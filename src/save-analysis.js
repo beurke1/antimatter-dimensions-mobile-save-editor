@@ -1,7 +1,20 @@
 import { buildPathIndex, getValueAtSegments } from './path-index.js';
 
 const CORE_PATHS = ['version', 'lastUpdate'];
-const COUNT_KEY_PATTERN = /(bought|boost|galax|upgrade|purchase|infinities|eternit|realit|completion|version)$/iu;
+const COUNT_KEY_PATTERN = /(?:bought|boosts?|galax(?:y|ies)|upgrades?|purchases?|infinities|eternities|realities|completions?|version)$/iu;
+const ANDROID_DECIMAL_STRING_CATEGORIES = new Set([
+  'resources',
+  'dimensions',
+  'challenges',
+  'infinity',
+  'replicanti',
+  'eternity',
+  'reality',
+  'black-hole',
+  'celestials',
+  'records',
+]);
+const DECIMAL_STRING_PATTERN = /^[+-]?(?:(?:\d+(?:\.\d+)?)|(?:\.\d+))(?:e[+-]?\d+)?$/iu;
 
 const isRecord = (value) => {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -14,6 +27,10 @@ const makeIssue = (severity, path, title, message) => ({
   title,
   message,
 });
+
+const isDecimalString = (value) => {
+  return typeof value === 'string' && DECIMAL_STRING_PATTERN.test(value.trim());
+};
 
 export const analyzeSaveData = (data, saveType = 'pc') => {
   const issues = [];
@@ -47,6 +64,29 @@ export const analyzeSaveData = (data, saveType = 'pc') => {
       if (!Number.isInteger(value.exponent)) {
         issues.push(makeIssue('warning', node.path, 'Fractional exponent', 'Big-number exponents are normally integers.'));
       }
+
+      if (saveType === 'pc') {
+        issues.push(makeIssue(
+          'warning',
+          node.path,
+          'Android numeric format',
+          'PC saves normally store Decimal values as strings. Mantissa/exponent objects may only import correctly in Android saves.'
+        ));
+      }
+    }
+
+    if (
+      saveType === 'android' &&
+      node.type === 'string' &&
+      ANDROID_DECIMAL_STRING_CATEGORIES.has(node.categoryId) &&
+      isDecimalString(value)
+    ) {
+      issues.push(makeIssue(
+        'warning',
+        node.path,
+        'PC numeric format',
+        'Android saves normally store Decimal values as mantissa/exponent objects. Decimal strings may not import correctly.'
+      ));
     }
 
     if (
@@ -56,6 +96,15 @@ export const analyzeSaveData = (data, saveType = 'pc') => {
       COUNT_KEY_PATTERN.test(node.key)
     ) {
       issues.push(makeIssue('warning', node.path, 'Negative count', 'This looks like a count-like field and may not support negative values.'));
+    }
+
+    if (
+      node.type === 'number' &&
+      typeof value === 'number' &&
+      !Number.isInteger(value) &&
+      COUNT_KEY_PATTERN.test(node.key)
+    ) {
+      issues.push(makeIssue('warning', node.path, 'Fractional count', 'This looks like a count-like field and may not support fractional values.'));
     }
   }
 

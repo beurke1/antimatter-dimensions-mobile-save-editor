@@ -138,6 +138,26 @@ assert.ok(invalidSaveIssues.some((issue) => issue.path === 'dimensionBoosts' && 
 const missingCoreIssues = analyzeSaveData({ antimatter: '10' }, SaveType.PC);
 assert.equal(summarizeAnalysis(missingCoreIssues).warnings, 2);
 
+const pcFormatMismatchIssues = analyzeSaveData({
+  ...samplePcSave,
+  antimatter: { mantissa: 1, exponent: 1200 },
+}, SaveType.PC);
+assert.ok(pcFormatMismatchIssues.some((issue) => issue.path === 'antimatter' && issue.title === 'Android numeric format'));
+
+const androidFormatMismatchIssues = analyzeSaveData({
+  ...sampleAndroidSave,
+  infinityPoints: '1e250',
+}, SaveType.Android);
+assert.ok(androidFormatMismatchIssues.some((issue) => issue.path === 'infinityPoints' && issue.title === 'PC numeric format'));
+
+const countLikeIssues = analyzeSaveData({
+  ...samplePcSave,
+  dimensionBoosts: 1.5,
+  galaxies: -1,
+}, SaveType.PC);
+assert.ok(countLikeIssues.some((issue) => issue.path === 'dimensionBoosts' && issue.title === 'Fractional count'));
+assert.ok(countLikeIssues.some((issue) => issue.path === 'galaxies' && issue.title === 'Negative count'));
+
 const requiredCategoryIds = CATEGORIES
   .map((category) => category.id)
   .filter((categoryId) => categoryId !== 'unknown');
