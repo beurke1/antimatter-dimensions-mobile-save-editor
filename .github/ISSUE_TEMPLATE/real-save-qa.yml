@@ -14,7 +14,7 @@ body:
     id: qa-summary
     attributes:
       label: QA summary
-      description: Paste the output from Copy QA summary here. It contains detected game stage, stage signal paths, coverage counts, unknown top-level counts, safety issue counts, path names, and warning samples only, not save values.
+      description: Paste the output from Copy QA summary here. It contains detected game stage, stage signal paths, coverage counts, unknown top-level counts, unknown-path sample omission counts, safety issue counts, path names, and warning samples only, not save values.
       placeholder: |
         # Antimatter Dimensions Real-Save QA Summary
         ...

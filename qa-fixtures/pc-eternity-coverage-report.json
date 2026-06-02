@@ -108,6 +108,7 @@
     "version"
   ],
   "unknownPaths": [],
+  "unknownPathsOmitted": 0,
   "unknownTopLevelCounts": {},
   "safety": {
     "error": 0,

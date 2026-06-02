@@ -1,6 +1,7 @@
 import { CATEGORIES } from './taxonomy.js';
 
 const MAX_SAFETY_SAMPLES = 40;
+const MAX_UNKNOWN_PATHS = 250;
 
 const sortByCount = (entries) => {
   return Object.fromEntries(
@@ -107,6 +108,7 @@ export const buildCoverageReport = ({
   const safetySamples = analysisIssues
     .slice(0, MAX_SAFETY_SAMPLES)
     .map(formatSafetySample);
+  const visibleUnknownPaths = [...unknownPaths].sort().slice(0, MAX_UNKNOWN_PATHS);
 
   return {
     generatedAt,
@@ -127,7 +129,8 @@ export const buildCoverageReport = ({
     valueTypes: sortByCount(typeCounts),
     depths: sortByCount(depthCounts),
     topLevelPaths: topLevelPaths.sort(),
-    unknownPaths: unknownPaths.slice(0, 250).sort(),
+    unknownPaths: visibleUnknownPaths,
+    unknownPathsOmitted: Math.max(0, unknownPaths.length - visibleUnknownPaths.length),
     unknownTopLevelCounts: sortByCount(unknownTopLevelCounts),
     safety: issueCounts,
     safetyIssueCounts: sortByCount(safetyIssueCounts),
@@ -226,6 +229,7 @@ export const buildQaSummary = (coverageReport) => {
     ...formatCountBlock(coverageReport.valueTypes),
     '',
     '## Unknown Paths',
+    `- Report samples omitted: ${coverageReport.unknownPathsOmitted ?? 0}`,
     ...formatListBlock(coverageReport.unknownPaths),
     '',
     '## Unknown Top-Level Counts',

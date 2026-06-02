@@ -245,6 +245,8 @@ const unknownReport = buildCoverageReport({
   generatedAt: '2026-06-02T00:00:00.000Z',
 });
 assert.equal(unknownReport.totals.unknownPaths, 5);
+assert.equal(unknownReport.unknownPaths.length, 5);
+assert.equal(unknownReport.unknownPathsOmitted, 0);
 assert.equal(unknownReport.gameStage, STAGES.NORMAL);
 assert.deepEqual(unknownReport.gameStageSignals, []);
 assert.deepEqual(unknownReport.unknownTopLevelCounts, {
@@ -253,9 +255,40 @@ assert.deepEqual(unknownReport.unknownTopLevelCounts, {
 });
 const unknownQaSummary = buildQaSummary(unknownReport);
 assert.ok(unknownQaSummary.includes('## Unknown Top-Level Counts'));
+assert.ok(unknownQaSummary.includes('- Report samples omitted: 0'));
 assert.ok(unknownQaSummary.includes('- qqqBucket: 4'));
 assert.ok(unknownQaSummary.includes('- zzzFlag: 1'));
 assert.ok(!unknownQaSummary.includes('private-value'), 'Unknown path QA summary should not include unknown save values');
+
+const largeUnknownSave = {
+  ...samplePcSave,
+  qqqLarge: Object.fromEntries(
+    Array.from({ length: 300 }, (_, index) => [
+      `item${String(index).padStart(3, '0')}`,
+      `secret-${index}`,
+    ])
+  ),
+};
+const largeUnknownNodes = buildPathIndex(largeUnknownSave, SaveType.PC);
+const largeUnknownCoverage = calculateCoverage(largeUnknownNodes);
+const largeUnknownReport = buildCoverageReport({
+  saveType: SaveType.PC,
+  gameStage: detectStage(largeUnknownSave),
+  gameStageSignals: detectStageDetails(largeUnknownSave).signals,
+  nodes: largeUnknownNodes,
+  coverage: largeUnknownCoverage,
+  changes: [],
+  analysisIssues: [],
+  generatedAt: '2026-06-02T00:00:00.000Z',
+});
+assert.equal(largeUnknownReport.totals.unknownPaths, 301);
+assert.equal(largeUnknownReport.unknownPaths.length, 250);
+assert.equal(largeUnknownReport.unknownPathsOmitted, 51);
+assert.deepEqual(largeUnknownReport.unknownTopLevelCounts, { qqqLarge: 301 });
+const largeUnknownQaSummary = buildQaSummary(largeUnknownReport);
+assert.ok(largeUnknownQaSummary.includes('- Report samples omitted: 51'));
+assert.ok(largeUnknownQaSummary.includes('- qqqLarge: 301'));
+assert.ok(!largeUnknownQaSummary.includes('secret-299'), 'Capped unknown path summary should not include unknown save values');
 
 const requiredCategoryIds = CATEGORIES
   .map((category) => category.id)

@@ -173,7 +173,7 @@ Twelfth follow-up implementation added:
 - `npm run qa:fixtures` now exports eight fixture saves, eight coverage reports, and a manifest covering the full game progression shape without real user saves.
 - Smoke tests round-trip all eight progression fixtures, verify no fixture has safety errors, and keep the late-game all-category coverage gate.
 - Rendered mobile verification now includes early PC and Android saves in addition to late-game fixtures.
-- QA summaries and coverage reports include value-free detected game stage, stage signal paths, unknown top-level counts, safety issue counts, and warning samples so real-save reports can identify taxonomy gaps, stage-detection oddities, or noisy warnings without sharing save values.
+- QA summaries and coverage reports include value-free detected game stage, stage signal paths, unknown top-level counts, unknown-path sample omission counts, safety issue counts, and warning samples so real-save reports can identify taxonomy gaps, stage-detection oddities, or noisy warnings without sharing save values.
 - Added a taxonomy guard for stable top-level save keys, including `eternityBuyer`, so known keys stay out of fallback when possible.
 
 Thirteenth follow-up implementation added:
@@ -195,6 +195,7 @@ Thirteenth follow-up implementation added:
 - Coverage reports and copied QA summaries now include value-free Unknown Top-Level Counts so fallback taxonomy gaps can be grouped even when unknown path lists are capped.
 - Coverage reports and copied QA summaries now include the detected game stage so real-save reports can be compared against the expected progression phase without sharing save values.
 - Coverage reports and copied QA summaries now include value-free stage signal paths so stage-detection oddities can be reviewed without exposing the triggering values.
+- Coverage reports and copied QA summaries now include value-free unknown-path sample omission counts so large fallback reports make capped path lists explicit.
 
 Open engineering tasks:
 
