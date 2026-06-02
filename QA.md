@@ -14,6 +14,8 @@ Then open the public app:
 
 https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 
+The `pc-late-game-save.txt` fixture is the broadest synthetic pass. It should currently decode to 1,576 paths and includes source-shaped automation, records, speedrun, Reality, Celestials, Pelle, and options branches.
+
 For each file in `qa-fixtures/*-save.txt`:
 
 1. Paste the full save into Import and tap Decode.

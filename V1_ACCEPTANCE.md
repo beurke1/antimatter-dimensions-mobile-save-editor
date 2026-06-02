@@ -20,7 +20,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Unknown paths appear in fallback coverage, never hidden.
 - Stable known AD top-level keys are guarded against fallback classification.
 - Value-free QA summaries with detected game stage and stage signal paths, coverage counts, unknown top-level counts, unknown-path sample omission counts, safety issue counts, and warning samples can be copied, and coverage report JSON can be copied or downloaded for real-save QA.
-- Synthetic Normal, Infinity, Eternity, and late-game PC/Android fixtures can be exported for repeatable mobile QA.
+- Synthetic Normal, Infinity, Eternity, and late-game PC/Android fixtures can be exported for repeatable mobile QA, with the PC late-game fixture covering 1,500+ current-source-shaped paths.
 
 ## Mobile Navigation
 

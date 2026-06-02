@@ -348,6 +348,29 @@ const requiredCategoryIds = CATEGORIES
   .map((category) => category.id)
   .filter((categoryId) => categoryId !== 'unknown');
 
+const requiredComprehensivePcLandmarks = [
+  'auto.reality.rm',
+  'auto.antimatterDims.all[7].bulk',
+  'auto.imaginaryUpgrades.all[9].isActive',
+  'challenge.eternity.requirementBits',
+  'news.specialTickerData.paperclips',
+  'records.recentRealities[0][6]',
+  'records.bestReality.iMCapSet[0]',
+  'speedrun.previousRuns.fixture.time',
+  'replicanti.chanceCost',
+  'timestudy.preferredPaths[0][2]',
+  'dilation.nextThreshold',
+  'reality.glyphs.filter.types.power.effectScores[0]',
+  'reality.automator.constants.targetRM',
+  'celestials.ra.alchemy[20].reaction',
+  'celestials.laitela.dimensions[3].ascensionCount',
+  'celestials.pelle.rifts.vacuum.reducedTo',
+  'options.confirmations.armageddon',
+  'options.awayProgress.realityShards',
+  'options.showHintText.glyphInfoType',
+  'options.automatorEvents.maxEntries',
+];
+
 assert.ok(KNOWN_TOP_LEVEL_CATEGORIES.length >= 100, 'Known top-level taxonomy guard should cover the broad AD player shape');
 assert.equal(
   new Set(KNOWN_TOP_LEVEL_CATEGORIES.map(([path]) => path)).size,
@@ -475,6 +498,17 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
 
   const rootChildrenCount = getDirectChildNodes(fixtureNodes, 'root').length;
   assert.ok(rootChildrenCount > 30);
+
+  if (saveType === SaveType.PC) {
+    assert.ok(
+      fixtureCoverage.total >= 600,
+      `PC late-game fixture should stress a broad current-source-shaped save, got ${fixtureCoverage.total} paths`
+    );
+
+    for (const path of requiredComprehensivePcLandmarks) {
+      assert.ok(fixtureNodeByPath.has(path), `PC late-game fixture should include source landmark ${path}`);
+    }
+  }
 
   const safetySummary = summarizeAnalysis(analyzeSaveData(decoded.data, saveType));
   assert.equal(safetySummary.errors, 0);
