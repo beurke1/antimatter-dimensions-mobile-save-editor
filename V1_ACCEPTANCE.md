@@ -8,6 +8,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 
 - PC encoded saves decode and re-encode.
 - Android encoded saves decode and re-encode.
+- PC and Android codecs work without native browser compression streams.
 - Decoded JSON can be imported for QA.
 - Encoding is blocked for hard safety errors.
 
@@ -37,6 +38,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Android-style `{ mantissa, exponent }` big numbers use direct mantissa/exponent controls.
 - Arrays and objects remain editable through scoped JSON.
 - Quick-edit presets preserve PC decimal-string values and Android mantissa/exponent values.
+- Direct edits such as `eternities` encode back exactly without hidden timestamp mutation.
 - Changed-path review shows before/after previews.
 - Per-path reset and reset-all work.
 

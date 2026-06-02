@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import {
   createComprehensiveAndroidSave,
   createComprehensivePcSave,
+  createEternityPcSave,
   createNormalAndroidSave,
   createNormalPcSave,
 } from './fixture-saves.mjs';
@@ -990,6 +991,28 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         };
       }
 
+      if (${JSON.stringify(workflow)} === 'pc-eternities-controlled-export') {
+        const originalLastUpdate = Number(card('lastUpdate')?.querySelector('input')?.value ?? 0);
+        setEditorValue('eternities', '[data-editor-type="string"]', '12345');
+        await waitFor(() => card('eternities')?.classList.contains('changed'), 'Eternities edit');
+
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'Eternities encode');
+        const { decodeSave } = await import('./src/save-codec.js');
+        const decoded = await decodeSave(encoded);
+        const encodedLastUpdate = Number(decoded.data.lastUpdate ?? 0);
+
+        return {
+          workflow: 'pc-eternities-controlled-export',
+          encodedPrefix: encoded.slice(0, 37),
+          exactEternities: decoded.data.eternities === '12345',
+          encodedLastUpdate,
+          originalLastUpdate,
+          timestampPreserved: encodedLastUpdate === originalLastUpdate,
+          lastUpdateChanged: card('lastUpdate')?.classList.contains('changed') ?? false,
+        };
+      }
+
       if (${JSON.stringify(workflow)} === 'android-big-number') {
         setEditorValue('antimatter', '[data-editor-type="big-mantissa"]', '2');
         await waitFor(() => card('antimatter')?.classList.contains('changed'), 'Android mantissa edit');
@@ -1237,6 +1260,15 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('deep scoped browser workflow did not produce an encoded PC save');
       }
     }
+    if (caseConfig.editorWorkflow === 'pc-eternities-controlled-export') {
+      if (!editorWorkflow?.exactEternities) failures.push('controlled Eternities edit was not preserved exactly in the encoded save');
+      if (!editorWorkflow?.timestampPreserved || editorWorkflow?.lastUpdateChanged) {
+        failures.push('controlled Eternities workflow changed lastUpdate unexpectedly');
+      }
+      if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) {
+        failures.push('controlled Eternities workflow did not produce an encoded PC save');
+      }
+    }
     if (caseConfig.editorWorkflow === 'android-big-number') {
       if (!editorWorkflow?.antimatterChanged) failures.push('Android big-number editor did not mark antimatter changed');
       if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsAndroidSaveFormat')) {
@@ -1309,6 +1341,12 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createNormalPcSave(),
       presetWorkflow: 'pc-normal-preset',
+    },
+    {
+      name: 'pc-eternities-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createEternityPcSave(),
+      editorWorkflow: 'pc-eternities-controlled-export',
     },
     {
       name: 'file-import-qa-iphone-se',

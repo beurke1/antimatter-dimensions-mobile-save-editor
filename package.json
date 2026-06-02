@@ -9,5 +9,8 @@
     "qa:fixtures": "node scripts/export-qa-fixtures.mjs",
     "test": "node scripts/smoke-test.mjs",
     "verify:mobile": "node scripts/mobile-viewport-check.mjs"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2"
   }
 }

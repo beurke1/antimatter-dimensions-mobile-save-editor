@@ -1,3 +1,5 @@
+import { gzipSync, gunzipSync, unzlibSync, zlibSync } from './vendor/fflate.js';
+
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
@@ -22,10 +24,6 @@ const SAVE_FORMATS = Object.freeze({
 });
 
 const normalizeInput = (value) => String(value ?? '').trim().replace(/\r/g, '').replace(/\\r/g, '');
-
-const isNodeRuntime = () => {
-  return typeof process !== 'undefined' && Boolean(process.versions?.node);
-};
 
 const toUint8Array = (value) => {
   if (value instanceof Uint8Array) {
@@ -96,24 +94,12 @@ const streamTransform = async (bytes, stream) => {
   return new Uint8Array(await new Response(stream.readable).arrayBuffer());
 };
 
-const compressWithNode = async (bytes, format) => {
-  if (!isNodeRuntime()) {
-    throw new Error('CompressionStream is unavailable in this browser.');
-  }
-
-  const zlib = await import('node:zlib');
-  const source = Buffer.from(bytes);
-  return new Uint8Array(format === 'gzip' ? zlib.gzipSync(source) : zlib.deflateSync(source));
+const compressWithFflate = (bytes, format) => {
+  return format === 'gzip' ? gzipSync(bytes) : zlibSync(bytes);
 };
 
-const decompressWithNode = async (bytes, format) => {
-  if (!isNodeRuntime()) {
-    throw new Error('DecompressionStream is unavailable in this browser.');
-  }
-
-  const zlib = await import('node:zlib');
-  const source = Buffer.from(bytes);
-  return new Uint8Array(format === 'gzip' ? zlib.gunzipSync(source) : zlib.inflateSync(source));
+const decompressWithFflate = (bytes, format) => {
+  return format === 'gzip' ? gunzipSync(bytes) : unzlibSync(bytes);
 };
 
 const compressBytes = async (bytes, format) => {
@@ -121,7 +107,7 @@ const compressBytes = async (bytes, format) => {
     return streamTransform(bytes, new CompressionStream(format));
   }
 
-  return compressWithNode(bytes, format);
+  return compressWithFflate(bytes, format);
 };
 
 const decompressBytes = async (bytes, format) => {
@@ -129,7 +115,7 @@ const decompressBytes = async (bytes, format) => {
     return streamTransform(bytes, new DecompressionStream(format));
   }
 
-  return decompressWithNode(bytes, format);
+  return decompressWithFflate(bytes, format);
 };
 
 const parseJsonSave = (jsonText) => {
@@ -226,4 +212,3 @@ export const encodeSaveData = async (data, saveType = SaveType.PC) => {
 export const stringifySaveJson = (data, spacing = 2) => {
   return JSON.stringify(data, null, spacing);
 };
-

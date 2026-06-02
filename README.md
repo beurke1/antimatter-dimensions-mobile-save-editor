@@ -10,6 +10,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 ## What Works
 
 - PC and Android save decode/encode.
+- Browser-safe PC/Android compression fallback for Safari and other browsers without native compression streams.
 - Decoded JSON import.
 - Dark mobile-first, browser-first UI tuned for iPhone-sized screens.
 - Runtime indexing of every path in the imported save.
@@ -44,7 +45,7 @@ npm test
 npm run verify:mobile
 ```
 
-The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, reset behavior, safety analysis, progression-stage fixtures, and comprehensive category coverage across generated PC/Android late-game fixtures. The mobile verifier launches headless Chrome, decodes early and late PC/Android fixture saves, exercises rendered file import, category/stage/search/type navigation, changed-only filtering after edits, review/reset flows, stage-filtered quick edits with PC/Android numeric preservation, value-free QA/report copy/download, representative edit/export flows, and deep scoped browsing, checks iPhone-sized rendered layout overflow, and writes screenshots plus a JSON report to `artifacts/mobile-viewport/`.
+The smoke test verifies PC and Android round trips with and without native compression streams, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, reset behavior, safety analysis, progression-stage fixtures, exact Eternities edit/export behavior, and comprehensive category coverage across generated PC/Android late-game fixtures. The mobile verifier launches headless Chrome, decodes early and late PC/Android fixture saves, exercises rendered file import, category/stage/search/type navigation, changed-only filtering after edits, review/reset flows, stage-filtered quick edits with PC/Android numeric preservation, exact Eternities edit/export behavior, value-free QA/report copy/download, representative edit/export flows, and deep scoped browsing, checks iPhone-sized rendered layout overflow, and writes screenshots plus a JSON report to `artifacts/mobile-viewport/`.
 
 GitHub Actions runs the same smoke and mobile checks on pushes and pull requests. The Pages deployment also runs them before publishing the static app.
 

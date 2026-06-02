@@ -80,6 +80,48 @@ const sampleAndroidSave = {
   lastUpdate: 1700000000000,
 };
 
+const withCompressionStreamsDisabled = async (work) => {
+  const hadCompressionStream = Object.hasOwn(globalThis, 'CompressionStream');
+  const hadDecompressionStream = Object.hasOwn(globalThis, 'DecompressionStream');
+  const originalCompressionStream = globalThis.CompressionStream;
+  const originalDecompressionStream = globalThis.DecompressionStream;
+
+  try {
+    Object.defineProperty(globalThis, 'CompressionStream', {
+      configurable: true,
+      writable: true,
+      value: undefined,
+    });
+    Object.defineProperty(globalThis, 'DecompressionStream', {
+      configurable: true,
+      writable: true,
+      value: undefined,
+    });
+
+    return await work();
+  } finally {
+    if (hadCompressionStream) {
+      Object.defineProperty(globalThis, 'CompressionStream', {
+        configurable: true,
+        writable: true,
+        value: originalCompressionStream,
+      });
+    } else {
+      delete globalThis.CompressionStream;
+    }
+
+    if (hadDecompressionStream) {
+      Object.defineProperty(globalThis, 'DecompressionStream', {
+        configurable: true,
+        writable: true,
+        value: originalDecompressionStream,
+      });
+    } else {
+      delete globalThis.DecompressionStream;
+    }
+  }
+};
+
 const pcEncoded = await encodeSaveData(samplePcSave, SaveType.PC);
 assert.ok(pcEncoded.startsWith('AntimatterDimensionsSavefileFormatAAB'));
 
@@ -93,6 +135,18 @@ assert.ok(androidEncoded.startsWith('AntimatterDimensionsAndroidSaveFormatAAA'))
 const androidDecoded = await decodeSave(androidEncoded);
 assert.equal(androidDecoded.saveType, SaveType.Android);
 assert.deepEqual(androidDecoded.data, sampleAndroidSave);
+
+await withCompressionStreamsDisabled(async () => {
+  const fallbackPcEncoded = await encodeSaveData(samplePcSave, SaveType.PC);
+  const fallbackPcDecoded = await decodeSave(fallbackPcEncoded);
+  assert.equal(fallbackPcDecoded.saveType, SaveType.PC);
+  assert.deepEqual(fallbackPcDecoded.data, samplePcSave);
+
+  const fallbackAndroidEncoded = await encodeSaveData(sampleAndroidSave, SaveType.Android);
+  const fallbackAndroidDecoded = await decodeSave(fallbackAndroidEncoded);
+  assert.equal(fallbackAndroidDecoded.saveType, SaveType.Android);
+  assert.deepEqual(fallbackAndroidDecoded.data, sampleAndroidSave);
+});
 
 const nodes = buildPathIndex(samplePcSave, SaveType.PC);
 const coverage = calculateCoverage(nodes);
@@ -367,6 +421,12 @@ assert.deepEqual(
   { stage: STAGES.NORMAL, signals: [] },
   'present but zero later-stage trees should not expose stage signals'
 );
+
+const controlledEternitySave = setValueAtSegments(createEternityPcSave(), ['eternities'], '12345');
+const controlledEternityEncoded = await encodeSaveData(controlledEternitySave, SaveType.PC);
+const controlledEternityDecoded = await decodeSave(controlledEternityEncoded);
+assert.equal(controlledEternityDecoded.data.eternities, '12345');
+assert.equal(controlledEternityDecoded.data.lastUpdate, controlledEternitySave.lastUpdate);
 
 const assertProgressionFixture = async ([fixtureId, saveData, saveType, expectedStage]) => {
   const encoded = await encodeSaveData(saveData, saveType);

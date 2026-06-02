@@ -196,6 +196,8 @@ Thirteenth follow-up implementation added:
 - Coverage reports and copied QA summaries now include the detected game stage so real-save reports can be compared against the expected progression phase without sharing save values.
 - Coverage reports and copied QA summaries now include value-free stage signal paths so stage-detection oddities can be reviewed without exposing the triggering values.
 - Coverage reports and copied QA summaries now include value-free unknown-path sample omission counts so large fallback reports make capped path lists explicit.
+- Codec actions now use a vendored browser-safe zlib/gzip fallback when native compression streams are unavailable, and tests force that fallback path for PC and Android round trips.
+- Rendered mobile verification now includes a controlled Eternities edit/export case that decodes the encoded output and asserts the exact edited value is preserved without changing `lastUpdate`.
 
 Open engineering tasks:
 
