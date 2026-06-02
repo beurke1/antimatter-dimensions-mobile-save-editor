@@ -412,6 +412,50 @@ const decodeSave = async (client, saveData) => {
   return result;
 };
 
+const decodeSaveFromSyntheticFile = async (client, saveData) => {
+  const saveText = JSON.stringify(saveData);
+  const result = await evaluate(client, `
+    (async () => {
+      const waitFor = async (predicate, label) => {
+        const deadline = Date.now() + 8000;
+        while (Date.now() < deadline) {
+          const value = predicate();
+          if (value) return value;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        throw new Error(label + ' timed out');
+      };
+
+      const input = document.querySelector('#file-input');
+      if (!input) throw new Error('Missing file input');
+
+      const saveText = ${JSON.stringify(saveText)};
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(new File([saveText], 'decoded-pc-save.json', { type: 'application/json' }));
+      input.files = dataTransfer.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+
+      await waitFor(() => document.querySelector('#raw-save')?.value === saveText, 'file text load');
+      const loadedNotice = document.querySelector('.notice')?.textContent.trim() ?? '';
+      const sourceTextMatches = document.querySelector('#raw-save')?.value === saveText;
+
+      document.querySelector('[data-action="decode"]').click();
+      await waitFor(() => document.querySelector('.path-card'), 'file decode');
+
+      return {
+        loadedNotice,
+        notice: document.querySelector('.notice')?.textContent.trim() ?? '',
+        rawInputLength: saveText.length,
+        sourceTextMatches,
+        visibleCards: document.querySelectorAll('.path-card').length,
+      };
+    })()
+  `);
+  assert.equal(result.sourceTextMatches, true, 'Synthetic file import did not populate the save text area.');
+  assert.ok(result.visibleCards > 0, 'Synthetic file import did not render editable path cards.');
+  return result;
+};
+
 const expandSafetyPanel = async (client, minimumRows) => {
   return evaluate(client, `
     (() => {
@@ -514,6 +558,77 @@ const exerciseNavigationWorkflow = async (client, workflow) => {
         booleanCards,
         booleanCardsMatch,
         changedOnlyCards,
+      };
+    })()
+  `);
+};
+
+const exerciseQaWorkflow = async (client, workflow) => {
+  return evaluate(client, `
+    (async () => {
+      if (${JSON.stringify(workflow)} !== 'value-free-copy') return null;
+
+      const waitFor = async (predicate, label) => {
+        const deadline = Date.now() + 8000;
+        while (Date.now() < deadline) {
+          const value = predicate();
+          if (value) return value;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        throw new Error(label + ' timed out');
+      };
+      const clickAction = async (selector, label) => {
+        const button = document.querySelector(selector);
+        if (!button) throw new Error('Missing ' + label);
+        button.click();
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      };
+
+      const writes = [];
+      const clipboard = {
+        writeText: async (value) => {
+          writes.push(String(value));
+          window.__adSaveEditorClipboardWrites = writes;
+        },
+        readText: async () => writes.at(-1) ?? '',
+      };
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: clipboard,
+      });
+      window.__adSaveEditorClipboardWrites = writes;
+
+      await clickAction('[data-action="toggle-details"]', 'coverage details toggle');
+      await waitFor(() => document.querySelector('.coverage-panel'), 'coverage panel');
+
+      await clickAction('[data-action="copy-qa-summary"]', 'Copy QA summary');
+      await waitFor(() => window.__adSaveEditorClipboardWrites?.length >= 1, 'QA summary copy');
+      const qaSummary = window.__adSaveEditorClipboardWrites.at(-1) ?? '';
+
+      await clickAction('[data-action="copy-report"]', 'Copy report');
+      await waitFor(() => window.__adSaveEditorClipboardWrites?.length >= 2, 'coverage report copy');
+      const reportText = window.__adSaveEditorClipboardWrites.at(-1) ?? '';
+      let report = null;
+      try {
+        report = JSON.parse(reportText);
+      } catch {
+        report = null;
+      }
+
+      const leakedFixtures = ['AntimatterDimensionsSavefileFormat', 'AntimatterDimensionsAndroidSaveFormat', 'Mixed scientific', '1700000000000'];
+      const summaryValueFree = leakedFixtures.every((fixtureValue) => !qaSummary.includes(fixtureValue));
+      const reportValueFree = leakedFixtures.every((fixtureValue) => !reportText.includes(fixtureValue));
+
+      return {
+        workflow: 'value-free-copy',
+        clipboardWrites: window.__adSaveEditorClipboardWrites.length,
+        qaSummaryCopied: qaSummary.includes('Antimatter Dimensions Real-Save QA Summary'),
+        qaSummaryHasCounts: qaSummary.includes('- Paths:') && qaSummary.includes('## Safety'),
+        summaryValueFree,
+        reportCopied: Boolean(report),
+        reportHasTotals: Number(report?.totals?.paths ?? 0) > 20,
+        reportHasSafety: typeof report?.safety?.error === 'number',
+        reportValueFree,
       };
     })()
   `);
@@ -721,12 +836,19 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
 
   try {
     await openApp(client, appUrl, caseConfig.viewport);
-    const decoded = caseConfig.saveData ? await decodeSave(client, caseConfig.saveData) : null;
+    const decoded = caseConfig.fileImportData
+      ? await decodeSaveFromSyntheticFile(client, caseConfig.fileImportData)
+      : caseConfig.saveData
+        ? await decodeSave(client, caseConfig.saveData)
+        : null;
     const safetyPanel = caseConfig.minimumSafetyRows
       ? await expandSafetyPanel(client, caseConfig.minimumSafetyRows)
       : null;
     const navigationWorkflow = caseConfig.navigationWorkflow
       ? await exerciseNavigationWorkflow(client, caseConfig.navigationWorkflow)
+      : null;
+    const qaWorkflow = caseConfig.qaWorkflow
+      ? await exerciseQaWorkflow(client, caseConfig.qaWorkflow)
       : null;
     const editorWorkflow = caseConfig.editorWorkflow
       ? await exerciseEditorWorkflow(client, caseConfig.editorWorkflow)
@@ -774,6 +896,15 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
       if (!navigationWorkflow?.booleanCardsMatch) failures.push('Boolean type filter rendered non-boolean cards');
       if (navigationWorkflow?.changedOnlyCards !== 0) failures.push('Changed-only filter showed rows before edits');
     }
+    if (caseConfig.fileImportData) {
+      if (!decoded?.sourceTextMatches || !decoded?.visibleCards) failures.push('decoded JSON file import did not render editable cards');
+    }
+    if (caseConfig.qaWorkflow === 'value-free-copy') {
+      if (!qaWorkflow?.qaSummaryCopied || !qaWorkflow?.qaSummaryHasCounts) failures.push('rendered QA summary copy did not include the expected value-free report sections');
+      if (!qaWorkflow?.summaryValueFree) failures.push('rendered QA summary copy leaked fixture values or encoded save text');
+      if (!qaWorkflow?.reportCopied || !qaWorkflow?.reportHasTotals || !qaWorkflow?.reportHasSafety) failures.push('rendered coverage report copy did not produce the expected JSON report');
+      if (!qaWorkflow?.reportValueFree) failures.push('rendered coverage report copy leaked fixture values or encoded save text');
+    }
     if (caseConfig.editorWorkflow === 'pc-basic') {
       if (!editorWorkflow?.notationChanged) failures.push('PC string editor did not mark notation changed');
       if (!editorWorkflow?.subtreeChanged) failures.push('PC subtree JSON editor did not mark nested option changed');
@@ -804,6 +935,7 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
       decoded,
       safetyPanel,
       navigationWorkflow,
+      qaWorkflow,
       editorWorkflow,
       metrics: caseMetrics,
       failures,
@@ -838,6 +970,12 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createComprehensivePcSave(),
       navigationWorkflow: 'pc-navigation',
+    },
+    {
+      name: 'file-import-qa-iphone-se',
+      viewport: viewports.iphoneSe,
+      fileImportData: createNormalPcSave(),
+      qaWorkflow: 'value-free-copy',
     },
     {
       name: 'pc-fixture-iphone-15',
