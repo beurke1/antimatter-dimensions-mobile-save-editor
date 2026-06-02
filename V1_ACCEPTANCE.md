@@ -44,7 +44,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Arrays and objects remain editable through scoped JSON.
 - Quick-edit presets preserve PC decimal-string values and Android mantissa/exponent values.
 - Direct edits such as `eternities` encode back exactly without hidden timestamp mutation.
-- Changed-path review shows before/after previews.
+- Changed-path review shows before/after previews and can expand beyond the initial rows.
 - Per-path reset and reset-all work.
 
 ## Safety
@@ -65,7 +65,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 ## Hosting And CI
 
 - GitHub Actions smoke tests pass on `main`.
-- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, review/reset flows, structural add/remove/export controls, indexed array insert/replace/export controls, bitfield toggle/export controls, primitive leaf JSON type changes, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, value-free QA/report/path-inventory copy/download, and encoded output copy/share/download.
+- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, expandable review/reset flows, structural add/remove/export controls, indexed array insert/replace/export controls, bitfield toggle/export controls, primitive leaf JSON type changes, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, value-free QA/report/path-inventory copy/download, and encoded output copy/share/download.
 - GitHub Pages publishes the static app for iPhone Safari testing.
 - The public Pages URL loads without local tooling.
 - `npm run qa:fixtures` generates the committed fixture saves and expected reports.

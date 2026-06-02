@@ -990,11 +990,51 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         card('buyUntil10')?.querySelector('[data-action="toggle-boolean"]')?.click();
         await waitFor(() => card('buyUntil10')?.classList.contains('changed'), 'review boolean edit');
 
+        const optionsCard = card('options');
+        if (!optionsCard) throw new Error('Missing options card for expanded review');
+        optionsCard.querySelector('.subtree-editor').open = true;
+        const subtree = optionsCard.querySelector('.subtree-textarea');
+        const optionsJson = JSON.parse(subtree.value);
+        optionsJson.confirmations ??= {};
+        optionsJson.animations ??= {};
+        optionsJson.awayProgress ??= {};
+        optionsJson.showHintText ??= {};
+        optionsJson.automatorEvents ??= {};
+        optionsJson.confirmations.bigCrunch = false;
+        optionsJson.confirmations.resetReality = false;
+        optionsJson.confirmations.glyphUndo = false;
+        optionsJson.confirmations.autoClean = false;
+        optionsJson.animations.bigCrunch = false;
+        optionsJson.animations.eternity = false;
+        optionsJson.awayProgress.antimatter = false;
+        optionsJson.awayProgress.infinityPoints = false;
+        optionsJson.showHintText.achievements = false;
+        optionsJson.showHintText.realityUpgrades = false;
+        optionsJson.automatorEvents.maxEntries = 222;
+        optionsJson.updateRate = 40;
+        subtree.value = JSON.stringify(optionsJson, null, 2);
+        optionsCard.querySelector('[data-action="apply-subtree-json"]').click();
+        await waitFor(() => card('options.confirmations.bigCrunch')?.classList.contains('changed'), 'review subtree multi-edit');
+
         await waitFor(() => document.querySelector('.change-review'), 'review panel');
         const reviewRowsBefore = Array.from(document.querySelectorAll('.change-row'));
         const reviewText = document.querySelector('.change-review')?.textContent ?? '';
         const reviewContainsNotation = reviewRowsBefore.some((row) => row.dataset.changePath === 'options.notation' && row.textContent.includes('Mixed scientific') && row.textContent.includes('Engineering'));
         const reviewContainsBoolean = reviewRowsBefore.some((row) => row.dataset.changePath === 'buyUntil10');
+        const reviewToggleButton = document.querySelector('[data-action="toggle-change-list"]');
+        const reviewToggleRect = reviewToggleButton?.getBoundingClientRect();
+        const reviewToggleVisible = Boolean(reviewToggleRect) &&
+          reviewToggleRect.width >= 70 &&
+          reviewToggleRect.height >= 32 &&
+          reviewToggleRect.left >= 0 &&
+          reviewToggleRect.right <= window.innerWidth + 1;
+        reviewToggleButton?.click();
+        await waitFor(() => document.querySelectorAll('.change-row').length > reviewRowsBefore.length, 'expanded review rows');
+        const reviewRowsExpanded = Array.from(document.querySelectorAll('.change-row'));
+        const expandedReviewHasDeepChange = reviewRowsExpanded.some((row) => row.dataset.changePath === 'options.automatorEvents.maxEntries');
+        document.querySelector('[data-action="toggle-change-list"]')?.click();
+        await waitFor(() => document.querySelectorAll('.change-row').length === reviewRowsBefore.length, 'collapsed review rows');
+        const reviewRowsCollapsedAgain = Array.from(document.querySelectorAll('.change-row'));
 
         const changedToggle = () => document.querySelector('[data-action="toggle-changed-filter"]');
         changedToggle()?.click();
@@ -1021,6 +1061,11 @@ const exerciseEditorWorkflow = async (client, workflow) => {
           reviewRowsBefore: reviewRowsBefore.length,
           reviewContainsNotation,
           reviewContainsBoolean,
+          reviewToggleRendered: Boolean(reviewToggleButton),
+          reviewToggleVisible,
+          reviewRowsExpanded: reviewRowsExpanded.length,
+          reviewRowsCollapsedAgain: reviewRowsCollapsedAgain.length,
+          expandedReviewHasDeepChange,
           changedOnlyCards: changedOnlyCards.length,
           changedOnlyAllChanged,
           changedOnlyIncludesNotation,
@@ -1485,6 +1530,11 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     if (caseConfig.editorWorkflow === 'review-reset-all') {
       if (!editorWorkflow?.reviewRendered || editorWorkflow?.reviewRowsBefore < 2) failures.push('review workflow did not render expected review rows after edits');
       if (!editorWorkflow?.reviewContainsNotation || !editorWorkflow?.reviewContainsBoolean) failures.push('review workflow did not show expected before/after changed paths');
+      if (!editorWorkflow?.reviewToggleRendered || !editorWorkflow?.reviewToggleVisible) failures.push('review workflow did not render a visible show-all changes control');
+      if (editorWorkflow?.reviewRowsBefore !== 8 || !(editorWorkflow?.reviewRowsExpanded > editorWorkflow?.reviewRowsBefore) || editorWorkflow?.reviewRowsCollapsedAgain !== editorWorkflow?.reviewRowsBefore) {
+        failures.push('review workflow did not expand and collapse hidden changed rows');
+      }
+      if (!editorWorkflow?.expandedReviewHasDeepChange) failures.push('expanded review did not expose a hidden changed path');
       if (!editorWorkflow?.changedOnlyAllChanged || !editorWorkflow?.changedOnlyIncludesNotation) failures.push('changed-only filter did not show only changed rows after edits');
       if (!editorWorkflow?.booleanReviewReset) failures.push('review row reset did not clear the selected changed path');
       if (!editorWorkflow?.resetAllCleared || !editorWorkflow?.changedToggleCleared || !editorWorkflow?.visibleCardsAfterReset) {

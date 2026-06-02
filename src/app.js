@@ -60,6 +60,7 @@ const state = {
   showDetails: false,
   showPresets: false,
   showAllSafety: false,
+  showAllChanges: false,
   openBitfieldPath: null,
 };
 
@@ -299,6 +300,7 @@ const resetAllChanges = () => {
   state.data = structuredClone(state.originalData);
   markDataChanged();
   state.dirty = false;
+  state.showAllChanges = false;
   setNotice('All edits reset.', 'success');
   render();
 };
@@ -1168,8 +1170,9 @@ const renderChangeReview = () => {
     return '';
   }
 
-  const previewChanges = state.changes.slice(0, 8);
-  const remainingCount = Math.max(0, state.changes.length - previewChanges.length);
+  const canToggle = state.changes.length > 8;
+  const visibleChanges = state.showAllChanges ? state.changes : state.changes.slice(0, 8);
+  const remainingCount = Math.max(0, state.changes.length - visibleChanges.length);
 
   return `
     <section class="panel change-review" aria-labelledby="changes-title">
@@ -1178,10 +1181,17 @@ const renderChangeReview = () => {
           <h2 id="changes-title">Review edits</h2>
           <p>${state.changes.length} changed path${state.changes.length === 1 ? '' : 's'}</p>
         </div>
-        <button type="button" class="secondary-button compact" data-action="reset-all">Reset all</button>
+        <div class="panel-actions">
+          ${canToggle ? `
+            <button type="button" class="secondary-button compact" data-action="toggle-change-list">
+              ${state.showAllChanges ? 'Show fewer' : 'Show all'}
+            </button>
+          ` : ''}
+          <button type="button" class="secondary-button compact" data-action="reset-all">Reset all</button>
+        </div>
       </div>
       <div class="change-list">
-        ${previewChanges.map((change) => `
+        ${visibleChanges.map((change) => `
           <article class="change-row" data-change-path="${escapeHtml(change.path)}">
             <div>
               <span class="change-type">${escapeHtml(change.changeType)}</span>
@@ -1192,7 +1202,7 @@ const renderChangeReview = () => {
           </article>
         `).join('')}
       </div>
-      ${remainingCount ? `<p class="change-more">${remainingCount} more via Changed filter above.</p>` : ''}
+      ${remainingCount ? `<p class="change-more">${remainingCount} more changed path${remainingCount === 1 ? '' : 's'}.</p>` : ''}
     </section>
   `;
 };
@@ -1444,6 +1454,7 @@ const handleDecode = async () => {
     state.importCollapsed = true;
     state.showDetails = false;
     state.showAllSafety = false;
+    state.showAllChanges = false;
     rebuildIndex();
     setNotice(`Decoded ${decoded.saveType.toUpperCase()} save — ${state.coverage.total} paths ready to edit.`, 'success');
   } catch (error) {
@@ -1570,6 +1581,12 @@ document.addEventListener('click', async (event) => {
 
   if (action === 'toggle-safety-list') {
     state.showAllSafety = !state.showAllSafety;
+    render();
+    return;
+  }
+
+  if (action === 'toggle-change-list') {
+    state.showAllChanges = !state.showAllChanges;
     render();
     return;
   }

@@ -26,7 +26,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Direct mantissa/exponent edits for Android-style big-number objects.
 - Add object keys, append/insert/replace array items, and remove non-root paths with review before export.
 - Scoped JSON edits for objects and arrays.
-- Changed-path review with reset controls.
+- Expandable changed-path review with per-path and reset-all controls.
 - Safety check for invalid values and risky structural edits before export, with grouped subtree warnings and direct jumps to affected paths.
 - Stage-aware quick-edit presets with PC/Android numeric format preservation.
 - Copy value-free QA summaries with detected game stage and stage signal paths, coverage counts, unknown top-level counts, unknown-path sample omission counts, safety issue counts, and warning samples, plus copy/download coverage reports for imported saves.
@@ -50,7 +50,7 @@ npm test
 npm run verify:mobile
 ```
 
-The smoke test verifies PC and Android round trips with and without native compression streams, path indexing, scoped navigation helpers, coverage report generation, value-free path inventory generation, immutable path edits, change tracking, reset behavior, safety analysis, progression-stage fixtures, exact Eternities edit/export behavior, and comprehensive category coverage across generated PC/Android late-game fixtures. The mobile verifier launches headless Chrome, decodes early and late PC/Android fixture saves, exercises rendered file import, category/stage/search/type navigation, changed-only filtering after edits, review/reset flows, structural add/remove/export controls, indexed array insert/replace/export controls, bitfield toggle/export controls, primitive leaf JSON type changes, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, exact Eternities edit/export behavior, value-free QA/report/path-inventory copy/download, representative edit/export flows, and deep scoped browsing, checks iPhone-sized rendered layout overflow, and writes screenshots plus a JSON report to `artifacts/mobile-viewport/`.
+The smoke test verifies PC and Android round trips with and without native compression streams, path indexing, scoped navigation helpers, coverage report generation, value-free path inventory generation, immutable path edits, change tracking, reset behavior, safety analysis, progression-stage fixtures, exact Eternities edit/export behavior, and comprehensive category coverage across generated PC/Android late-game fixtures. The mobile verifier launches headless Chrome, decodes early and late PC/Android fixture saves, exercises rendered file import, category/stage/search/type navigation, changed-only filtering after edits, expandable review/reset flows, structural add/remove/export controls, indexed array insert/replace/export controls, bitfield toggle/export controls, primitive leaf JSON type changes, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, exact Eternities edit/export behavior, value-free QA/report/path-inventory copy/download, representative edit/export flows, and deep scoped browsing, checks iPhone-sized rendered layout overflow, and writes screenshots plus a JSON report to `artifacts/mobile-viewport/`.
 
 GitHub Actions runs the same smoke and mobile checks on pushes and pull requests. The Pages deployment also runs them before publishing the static app.
 

@@ -201,6 +201,14 @@ h2 {
   line-height: 1.35;
 }
 
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
 /* ── IMPORT PANEL ── */
 
 .save-input, .output-textarea, .subtree-textarea, .field-textarea {
