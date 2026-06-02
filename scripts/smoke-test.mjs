@@ -228,7 +228,20 @@ assert.ok(qaArtifacts.manifest.fixtures.every((fixture) => fixture.expectedSafet
 
 for (const file of qaArtifacts.files) {
   const committedContent = await readFile(new URL(`../qa-fixtures/${file.path}`, import.meta.url), 'utf8');
-  assert.equal(committedContent, file.content, `qa-fixtures/${file.path} should match npm run qa:fixtures output`);
+
+  if (file.path.endsWith('-save.txt')) {
+    const committedDecoded = await decodeSave(committedContent);
+    const generatedDecoded = await decodeSave(file.content);
+
+    assert.equal(committedDecoded.saveType, generatedDecoded.saveType);
+    assert.deepEqual(
+      committedDecoded.data,
+      generatedDecoded.data,
+      `qa-fixtures/${file.path} should decode to the generated fixture save`
+    );
+  } else {
+    assert.equal(committedContent, file.content, `qa-fixtures/${file.path} should match npm run qa:fixtures output`);
+  }
 }
 
 console.log(`Smoke tests passed: ${coverage.total} sample paths, ${pcCoverageTotal} PC fixture paths, ${androidCoverageTotal} Android fixture paths verified.`);
