@@ -9,6 +9,26 @@
 
 const bigNum = (mantissa, exponent) => ({ mantissa, exponent });
 
+const isAndroidSave = (data) => {
+  return 'brake' in data || 'achievements' in data || 'breakInfinityUpgradeBits' in data;
+};
+
+const isAndroidBigNumber = (value) => {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value) && 'mantissa' in value && 'exponent' in value;
+};
+
+const decimalString = (mantissa, exponent) => {
+  return exponent === 0 ? String(mantissa) : `${mantissa}e${exponent}`;
+};
+
+const decimalValue = (data, currentValue, mantissa, exponent) => {
+  if (isAndroidBigNumber(currentValue) || isAndroidSave(data)) {
+    return bigNum(mantissa, exponent);
+  }
+
+  return decimalString(mantissa, exponent);
+};
+
 export const PRESETS = [
   /* ── Normal stage ─────────────────────────────────── */
   {
@@ -17,7 +37,7 @@ export const PRESETS = [
     description: 'Set antimatter to 1.79e308 (threshold for first Infinity)',
     stage: 'Normal',
     accentStage: 'normal',
-    apply: (data) => ({ ...data, antimatter: bigNum(1.79, 308) }),
+    apply: (data) => ({ ...data, antimatter: decimalValue(data, data.antimatter, 1.79, 308) }),
   },
   {
     id: 'dim-boosts-4',
@@ -56,7 +76,7 @@ export const PRESETS = [
     description: 'Set infinity points to 1e100',
     stage: 'Infinity',
     accentStage: 'infinity',
-    apply: (data) => ({ ...data, infinityPoints: bigNum(1, 100) }),
+    apply: (data) => ({ ...data, infinityPoints: decimalValue(data, data.infinityPoints, 1, 100) }),
   },
   {
     id: 'replicanti-unlock',
@@ -64,17 +84,28 @@ export const PRESETS = [
     description: 'Unlock replicanti (sets replicanti.unl to true)',
     stage: 'Infinity',
     accentStage: 'infinity',
-    apply: (data) => ({
-      ...data,
-      replicanti: {
-        ...(data.replicanti ?? {}),
+    apply: (data) => {
+      const current = data.replicanti ?? {};
+      const nextReplicanti = {
+        ...current,
         unl: true,
-        amount: bigNum(1, 0),
-        chance: data.replicanti?.chance ?? 0.01,
-        interval: data.replicanti?.interval ?? 1000,
-        galaxies: data.replicanti?.galaxies ?? 0,
-      },
-    }),
+        amount: decimalValue(data, current.amount, 1, 0),
+        galaxies: current.galaxies ?? 0,
+      };
+
+      if (!isAndroidSave(data) || 'chance' in current) {
+        nextReplicanti.chance = current.chance ?? 0.01;
+      }
+
+      if (!isAndroidSave(data) || 'interval' in current) {
+        nextReplicanti.interval = current.interval ?? 1000;
+      }
+
+      return {
+        ...data,
+        replicanti: nextReplicanti,
+      };
+    },
   },
 
   /* ── Eternity stage ────────────────────────────────── */
@@ -84,7 +115,7 @@ export const PRESETS = [
     description: 'Set eternity points to 1e100',
     stage: 'Eternity',
     accentStage: 'eternity',
-    apply: (data) => ({ ...data, eternityPoints: bigNum(1, 100) }),
+    apply: (data) => ({ ...data, eternityPoints: decimalValue(data, data.eternityPoints, 1, 100) }),
   },
   {
     id: 'time-shards-e6',
@@ -92,7 +123,7 @@ export const PRESETS = [
     description: 'Set time shards to 1e6 (enables tickspeed study)',
     stage: 'Eternity',
     accentStage: 'eternity',
-    apply: (data) => ({ ...data, timeShards: bigNum(1, 6) }),
+    apply: (data) => ({ ...data, timeShards: decimalValue(data, data.timeShards, 1, 6) }),
   },
 
   /* ── Reality stage ─────────────────────────────────── */
@@ -106,7 +137,7 @@ export const PRESETS = [
       ...data,
       reality: {
         ...(data.reality ?? {}),
-        realityMachines: bigNum(1000, 0),
+        realityMachines: decimalValue(data, data.reality?.realityMachines, 1000, 0),
       },
     }),
   },

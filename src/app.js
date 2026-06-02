@@ -105,7 +105,7 @@ const detectStage = (data) => {
     return 'No save';
   }
 
-  if (data.celestials || data.reality?.glyphs || data.blackHole) {
+  if (data.reality || data.celestials || data.blackHole || data.realities || data.bigRealities) {
     return 'Reality';
   }
 
