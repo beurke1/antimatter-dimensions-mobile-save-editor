@@ -17,6 +17,7 @@ import { buildCoverageReport, buildQaSummary } from './coverage-report.js';
 import { buildReadinessSummary } from './readiness.js';
 import { CATEGORIES, getCategory } from './taxonomy.js';
 import { PRESETS, applyPreset } from './presets.js';
+import { detectStage } from './stage.js';
 
 const appRoot = document.querySelector('#app');
 const searchableTypes = new Set(['string', 'number', 'boolean', 'null', 'big-number', 'array', 'object']);
@@ -98,26 +99,6 @@ const setNotice = (message, tone = 'neutral') => {
 const setError = (message) => {
   state.error = message;
   state.notice = null;
-};
-
-const detectStage = (data) => {
-  if (!data) {
-    return 'No save';
-  }
-
-  if (data.reality || data.celestials || data.blackHole || data.realities || data.bigRealities) {
-    return 'Reality';
-  }
-
-  if (data.eternityPoints || data.eternities || data.bigEternities || data.dilation || data.timeShards) {
-    return 'Eternity';
-  }
-
-  if (data.infinityPoints || data.infinities || data.bigCrunches || data.replicanti || data.break || data.brake) {
-    return 'Infinity';
-  }
-
-  return 'Normal';
 };
 
 const stageMatchesFilter = (stage, filterId) => {

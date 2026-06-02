@@ -5,6 +5,7 @@ import { PRESETS, applyPreset } from '../src/presets.js';
 import { buildCoverageReport, buildQaSummary } from '../src/coverage-report.js';
 import { buildReadinessSummary } from '../src/readiness.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
+import { STAGES, detectStage, isPositiveQuantity } from '../src/stage.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
 import { createQaArtifacts } from './export-qa-fixtures.mjs';
 import {
@@ -213,21 +214,51 @@ for (const [path, categoryId] of knownTopLevelCategories) {
 }
 
 const progressionFixtures = [
-  ['pc-normal', createNormalPcSave(), SaveType.PC],
-  ['pc-infinity', createInfinityPcSave(), SaveType.PC],
-  ['pc-eternity', createEternityPcSave(), SaveType.PC],
-  ['pc-late-game', createComprehensivePcSave(), SaveType.PC],
-  ['android-normal', createNormalAndroidSave(), SaveType.Android],
-  ['android-infinity', createInfinityAndroidSave(), SaveType.Android],
-  ['android-eternity', createEternityAndroidSave(), SaveType.Android],
-  ['android-late-game', createComprehensiveAndroidSave(), SaveType.Android],
+  ['pc-normal', createNormalPcSave(), SaveType.PC, STAGES.NORMAL],
+  ['pc-infinity', createInfinityPcSave(), SaveType.PC, STAGES.INFINITY],
+  ['pc-eternity', createEternityPcSave(), SaveType.PC, STAGES.ETERNITY],
+  ['pc-late-game', createComprehensivePcSave(), SaveType.PC, STAGES.REALITY],
+  ['android-normal', createNormalAndroidSave(), SaveType.Android, STAGES.NORMAL],
+  ['android-infinity', createInfinityAndroidSave(), SaveType.Android, STAGES.INFINITY],
+  ['android-eternity', createEternityAndroidSave(), SaveType.Android, STAGES.ETERNITY],
+  ['android-late-game', createComprehensiveAndroidSave(), SaveType.Android, STAGES.REALITY],
 ];
 
-const assertProgressionFixture = async ([fixtureId, saveData, saveType]) => {
+assert.equal(isPositiveQuantity(0), false);
+assert.equal(isPositiveQuantity(5), true);
+assert.equal(isPositiveQuantity('0'), false);
+assert.equal(isPositiveQuantity('0e1000'), false);
+assert.equal(isPositiveQuantity('1e250'), true);
+assert.equal(isPositiveQuantity('1e1000'), true);
+assert.equal(isPositiveQuantity('-1e1000'), false);
+assert.equal(isPositiveQuantity('not-a-number'), false);
+assert.equal(isPositiveQuantity({ mantissa: 0, exponent: 0 }), false);
+assert.equal(isPositiveQuantity({ mantissa: 1, exponent: 1000 }), true);
+assert.equal(isPositiveQuantity(null), false);
+assert.equal(isPositiveQuantity(undefined), false);
+assert.equal(isPositiveQuantity(false), false);
+assert.equal(detectStage(samplePcSave), STAGES.NORMAL);
+assert.equal(detectStage(sampleAndroidSave), STAGES.NORMAL);
+assert.equal(
+  detectStage({
+    ...samplePcSave,
+    infinityPoints: '0',
+    eternityPoints: '0',
+    realities: '0',
+    reality: { realityMachines: '0', imaginaryMachines: 0 },
+    celestials: {},
+    blackHole: [],
+  }),
+  STAGES.NORMAL,
+  'present but zero later-stage trees should not imply late-game progress'
+);
+
+const assertProgressionFixture = async ([fixtureId, saveData, saveType, expectedStage]) => {
   const encoded = await encodeSaveData(saveData, saveType);
   const decoded = await decodeSave(encoded);
   assert.equal(decoded.saveType, saveType, `${fixtureId} should decode as ${saveType}`);
   assert.deepEqual(decoded.data, saveData, `${fixtureId} should round-trip through the codec`);
+  assert.equal(detectStage(decoded.data), expectedStage, `${fixtureId} should be detected as ${expectedStage}`);
 
   const fixtureNodes = buildPathIndex(decoded.data, saveType);
   const fixtureCoverage = calculateCoverage(fixtureNodes);
