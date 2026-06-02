@@ -34,6 +34,7 @@ Build a mobile-first Antimatter Dimensions save editor that can be used througho
 - Per-path reset and reset-all controls before export.
 - Safety analysis for invalid values, added/removed paths, type changes, and late-game edit notes.
 - Encode, copy, share, and download output.
+- Generated comprehensive PC and Android fixture tests for category and scope coverage.
 
 ## Taxonomy
 
@@ -64,4 +65,4 @@ Claude should refine labels, ordering, grouping, and mobile navigation. Codex sh
 - Save and edit risk analysis lives in `src/save-analysis.js`.
 - Category mapping lives in `src/taxonomy.js`.
 - The UI must never hide an unmapped imported path.
-- Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, immutable path edits, change tracking, added-key reset, and safety analysis.
+- Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, immutable path edits, change tracking, added-key reset, safety analysis, and all non-fallback category coverage in generated late-game PC/Android fixtures.

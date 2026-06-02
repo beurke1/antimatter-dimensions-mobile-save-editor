@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { CATEGORIES } from '../src/taxonomy.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
+import { createComprehensiveAndroidSave, createComprehensivePcSave } from './fixture-saves.mjs';
 import {
   buildChangeIndex,
   buildPathIndex,
@@ -131,4 +133,44 @@ assert.ok(invalidSaveIssues.some((issue) => issue.path === 'dimensionBoosts' && 
 const missingCoreIssues = analyzeSaveData({ antimatter: '10' }, SaveType.PC);
 assert.equal(summarizeAnalysis(missingCoreIssues).warnings, 2);
 
-console.log(`Smoke tests passed: ${coverage.total} indexed paths, round trips and change tracking verified.`);
+const requiredCategoryIds = CATEGORIES
+  .map((category) => category.id)
+  .filter((categoryId) => categoryId !== 'unknown');
+
+const assertComprehensiveCoverage = async (saveData, saveType) => {
+  const encoded = await encodeSaveData(saveData, saveType);
+  const decoded = await decodeSave(encoded);
+  assert.equal(decoded.saveType, saveType);
+
+  const fixtureNodes = buildPathIndex(decoded.data, saveType);
+  const fixtureCoverage = calculateCoverage(fixtureNodes);
+  assert.equal(fixtureCoverage.total, fixtureNodes.length);
+  assert.equal(fixtureCoverage.editableCount, fixtureNodes.length);
+
+  for (const categoryId of requiredCategoryIds) {
+    assert.ok(
+      fixtureCoverage.categoryCounts[categoryId] > 0,
+      `${saveType} fixture should cover category ${categoryId}`
+    );
+  }
+
+  const fixtureNodeByPath = new Map(fixtureNodes.map((node) => [node.path, node]));
+  const lateGameNode = fixtureNodeByPath.get(saveType === SaveType.PC
+    ? 'celestials.ra.pets.teresa.level'
+    : 'celestials.ra.pets.teresa.level');
+  assert.ok(lateGameNode);
+  assert.equal(isNodeWithinScope(lateGameNode, 'celestials', fixtureNodeByPath), true);
+
+  const rootChildrenCount = getDirectChildNodes(fixtureNodes, 'root').length;
+  assert.ok(rootChildrenCount > 30);
+
+  const safetySummary = summarizeAnalysis(analyzeSaveData(decoded.data, saveType));
+  assert.equal(safetySummary.errors, 0);
+
+  return fixtureCoverage.total;
+};
+
+const pcCoverageTotal = await assertComprehensiveCoverage(createComprehensivePcSave(), SaveType.PC);
+const androidCoverageTotal = await assertComprehensiveCoverage(createComprehensiveAndroidSave(), SaveType.Android);
+
+console.log(`Smoke tests passed: ${coverage.total} sample paths, ${pcCoverageTotal} PC fixture paths, ${androidCoverageTotal} Android fixture paths verified.`);

@@ -57,6 +57,7 @@ Core behavior:
 - Analyze invalid values and risky edits before export.
 - Reset one changed path or reset all edits.
 - Encode, copy, share, and download.
+- Generated late-game PC and Android fixtures verify category and scope coverage.
 
 ## Claude Inbox
 
@@ -104,8 +105,15 @@ Fourth follow-up implementation added:
 - Added/removed paths, type changes, fractional big-number exponents, negative count-like values, and late-game edits are surfaced for review.
 - Smoke tests cover save analysis and edit-risk summaries.
 
+Fifth follow-up implementation added:
+
+- `scripts/fixture-saves.mjs` generates broad late-game PC and Android save fixtures without copying legacy project data.
+- Smoke tests round-trip both fixtures through the codec.
+- Tests assert every non-fallback category has reachable paths on both platforms.
+- Tests assert every indexed fixture path is editable and that deep celestial paths are reachable through scoped browsing.
+
 Open engineering tasks:
 
 - Verify in browser at mobile widths.
-- Add fixture-based tests using real reference saves once we decide whether to vendor fixtures into this repo.
+- Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy without vendoring legacy data.
 - Refine validation rules with Claude so warnings are useful without being noisy.
