@@ -195,7 +195,18 @@ const stopChrome = async (chrome) => {
     }
   }
 
-  await rm(chrome.profileDir, { recursive: true, force: true });
+  try {
+    await rm(chrome.profileDir, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 120,
+    });
+  } catch (error) {
+    if (error?.code !== 'ENOENT') {
+      console.warn(`Could not remove Chrome profile directory ${chrome.profileDir}: ${error.message}`);
+    }
+  }
 };
 
 class Cdp {
