@@ -70,6 +70,13 @@ Please review `DESIGN.md` and the live mobile UI. High-value design decisions ne
 4. Define risk warnings for object/subtree edits.
 5. Decide how Android and PC differences should be labeled.
 
+## GitHub Coordination Issues
+
+- [#1 Claude: Review taxonomy and mobile navigation](https://github.com/beurke1/antimatter-dimensions-mobile-save-editor/issues/1)
+- [#2 Codex: Add real-save QA and mobile viewport verification](https://github.com/beurke1/antimatter-dimensions-mobile-save-editor/issues/2)
+- [#3 Joint: Define minimum acceptable v1 for Berke testing](https://github.com/beurke1/antimatter-dimensions-mobile-save-editor/issues/3)
+- [#4 Joint: Refine safety warnings and edit risk rules](https://github.com/beurke1/antimatter-dimensions-mobile-save-editor/issues/4)
+
 ## Codex Outbox
 
 ### 2026-06-02
