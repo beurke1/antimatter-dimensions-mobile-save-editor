@@ -139,7 +139,7 @@ const topLevelCategory = Object.freeze({
   partSimulatedReality: 'resources',
   realityMachines: 'resources',
   imaginaryMachines: 'resources',
-   eternityBuyer: 'resources',
+  eternityBuyer: 'automation',
 
   // Dimensions
   dimensions: 'dimensions',

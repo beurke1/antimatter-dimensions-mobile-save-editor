@@ -7,7 +7,12 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createComprehensiveAndroidSave, createComprehensivePcSave } from './fixture-saves.mjs';
+import {
+  createComprehensiveAndroidSave,
+  createComprehensivePcSave,
+  createNormalAndroidSave,
+  createNormalPcSave,
+} from './fixture-saves.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const artifactDir = path.resolve(process.env.MOBILE_VIEWPORT_ARTIFACT_DIR ?? path.join(root, 'artifacts/mobile-viewport'));
@@ -537,9 +542,19 @@ try {
       viewport: viewports.iphoneSe,
     },
     {
+      name: 'pc-normal-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createNormalPcSave(),
+    },
+    {
       name: 'pc-fixture-iphone-15',
       viewport: viewports.iphone15,
       saveData: createComprehensivePcSave(),
+    },
+    {
+      name: 'android-normal-iphone-15',
+      viewport: viewports.iphone15,
+      saveData: createNormalAndroidSave(),
     },
     {
       name: 'android-fixture-iphone-se',

@@ -3,6 +3,231 @@ export const createBigNumber = (mantissa, exponent) => ({
   exponent,
 });
 
+const FIXTURE_LAST_UPDATE = 1700000000000;
+
+export const createNormalPcSave = () => ({
+  antimatter: '10',
+  dimensions: {
+    antimatter: [
+      { amount: '10', bought: 1, costBumps: 0 },
+      { amount: '0', bought: 0, costBumps: 0 },
+    ],
+  },
+  buyUntil10: true,
+  sacrificed: '0',
+  achievementBits: [0],
+  secretAchievementBits: [0],
+  challenge: {
+    normal: { current: 0, completedBits: 0 },
+  },
+  infinity: {
+    upgradeBits: 0,
+  },
+  auto: {
+    autobuyersOn: true,
+    tickspeed: { isActive: false, isBought: false },
+    antimatterDims: { isActive: true },
+  },
+  infinityPoints: '0',
+  infinities: '0',
+  dimensionBoosts: 0,
+  galaxies: 0,
+  news: { seen: {} },
+  lastUpdate: FIXTURE_LAST_UPDATE,
+  matter: '1',
+  chall2Pow: 1,
+  chall3Pow: '0.01',
+  chall9TickspeedCostBumps: 0,
+  chall8TotalSacrifice: '1',
+  ic2Count: 0,
+  partInfinityPoint: 0,
+  partInfinitied: 0,
+  break: false,
+  secretUnlocks: { themes: [] },
+  shownRuns: { Infinity: true },
+  requirementChecks: {
+    infinity: { maxAll: false, noSacrifice: true, noAD8: true },
+  },
+  records: {
+    totalAntimatter: '10',
+    thisInfinity: { time: 0, maxAM: '10' },
+    bestInfinity: { time: Number.MAX_VALUE },
+  },
+  speedrun: { isActive: false },
+  IPMultPurchases: 0,
+  version: 25,
+  options: {
+    notation: 'Mixed scientific',
+    confirmations: { sacrifice: true, bigCrunch: true },
+  },
+  IAP: { enabled: false },
+});
+
+export const createInfinityPcSave = () => ({
+  ...createNormalPcSave(),
+  antimatter: '1e400',
+  infinityPoints: '1e50',
+  infinities: '25',
+  infinityPower: '1e20',
+  break: true,
+  infinityUpgrades: ['timeMult', 'dimMult'],
+  infinityRebuyables: [4, 2, 1],
+  challenge: {
+    normal: { current: 0, completedBits: 255 },
+    infinity: { current: 0, completedBits: 15 },
+  },
+  auto: {
+    ...createNormalPcSave().auto,
+    bigCrunch: { isActive: true, mode: 'amount', amount: '1e40' },
+  },
+  replicanti: {
+    unl: true,
+    amount: '1',
+    chance: 0.01,
+    interval: 1000,
+    galaxies: 0,
+  },
+  records: {
+    ...createNormalPcSave().records,
+    totalAntimatter: '1e400',
+    bestInfinity: { time: 120000, bestIPminReality: '0' },
+  },
+});
+
+export const createEternityPcSave = () => ({
+  ...createInfinityPcSave(),
+  eternityPoints: '1e20',
+  eternities: '5',
+  eternityUpgrades: [1, 2],
+  epmultUpgrades: 3,
+  timeShards: '1e12',
+  dimensions: {
+    ...createInfinityPcSave().dimensions,
+    infinity: [{ amount: '1e25', bought: 2 }],
+    time: [{ amount: '1e10', bought: 1 }],
+  },
+  timestudy: {
+    theorem: 24,
+    studies: [11, 21],
+    presets: [{ name: 'Eternity push', studies: '11,21' }],
+  },
+  eternityChalls: {
+    current: 0,
+    completions: { 1: 1 },
+  },
+  dilation: {
+    active: false,
+    studies: [1],
+    tachyonParticles: '0',
+    dilatedTime: '0',
+    upgrades: [],
+  },
+  records: {
+    ...createInfinityPcSave().records,
+    thisEternity: { time: 0, maxIP: '1e50' },
+    bestEternity: { time: 240000 },
+  },
+});
+
+export const createNormalAndroidSave = () => ({
+  IAP: { enabled: false },
+  achievements: [],
+  antimatter: createBigNumber(1, 1),
+  auto: {
+    autobuyersOn: true,
+    tickspeed: { isActive: false, isBought: false },
+    antimatterDims: { isActive: true },
+  },
+  brake: false,
+  buyUntil10: true,
+  challenge: {
+    normal: { current: 0, completedBits: 0 },
+  },
+  dimensionBoosts: 0,
+  dimensions: {
+    antimatter: [
+      { amount: createBigNumber(1, 1), bought: 1 },
+      { amount: createBigNumber(0, 0), bought: 0 },
+    ],
+  },
+  galaxies: 0,
+  infinities: createBigNumber(0, 0),
+  infinityPoints: createBigNumber(0, 0),
+  lastUpdate: FIXTURE_LAST_UPDATE,
+  matter: createBigNumber(1, 0),
+  news: { seen: [] },
+  options: { notation: 'Scientific', theme: 'Normal' },
+  partInfinitied: 0,
+  partInfinityPoint: 0,
+  records: {
+    totalAntimatter: createBigNumber(1, 1),
+    bestInfinity: { time: Number.MAX_VALUE },
+  },
+  sacrificed: createBigNumber(0, 0),
+  secretAchievements: [],
+  shownRuns: { Infinity: true },
+  speedrun: { isActive: false },
+  triggeredTabNotificationBits: 0,
+  tutorialActive: true,
+  tutorialState: 0,
+  version: 30100100,
+});
+
+export const createInfinityAndroidSave = () => ({
+  ...createNormalAndroidSave(),
+  antimatter: createBigNumber(1, 400),
+  bankedInfinities: createBigNumber(0, 0),
+  bigCrunches: createBigNumber(2.5, 1),
+  brake: true,
+  breakInfinityRebuyables: [4, 2, 1],
+  breakInfinityUpgradeBits: 7,
+  challenge: {
+    normal: { current: 0, completedBits: 255 },
+    infinity: { current: 0, completedBits: 15 },
+  },
+  infinities: createBigNumber(2.5, 1),
+  infinityPoints: createBigNumber(1, 50),
+  infinityPower: createBigNumber(1, 20),
+  infinityUpgradeBits: 15,
+  ipMultUpgrades: 4,
+  replicanti: {
+    unl: true,
+    amount: createBigNumber(1, 0),
+    chanceUpgrades: 0,
+    intervalUpgrades: 0,
+    galaxies: 0,
+  },
+  records: {
+    ...createNormalAndroidSave().records,
+    totalAntimatter: createBigNumber(1, 400),
+    bestInfinity: { time: 120000 },
+  },
+});
+
+export const createEternityAndroidSave = () => ({
+  ...createInfinityAndroidSave(),
+  bigEternities: createBigNumber(5, 0),
+  dimensions: {
+    ...createInfinityAndroidSave().dimensions,
+    infinity: [{ amount: createBigNumber(1, 25), bought: 2 }],
+    time: [{ amount: createBigNumber(1, 10), bought: 1 }],
+  },
+  epMultUpgrades: 3,
+  eternities: createBigNumber(5, 0),
+  eternityPoints: createBigNumber(1, 20),
+  eternityUpgradeBits: 3,
+  timeShards: createBigNumber(1, 12),
+  timestudy: {
+    theorem: 24,
+    studies: [11, 21],
+  },
+  dilation: {
+    active: false,
+    tachyonParticles: createBigNumber(0, 0),
+    dilatedTime: createBigNumber(0, 0),
+  },
+});
+
 export const createComprehensivePcSave = () => ({
   antimatter: '1e1000',
   dimensions: {

@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-06-02T00:00:00.000Z",
+  "saveType": "android",
+  "totals": {
+    "paths": 69,
+    "editablePaths": 69,
+    "leaves": 41,
+    "containers": 28,
+    "changedPaths": 0,
+    "unknownPaths": 0
+  },
+  "categories": {
+    "dimensions": 18,
+    "resources": 11,
+    "records": 10,
+    "core": 8,
+    "automation": 7,
+    "options": 5,
+    "challenges": 4,
+    "infinity": 4,
+    "achievements": 2,
+    "black-hole": 0,
+    "celestials": 0,
+    "eternity": 0,
+    "reality": 0,
+    "replicanti": 0,
+    "unknown": 0
+  },
+  "missingCategories": [
+    "replicanti",
+    "eternity",
+    "reality",
+    "black-hole",
+    "celestials"
+  ],
+  "stages": {
+    "All game": 30,
+    "Normal": 26,
+    "Meta": 5,
+    "Infinity": 4,
+    "Normal to Eternity": 4
+  },
+  "valueTypes": {
+    "number": 29,
+    "object": 16,
+    "boolean": 10,
+    "big-number": 8,
+    "array": 4,
+    "string": 2
+  },
+  "depths": {
+    "0": 1,
+    "1": 27,
+    "2": 23,
+    "3": 10,
+    "4": 4,
+    "5": 4
+  },
+  "topLevelPaths": [
+    "IAP",
+    "achievements",
+    "antimatter",
+    "auto",
+    "brake",
+    "buyUntil10",
+    "challenge",
+    "dimensionBoosts",
+    "dimensions",
+    "galaxies",
+    "infinities",
+    "infinityPoints",
+    "lastUpdate",
+    "matter",
+    "news",
+    "options",
+    "partInfinitied",
+    "partInfinityPoint",
+    "records",
+    "sacrificed",
+    "secretAchievements",
+    "shownRuns",
+    "speedrun",
+    "triggeredTabNotificationBits",
+    "tutorialActive",
+    "tutorialState",
+    "version"
+  ],
+  "unknownPaths": [],
+  "safety": {
+    "error": 0,
+    "warning": 0,
+    "info": 0
+  },
+  "safetySamples": [],
+  "safetySamplesOmitted": 0
+}

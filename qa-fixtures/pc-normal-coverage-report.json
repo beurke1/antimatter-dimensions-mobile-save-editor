@@ -1,0 +1,100 @@
+{
+  "generatedAt": "2026-06-02T00:00:00.000Z",
+  "saveType": "pc",
+  "totals": {
+    "paths": 74,
+    "editablePaths": 74,
+    "leaves": 47,
+    "containers": 27,
+    "changedPaths": 0,
+    "unknownPaths": 0
+  },
+  "categories": {
+    "records": 16,
+    "dimensions": 14,
+    "challenges": 9,
+    "automation": 7,
+    "options": 7,
+    "achievements": 6,
+    "core": 5,
+    "infinity": 5,
+    "resources": 5,
+    "black-hole": 0,
+    "celestials": 0,
+    "eternity": 0,
+    "reality": 0,
+    "replicanti": 0,
+    "unknown": 0
+  },
+  "missingCategories": [
+    "replicanti",
+    "eternity",
+    "reality",
+    "black-hole",
+    "celestials"
+  ],
+  "stages": {
+    "All game": 34,
+    "Normal": 19,
+    "Normal to Eternity": 9,
+    "Meta": 7,
+    "Infinity": 5
+  },
+  "valueTypes": {
+    "object": 23,
+    "number": 21,
+    "boolean": 14,
+    "string": 12,
+    "array": 4
+  },
+  "depths": {
+    "0": 1,
+    "1": 33,
+    "2": 19,
+    "3": 15,
+    "4": 6
+  },
+  "topLevelPaths": [
+    "IAP",
+    "IPMultPurchases",
+    "achievementBits",
+    "antimatter",
+    "auto",
+    "break",
+    "buyUntil10",
+    "chall2Pow",
+    "chall3Pow",
+    "chall8TotalSacrifice",
+    "chall9TickspeedCostBumps",
+    "challenge",
+    "dimensionBoosts",
+    "dimensions",
+    "galaxies",
+    "ic2Count",
+    "infinities",
+    "infinity",
+    "infinityPoints",
+    "lastUpdate",
+    "matter",
+    "news",
+    "options",
+    "partInfinitied",
+    "partInfinityPoint",
+    "records",
+    "requirementChecks",
+    "sacrificed",
+    "secretAchievementBits",
+    "secretUnlocks",
+    "shownRuns",
+    "speedrun",
+    "version"
+  ],
+  "unknownPaths": [],
+  "safety": {
+    "error": 0,
+    "warning": 0,
+    "info": 0
+  },
+  "safetySamples": [],
+  "safetySamplesOmitted": 0
+}

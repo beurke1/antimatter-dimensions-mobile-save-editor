@@ -1,13 +1,22 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { CATEGORIES } from '../src/taxonomy.js';
+import { categorizePath, CATEGORIES } from '../src/taxonomy.js';
 import { PRESETS, applyPreset } from '../src/presets.js';
 import { buildCoverageReport, buildQaSummary } from '../src/coverage-report.js';
 import { buildReadinessSummary } from '../src/readiness.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
 import { createQaArtifacts } from './export-qa-fixtures.mjs';
-import { createComprehensiveAndroidSave, createComprehensivePcSave } from './fixture-saves.mjs';
+import {
+  createComprehensiveAndroidSave,
+  createComprehensivePcSave,
+  createEternityAndroidSave,
+  createEternityPcSave,
+  createInfinityAndroidSave,
+  createInfinityPcSave,
+  createNormalAndroidSave,
+  createNormalPcSave,
+} from './fixture-saves.mjs';
 import {
   buildChangeIndex,
   buildPathIndex,
@@ -150,6 +159,23 @@ const androidFormatMismatchIssues = analyzeSaveData({
 }, SaveType.Android);
 assert.ok(androidFormatMismatchIssues.some((issue) => issue.path === 'infinityPoints' && issue.title === 'PC numeric format'));
 
+const warningSampleReport = buildCoverageReport({
+  saveType: SaveType.PC,
+  nodes,
+  coverage,
+  changes: [],
+  analysisIssues: pcFormatMismatchIssues,
+  generatedAt: '2026-06-02T00:00:00.000Z',
+});
+assert.equal(warningSampleReport.safetySamples.length, pcFormatMismatchIssues.length);
+assert.ok(warningSampleReport.safetySamples.some((sample) => sample.path === 'antimatter' && sample.title === 'Android numeric format'));
+const warningQaSummary = buildQaSummary(warningSampleReport);
+assert.ok(warningQaSummary.includes('## Safety Samples'));
+assert.ok(warningQaSummary.includes('warning | Android numeric format | antimatter'));
+assert.ok(!warningQaSummary.includes('1200'), 'QA warning summary should not include warning sample values');
+assert.ok(!warningQaSummary.includes('1e1200'), 'QA warning summary should not include unrelated save values');
+assert.ok(!warningQaSummary.includes('AntimatterDimensionsSavefileFormat'), 'QA warning summary should not include encoded save text');
+
 const countLikeIssues = analyzeSaveData({
   ...samplePcSave,
   dimensionBoosts: 1.5,
@@ -161,6 +187,57 @@ assert.ok(countLikeIssues.some((issue) => issue.path === 'galaxies' && issue.tit
 const requiredCategoryIds = CATEGORIES
   .map((category) => category.id)
   .filter((categoryId) => categoryId !== 'unknown');
+
+const knownTopLevelCategories = new Map([
+  ['antimatter', 'resources'],
+  ['dimensions', 'dimensions'],
+  ['achievementBits', 'achievements'],
+  ['challenge', 'challenges'],
+  ['infinityPoints', 'resources'],
+  ['infinityUpgrades', 'infinity'],
+  ['auto', 'automation'],
+  ['replicanti', 'replicanti'],
+  ['eternityPoints', 'resources'],
+  ['timestudy', 'eternity'],
+  ['dilation', 'eternity'],
+  ['reality', 'reality'],
+  ['blackHole', 'black-hole'],
+  ['celestials', 'celestials'],
+  ['records', 'records'],
+  ['options', 'options'],
+  ['eternityBuyer', 'automation'],
+]);
+
+for (const [path, categoryId] of knownTopLevelCategories) {
+  assert.equal(categorizePath([path]).id, categoryId, `${path} should be categorized as ${categoryId}`);
+}
+
+const progressionFixtures = [
+  ['pc-normal', createNormalPcSave(), SaveType.PC],
+  ['pc-infinity', createInfinityPcSave(), SaveType.PC],
+  ['pc-eternity', createEternityPcSave(), SaveType.PC],
+  ['pc-late-game', createComprehensivePcSave(), SaveType.PC],
+  ['android-normal', createNormalAndroidSave(), SaveType.Android],
+  ['android-infinity', createInfinityAndroidSave(), SaveType.Android],
+  ['android-eternity', createEternityAndroidSave(), SaveType.Android],
+  ['android-late-game', createComprehensiveAndroidSave(), SaveType.Android],
+];
+
+const assertProgressionFixture = async ([fixtureId, saveData, saveType]) => {
+  const encoded = await encodeSaveData(saveData, saveType);
+  const decoded = await decodeSave(encoded);
+  assert.equal(decoded.saveType, saveType, `${fixtureId} should decode as ${saveType}`);
+  assert.deepEqual(decoded.data, saveData, `${fixtureId} should round-trip through the codec`);
+
+  const fixtureNodes = buildPathIndex(decoded.data, saveType);
+  const fixtureCoverage = calculateCoverage(fixtureNodes);
+  const safetySummary = summarizeAnalysis(analyzeSaveData(decoded.data, saveType));
+  assert.equal(fixtureCoverage.total, fixtureNodes.length, `${fixtureId} coverage should match indexed nodes`);
+  assert.equal(fixtureCoverage.editableCount, fixtureNodes.length, `${fixtureId} should keep every path editable`);
+  assert.equal(safetySummary.errors, 0, `${fixtureId} should have no safety errors`);
+  assert.ok(fixtureCoverage.total > 20, `${fixtureId} should cover more than a trivial save`);
+  return fixtureCoverage.total;
+};
 
 const assertComprehensiveCoverage = async (saveData, saveType) => {
   const encoded = await encodeSaveData(saveData, saveType);
@@ -244,15 +321,29 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
   return fixtureCoverage.total;
 };
 
+const progressionCoverageTotals = await Promise.all(progressionFixtures.map(assertProgressionFixture));
 const pcCoverageTotal = await assertComprehensiveCoverage(createComprehensivePcSave(), SaveType.PC);
 const androidCoverageTotal = await assertComprehensiveCoverage(createComprehensiveAndroidSave(), SaveType.Android);
 const qaArtifacts = await createQaArtifacts();
-assert.equal(qaArtifacts.files.length, 6);
 assert.deepEqual(
   qaArtifacts.manifest.fixtures.map((fixture) => fixture.id),
-  ['pc-late-game', 'android-late-game']
+  progressionFixtures.map(([fixtureId]) => fixtureId)
 );
-assert.ok(qaArtifacts.manifest.fixtures.every((fixture) => fixture.expectedTotals.paths > 100));
+assert.deepEqual(
+  qaArtifacts.manifest.fixtures.map((fixture) => `${fixture.saveType}:${fixture.gameStage}`),
+  [
+    'pc:Normal',
+    'pc:Infinity',
+    'pc:Eternity',
+    'pc:Reality',
+    'android:Normal',
+    'android:Infinity',
+    'android:Eternity',
+    'android:Reality',
+  ]
+);
+assert.equal(qaArtifacts.files.length, (progressionFixtures.length * 2) + 2);
+assert.ok(qaArtifacts.manifest.fixtures.every((fixture) => fixture.expectedTotals.paths > 20));
 assert.ok(qaArtifacts.manifest.fixtures.every((fixture) => fixture.expectedSafety.error === 0));
 
 for (const file of qaArtifacts.files) {
@@ -324,4 +415,4 @@ assert.equal(brakeApplied.brake, true, 'break-infinity preset sets brake on Andr
 // Unknown preset throws
 assert.throws(() => applyPreset(basePC, 'does-not-exist'), /Unknown preset/);
 
-console.log(`Smoke tests passed: ${coverage.total} sample paths, ${pcCoverageTotal} PC fixture paths, ${androidCoverageTotal} Android fixture paths verified, ${PRESETS.length} presets validated.`);
+console.log(`Smoke tests passed: ${coverage.total} sample paths, ${progressionCoverageTotals.length} progression fixtures, ${pcCoverageTotal} PC late-game paths, ${androidCoverageTotal} Android late-game paths, ${PRESETS.length} presets validated.`);

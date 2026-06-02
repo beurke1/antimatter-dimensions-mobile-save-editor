@@ -23,10 +23,10 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Changed-path review with reset controls.
 - Safety check for invalid values and risky structural edits before export.
 - Stage-aware quick-edit presets with PC/Android numeric format preservation.
-- Copy value-free QA summaries and copy/download coverage reports for imported saves.
+- Copy value-free QA summaries with coverage counts and warning samples, plus copy/download coverage reports for imported saves.
 - Encode, copy, share, and download.
-- Generated comprehensive PC and Android fixture coverage tests.
-- Synthetic late-game QA fixture exports for public mobile testing.
+- Generated progression-stage PC and Android fixture coverage tests.
+- Synthetic Normal, Infinity, Eternity, and late-game QA fixture exports for public mobile testing.
 
 ## Run Locally
 
@@ -43,7 +43,7 @@ npm test
 npm run verify:mobile
 ```
 
-The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, reset behavior, safety analysis, and comprehensive category coverage across generated PC/Android late-game fixtures. The mobile verifier launches headless Chrome, decodes PC/Android fixture saves, checks iPhone-sized rendered layout overflow, and writes screenshots plus a JSON report to `artifacts/mobile-viewport/`.
+The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, reset behavior, safety analysis, progression-stage fixtures, and comprehensive category coverage across generated PC/Android late-game fixtures. The mobile verifier launches headless Chrome, decodes early and late PC/Android fixture saves, checks iPhone-sized rendered layout overflow, and writes screenshots plus a JSON report to `artifacts/mobile-viewport/`.
 
 GitHub Actions runs the same smoke and mobile checks on pushes and pull requests. The Pages deployment also runs them before publishing the static app.
 
@@ -53,7 +53,7 @@ GitHub Actions runs the same smoke and mobile checks on pushes and pull requests
 npm run qa:fixtures
 ```
 
-This writes synthetic PC and Android late-game saves plus expected coverage reports to `qa-fixtures/`. Use `QA.md` for the mobile and real-save verification protocol.
+This writes synthetic PC and Android Normal, Infinity, Eternity, and late-game saves plus expected coverage reports to `qa-fixtures/`. Use `QA.md` for the mobile and real-save verification protocol.
 
 ## Public Mobile Testing
 

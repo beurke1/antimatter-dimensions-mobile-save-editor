@@ -61,12 +61,12 @@ Core behavior:
 - Analyze invalid values and risky edits before export.
 - Reset one changed path or reset all edits.
 - Encode, copy, share, and download.
-- Generated late-game PC and Android fixtures verify category and scope coverage.
+- Generated progression-stage PC and Android fixtures verify category and scope coverage from Normal through late game.
 - Imported saves can export a value-free QA summary and coverage report JSON for QA/review.
 - Readiness panel distinguishes no-save, ready-to-encode, blocked, review, and ready-to-import states.
 - GitHub Actions runs smoke tests on pushes and pull requests.
 - GitHub Pages deployment publishes the static app after smoke tests pass.
-- Synthetic QA fixture saves and expected coverage reports can be generated for public mobile testing.
+- Synthetic progression-stage QA fixture saves and expected coverage reports can be generated for public mobile testing.
 - Rendered mobile viewport checks run in CI with headless Chrome.
 - Dark mobile-first design, browser-first flow, and quick-edit presets are merged to `main`.
 - Quick-edit presets preserve PC decimal-string values and Android mantissa/exponent objects.
@@ -120,8 +120,8 @@ Fourth follow-up implementation added:
 
 Fifth follow-up implementation added:
 
-- `scripts/fixture-saves.mjs` generates broad late-game PC and Android save fixtures without copying legacy project data.
-- Smoke tests round-trip both fixtures through the codec.
+- `scripts/fixture-saves.mjs` generates synthetic Normal, Infinity, Eternity, and late-game PC/Android save fixtures without copying legacy project data.
+- Smoke tests round-trip all progression fixtures through the codec.
 - Tests assert every non-fallback category has reachable paths on both platforms.
 - Tests assert every indexed fixture path is editable and that deep celestial paths are reachable through scoped browsing.
 
@@ -148,7 +148,7 @@ Eighth follow-up implementation added:
 
 Ninth follow-up implementation added:
 
-- `scripts/export-qa-fixtures.mjs` exports synthetic late-game PC and Android saves plus expected coverage reports.
+- `scripts/export-qa-fixtures.mjs` exports synthetic progression-stage PC and Android saves plus expected coverage reports.
 - `qa-fixtures/` stores the generated fixture saves, reports, manifest, and local instructions.
 - `QA.md` defines the synthetic fixture, mobile viewport, and real-save verification protocol.
 - Smoke tests verify QA fixture artifact generation.
@@ -167,9 +167,18 @@ Eleventh follow-up implementation added:
 - Smoke tests now validate all 9 presets, PC/Android preset numeric formats, Android `brake` naming, and that Android replicanti presets do not add PC-only fields.
 - Latest `main` CI and Pages deployment passed, and the public Pages URL returned HTTP 200.
 
+Twelfth follow-up implementation added:
+
+- Added synthetic Normal, Infinity, Eternity, and late-game fixtures for both PC and Android.
+- `npm run qa:fixtures` now exports eight fixture saves, eight coverage reports, and a manifest covering the full game progression shape without real user saves.
+- Smoke tests round-trip all eight progression fixtures, verify no fixture has safety errors, and keep the late-game all-category coverage gate.
+- Rendered mobile verification now includes early PC and Android saves in addition to late-game fixtures.
+- QA summaries and coverage reports include value-free safety warning samples so real-save reports can identify noisy or missing warnings without sharing save values.
+- Added a taxonomy guard for stable top-level save keys, including `eternityBuyer`, so known keys stay out of fallback when possible.
+
 Open engineering tasks:
 
-- Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy without vendoring legacy data.
+- Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy and progression stages without vendoring legacy data.
 - Collect Berke-approved real-save QA summaries, coverage reports, or redacted notes without committing private save strings.
 - Refine validation rules with Claude using real-save coverage reports so warnings are useful without being noisy.
 

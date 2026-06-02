@@ -1,5 +1,7 @@
 import { CATEGORIES } from './taxonomy.js';
 
+const MAX_SAFETY_SAMPLES = 40;
+
 const sortByCount = (entries) => {
   return Object.fromEntries(
     Object.entries(entries).sort((left, right) => {
@@ -15,6 +17,17 @@ const sortByCount = (entries) => {
 const increment = (counts, key) => {
   counts[key] = (counts[key] ?? 0) + 1;
 };
+
+const toStringField = (value, fallback = '') => {
+  return String(value ?? fallback);
+};
+
+const formatSafetySample = (issue) => ({
+  severity: toStringField(issue.severity, 'info'),
+  title: toStringField(issue.title, 'Issue'),
+  path: toStringField(issue.path, 'root'),
+  message: toStringField(issue.message),
+});
 
 export const buildCoverageReport = ({
   saveType,
@@ -63,6 +76,10 @@ export const buildCoverageReport = ({
     increment(issueCounts, issue.severity);
   }
 
+  const safetySamples = analysisIssues
+    .slice(0, MAX_SAFETY_SAMPLES)
+    .map(formatSafetySample);
+
   return {
     generatedAt,
     saveType,
@@ -82,6 +99,8 @@ export const buildCoverageReport = ({
     topLevelPaths: topLevelPaths.sort(),
     unknownPaths: unknownPaths.slice(0, 250).sort(),
     safety: issueCounts,
+    safetySamples,
+    safetySamplesOmitted: Math.max(0, analysisIssues.length - safetySamples.length),
   };
 };
 
@@ -103,6 +122,22 @@ const formatListBlock = (items, limit = 40) => {
   return remaining > 0
     ? [...visibleItems, `- ... ${remaining} more`]
     : visibleItems;
+};
+
+const formatSafetySamples = (samples, omitted = 0, limit = 20) => {
+  if (!samples || samples.length === 0) {
+    return ['- none'];
+  }
+
+  const visibleSamples = samples.slice(0, limit).map((sample) => {
+    const message = sample.message ? `: ${sample.message}` : '';
+    return `- ${sample.severity} | ${sample.title} | ${sample.path}${message}`;
+  });
+  const hiddenCount = samples.length - visibleSamples.length + omitted;
+
+  return hiddenCount > 0
+    ? [...visibleSamples, `- ... ${hiddenCount} more`]
+    : visibleSamples;
 };
 
 export const buildQaSummary = (coverageReport) => {
@@ -133,6 +168,9 @@ export const buildQaSummary = (coverageReport) => {
     `- Errors: ${safety.error ?? 0}`,
     `- Warnings: ${safety.warning ?? 0}`,
     `- Notes: ${safety.info ?? 0}`,
+    '',
+    '## Safety Samples',
+    ...formatSafetySamples(coverageReport.safetySamples, coverageReport.safetySamplesOmitted),
     '',
     '## Missing Categories',
     ...formatListBlock(coverageReport.missingCategories),

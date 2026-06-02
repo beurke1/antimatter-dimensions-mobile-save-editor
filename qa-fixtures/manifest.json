@@ -4,7 +4,159 @@
   "publicTestUrl": "https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/",
   "fixtures": [
     {
+      "id": "pc-normal",
+      "gameStage": "Normal",
+      "saveType": "pc",
+      "saveFile": "pc-normal-save.txt",
+      "coverageReportFile": "pc-normal-coverage-report.json",
+      "expectedTotals": {
+        "paths": 74,
+        "editablePaths": 74,
+        "leaves": 47,
+        "containers": 27,
+        "changedPaths": 0,
+        "unknownPaths": 0
+      },
+      "expectedSafety": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "missingCategories": [
+        "replicanti",
+        "eternity",
+        "reality",
+        "black-hole",
+        "celestials"
+      ],
+      "categoryCounts": {
+        "records": 16,
+        "dimensions": 14,
+        "challenges": 9,
+        "automation": 7,
+        "options": 7,
+        "achievements": 6,
+        "core": 5,
+        "infinity": 5,
+        "resources": 5,
+        "black-hole": 0,
+        "celestials": 0,
+        "eternity": 0,
+        "reality": 0,
+        "replicanti": 0,
+        "unknown": 0
+      },
+      "stageCounts": {
+        "All game": 34,
+        "Normal": 19,
+        "Normal to Eternity": 9,
+        "Meta": 7,
+        "Infinity": 5
+      }
+    },
+    {
+      "id": "pc-infinity",
+      "gameStage": "Infinity",
+      "saveType": "pc",
+      "saveFile": "pc-infinity-save.txt",
+      "coverageReportFile": "pc-infinity-coverage-report.json",
+      "expectedTotals": {
+        "paths": 96,
+        "editablePaths": 96,
+        "leaves": 64,
+        "containers": 32,
+        "changedPaths": 0,
+        "unknownPaths": 0
+      },
+      "expectedSafety": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "missingCategories": [
+        "eternity",
+        "reality",
+        "black-hole",
+        "celestials"
+      ],
+      "categoryCounts": {
+        "records": 17,
+        "dimensions": 14,
+        "challenges": 12,
+        "infinity": 12,
+        "automation": 11,
+        "options": 7,
+        "achievements": 6,
+        "replicanti": 6,
+        "resources": 6,
+        "core": 5,
+        "black-hole": 0,
+        "celestials": 0,
+        "eternity": 0,
+        "reality": 0,
+        "unknown": 0
+      },
+      "stageCounts": {
+        "All game": 40,
+        "Normal": 19,
+        "Infinity": 18,
+        "Normal to Eternity": 12,
+        "Meta": 7
+      }
+    },
+    {
+      "id": "pc-eternity",
+      "gameStage": "Eternity",
+      "saveType": "pc",
+      "saveFile": "pc-eternity-save.txt",
+      "coverageReportFile": "pc-eternity-coverage-report.json",
+      "expectedTotals": {
+        "paths": 136,
+        "editablePaths": 136,
+        "leaves": 88,
+        "containers": 48,
+        "changedPaths": 0,
+        "unknownPaths": 0
+      },
+      "expectedSafety": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "missingCategories": [
+        "reality",
+        "black-hole",
+        "celestials"
+      ],
+      "categoryCounts": {
+        "dimensions": 22,
+        "records": 22,
+        "eternity": 21,
+        "challenges": 16,
+        "infinity": 12,
+        "automation": 11,
+        "resources": 8,
+        "options": 7,
+        "achievements": 6,
+        "replicanti": 6,
+        "core": 5,
+        "black-hole": 0,
+        "celestials": 0,
+        "reality": 0,
+        "unknown": 0
+      },
+      "stageCounts": {
+        "All game": 47,
+        "Normal": 27,
+        "Eternity": 21,
+        "Infinity": 18,
+        "Normal to Eternity": 16,
+        "Meta": 7
+      }
+    },
+    {
       "id": "pc-late-game",
+      "gameStage": "Reality",
       "saveType": "pc",
       "saveFile": "pc-late-game-save.txt",
       "coverageReportFile": "pc-coverage-report.json",
@@ -50,7 +202,159 @@
       }
     },
     {
+      "id": "android-normal",
+      "gameStage": "Normal",
+      "saveType": "android",
+      "saveFile": "android-normal-save.txt",
+      "coverageReportFile": "android-normal-coverage-report.json",
+      "expectedTotals": {
+        "paths": 69,
+        "editablePaths": 69,
+        "leaves": 41,
+        "containers": 28,
+        "changedPaths": 0,
+        "unknownPaths": 0
+      },
+      "expectedSafety": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "missingCategories": [
+        "replicanti",
+        "eternity",
+        "reality",
+        "black-hole",
+        "celestials"
+      ],
+      "categoryCounts": {
+        "dimensions": 18,
+        "resources": 11,
+        "records": 10,
+        "core": 8,
+        "automation": 7,
+        "options": 5,
+        "challenges": 4,
+        "infinity": 4,
+        "achievements": 2,
+        "black-hole": 0,
+        "celestials": 0,
+        "eternity": 0,
+        "reality": 0,
+        "replicanti": 0,
+        "unknown": 0
+      },
+      "stageCounts": {
+        "All game": 30,
+        "Normal": 26,
+        "Meta": 5,
+        "Infinity": 4,
+        "Normal to Eternity": 4
+      }
+    },
+    {
+      "id": "android-infinity",
+      "gameStage": "Infinity",
+      "saveType": "android",
+      "saveFile": "android-infinity-save.txt",
+      "coverageReportFile": "android-infinity-coverage-report.json",
+      "expectedTotals": {
+        "paths": 96,
+        "editablePaths": 96,
+        "leaves": 61,
+        "containers": 35,
+        "changedPaths": 0,
+        "unknownPaths": 0
+      },
+      "expectedSafety": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "missingCategories": [
+        "eternity",
+        "reality",
+        "black-hole",
+        "celestials"
+      ],
+      "categoryCounts": {
+        "dimensions": 18,
+        "infinity": 17,
+        "resources": 14,
+        "records": 10,
+        "core": 8,
+        "replicanti": 8,
+        "automation": 7,
+        "challenges": 7,
+        "options": 5,
+        "achievements": 2,
+        "black-hole": 0,
+        "celestials": 0,
+        "eternity": 0,
+        "reality": 0,
+        "unknown": 0
+      },
+      "stageCounts": {
+        "All game": 33,
+        "Normal": 26,
+        "Infinity": 25,
+        "Normal to Eternity": 7,
+        "Meta": 5
+      }
+    },
+    {
+      "id": "android-eternity",
+      "gameStage": "Eternity",
+      "saveType": "android",
+      "saveFile": "android-eternity-save.txt",
+      "coverageReportFile": "android-eternity-coverage-report.json",
+      "expectedTotals": {
+        "paths": 135,
+        "editablePaths": 135,
+        "leaves": 85,
+        "containers": 50,
+        "changedPaths": 0,
+        "unknownPaths": 0
+      },
+      "expectedSafety": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "missingCategories": [
+        "reality",
+        "black-hole",
+        "celestials"
+      ],
+      "categoryCounts": {
+        "dimensions": 30,
+        "eternity": 21,
+        "resources": 20,
+        "infinity": 17,
+        "records": 10,
+        "core": 8,
+        "replicanti": 8,
+        "automation": 7,
+        "challenges": 7,
+        "options": 5,
+        "achievements": 2,
+        "black-hole": 0,
+        "celestials": 0,
+        "reality": 0,
+        "unknown": 0
+      },
+      "stageCounts": {
+        "All game": 39,
+        "Normal": 38,
+        "Infinity": 25,
+        "Eternity": 21,
+        "Normal to Eternity": 7,
+        "Meta": 5
+      }
+    },
+    {
       "id": "android-late-game",
+      "gameStage": "Reality",
       "saveType": "android",
       "saveFile": "android-late-game-save.txt",
       "coverageReportFile": "android-coverage-report.json",

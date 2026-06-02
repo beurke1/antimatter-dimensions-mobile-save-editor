@@ -20,8 +20,8 @@ For each file in `qa-fixtures/*-save.txt`:
 2. Confirm Total paths, Leaves, Containers, Fallback, Changed, and Warnings match the corresponding coverage report.
 3. Confirm Readiness allows encoding and shows no hard safety errors.
 4. Visit each category tab with a nonzero count.
-5. Use stage filters for Normal, Infinity, Eternity, Reality, Meta, and Fallback.
-6. Drill into `celestials`, `reality.glyphs`, and `dimensions` using Browse scope.
+5. Use every stage filter that has nonzero paths in the fixture.
+6. Drill into `dimensions` on every fixture, and into `celestials` plus `reality.glyphs` when those paths exist.
 7. Edit at least one primitive leaf, one boolean, one Android big-number mantissa/exponent, and one subtree JSON value.
 8. Confirm Review edits shows before/after values and that Reset works.
 9. Tap Encode, then Copy, Share, and Download where the browser permits them.
@@ -50,8 +50,8 @@ Do not commit real saves. For each real save tested:
 
 1. Import the save from the public app.
 2. Open Show coverage & readiness.
-3. Use Copy QA summary for a value-free report suitable for GitHub issues.
-4. Download the coverage report JSON if Claude needs deeper taxonomy review.
+3. Use Copy QA summary for a value-free report suitable for GitHub issues. It includes counts, path names, and safety warning samples, but not save values.
+4. Download the coverage report JSON if Claude needs deeper taxonomy or warning review.
 5. Record any confusing labels, noisy safety warnings, missing warnings, or hard-to-find paths.
 6. Attach only QA summaries, coverage reports, or redacted notes to GitHub issues unless Berke explicitly approves sharing a save file.
 

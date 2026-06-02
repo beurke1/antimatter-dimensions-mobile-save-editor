@@ -14,7 +14,7 @@ body:
     id: qa-summary
     attributes:
       label: QA summary
-      description: Paste the output from Copy QA summary here. It contains counts and path names only, not save values.
+      description: Paste the output from Copy QA summary here. It contains counts, path names, and warning samples only, not save values.
       placeholder: |
         # Antimatter Dimensions Real-Save QA Summary
         ...

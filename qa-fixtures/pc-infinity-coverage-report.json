@@ -1,0 +1,103 @@
+{
+  "generatedAt": "2026-06-02T00:00:00.000Z",
+  "saveType": "pc",
+  "totals": {
+    "paths": 96,
+    "editablePaths": 96,
+    "leaves": 64,
+    "containers": 32,
+    "changedPaths": 0,
+    "unknownPaths": 0
+  },
+  "categories": {
+    "records": 17,
+    "dimensions": 14,
+    "challenges": 12,
+    "infinity": 12,
+    "automation": 11,
+    "options": 7,
+    "achievements": 6,
+    "replicanti": 6,
+    "resources": 6,
+    "core": 5,
+    "black-hole": 0,
+    "celestials": 0,
+    "eternity": 0,
+    "reality": 0,
+    "unknown": 0
+  },
+  "missingCategories": [
+    "eternity",
+    "reality",
+    "black-hole",
+    "celestials"
+  ],
+  "stages": {
+    "All game": 40,
+    "Normal": 19,
+    "Infinity": 18,
+    "Normal to Eternity": 12,
+    "Meta": 7
+  },
+  "valueTypes": {
+    "number": 29,
+    "object": 26,
+    "string": 19,
+    "boolean": 16,
+    "array": 6
+  },
+  "depths": {
+    "0": 1,
+    "1": 37,
+    "2": 31,
+    "3": 21,
+    "4": 6
+  },
+  "topLevelPaths": [
+    "IAP",
+    "IPMultPurchases",
+    "achievementBits",
+    "antimatter",
+    "auto",
+    "break",
+    "buyUntil10",
+    "chall2Pow",
+    "chall3Pow",
+    "chall8TotalSacrifice",
+    "chall9TickspeedCostBumps",
+    "challenge",
+    "dimensionBoosts",
+    "dimensions",
+    "galaxies",
+    "ic2Count",
+    "infinities",
+    "infinity",
+    "infinityPoints",
+    "infinityPower",
+    "infinityRebuyables",
+    "infinityUpgrades",
+    "lastUpdate",
+    "matter",
+    "news",
+    "options",
+    "partInfinitied",
+    "partInfinityPoint",
+    "records",
+    "replicanti",
+    "requirementChecks",
+    "sacrificed",
+    "secretAchievementBits",
+    "secretUnlocks",
+    "shownRuns",
+    "speedrun",
+    "version"
+  ],
+  "unknownPaths": [],
+  "safety": {
+    "error": 0,
+    "warning": 0,
+    "info": 0
+  },
+  "safetySamples": [],
+  "safetySamplesOmitted": 0
+}
