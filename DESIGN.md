@@ -27,7 +27,8 @@ Build a mobile-first Antimatter Dimensions save editor that can be used througho
 - Stage filters for Normal, Infinity, Eternity, Reality, Meta, and fallback content.
 - Search over path, key, type, category, stage, and preview value.
 - Type-aware inline editing for primitive leaves.
-- Scoped JSON editing for objects, arrays, and big-number objects.
+- Direct mantissa/exponent editing for Android-style big-number objects.
+- Scoped JSON editing for objects, arrays, and edge-case values.
 - Changed-path review with original/current previews.
 - Per-path reset and reset-all controls before export.
 - Encode, copy, share, and download output.

@@ -11,6 +11,7 @@ Clean-slate mobile save editor for Antimatter Dimensions.
 - Stage filtering for the major game phases.
 - Search by path, key, type, category, stage, and value preview.
 - Inline primitive edits.
+- Direct mantissa/exponent edits for Android-style big-number objects.
 - Scoped JSON edits for objects and arrays.
 - Changed-path review with reset controls.
 - Encode, copy, share, and download.

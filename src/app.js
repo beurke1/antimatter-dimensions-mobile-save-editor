@@ -206,6 +206,20 @@ const commitLeafInput = (input) => {
       render();
       return;
     }
+  } else if (type === 'big-mantissa' || type === 'big-exponent') {
+    const currentValue = getValueAtSegments(state.data, node.segments);
+    const parsedValue = Number(input.value.trim());
+
+    if (!Number.isFinite(parsedValue) || !currentValue || typeof currentValue !== 'object') {
+      setError(`Invalid big number value for ${node.path}.`);
+      render();
+      return;
+    }
+
+    nextValue = {
+      ...currentValue,
+      [type === 'big-mantissa' ? 'mantissa' : 'exponent']: parsedValue,
+    };
   } else if (type === 'string') {
     nextValue = input.value;
   } else if (type === 'json') {
@@ -538,6 +552,35 @@ const renderLeafEditor = (node) => {
   `;
 };
 
+const renderBigNumberEditor = (node, value) => {
+  return `
+    <div class="big-number-editor" aria-label="${escapeHtml(node.path)} big number editor">
+      <label>
+        <span>Mantissa</span>
+        <input
+          class="field-input"
+          data-editor-type="big-mantissa"
+          type="text"
+          inputmode="decimal"
+          value="${escapeHtml(value.mantissa)}"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        <span>Exponent</span>
+        <input
+          class="field-input"
+          data-editor-type="big-exponent"
+          type="text"
+          inputmode="numeric"
+          value="${escapeHtml(value.exponent)}"
+          autocomplete="off"
+        />
+      </label>
+    </div>
+  `;
+};
+
 const renderContainerEditor = (node) => {
   const value = getValueAtSegments(state.data, node.segments);
   const json = stringifySaveJson(value);
@@ -578,6 +621,7 @@ const renderNodeCard = (node) => {
           <button type="button" class="tiny-button" data-action="reset-node">Reset</button>
         </div>
       ` : ''}
+      ${node.type === 'big-number' ? renderBigNumberEditor(node, value) : ''}
       ${isContainer ? `
         <div class="container-meta">${node.childCount} child ${node.childCount === 1 ? 'item' : 'items'} · ${escapeHtml(category.title)}</div>
         ${renderContainerEditor(node)}

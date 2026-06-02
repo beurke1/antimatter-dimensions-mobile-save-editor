@@ -646,6 +646,27 @@ h2 {
   margin: 0;
 }
 
+.big-number-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.big-number-editor label {
+  min-width: 0;
+}
+
+.big-number-editor span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--soft);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 .switch {
   display: inline-flex;
   align-items: center;

@@ -50,6 +50,7 @@ Core behavior:
 - Categorize every path with an Uncategorized fallback.
 - Search, type-filter, stage-filter, and changed-only filter paths.
 - Edit primitive values inline.
+- Edit Android-style big-number objects with mantissa/exponent controls.
 - Edit containers with scoped JSON.
 - Review changed paths with before/after previews.
 - Reset one changed path or reset all edits.
@@ -79,6 +80,11 @@ Follow-up implementation added:
 - Review edits panel with before/after previews.
 - Per-path reset and reset-all actions.
 - Smoke tests now cover change tracking and added-key reset.
+
+Second follow-up implementation added:
+
+- Direct mobile controls for detected `{ mantissa, exponent }` big-number objects.
+- JSON subtree editing still remains available under those objects as an escape hatch.
 
 Open engineering tasks:
 
