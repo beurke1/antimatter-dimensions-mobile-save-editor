@@ -37,6 +37,7 @@ Build a mobile-first Antimatter Dimensions save editor that can be used througho
 - Readiness summary for ready-to-encode versus ready-to-import state.
 - Encode, copy, share, and download output.
 - Generated comprehensive PC and Android fixture tests for category and scope coverage.
+- Synthetic QA fixture exports for repeatable public mobile testing.
 - GitHub Pages hosting for public iPhone Safari testing after CI passes.
 
 ## Taxonomy
@@ -66,9 +67,11 @@ Claude should refine labels, ordering, grouping, and mobile navigation. Codex sh
 - Codec logic lives in `src/save-codec.js`.
 - Path inventory and immutable edits live in `src/path-index.js`.
 - Coverage report generation lives in `src/coverage-report.js`.
+- QA fixture export lives in `scripts/export-qa-fixtures.mjs`.
 - Save and edit risk analysis lives in `src/save-analysis.js`.
 - Readiness calculation lives in `src/readiness.js`.
 - Category mapping lives in `src/taxonomy.js`.
 - The UI must never hide an unmapped imported path.
 - Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, coverage report generation, readiness calculation, immutable path edits, change tracking, added-key reset, safety analysis, and all non-fallback category coverage in generated late-game PC/Android fixtures.
+- Smoke tests must verify that synthetic QA fixture artifacts can be generated.
 - GitHub Pages deployment must publish only after smoke tests pass.

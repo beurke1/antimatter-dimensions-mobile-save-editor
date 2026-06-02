@@ -22,6 +22,7 @@ export const buildCoverageReport = ({
   coverage,
   changes = [],
   analysisIssues = [],
+  generatedAt = new Date().toISOString(),
 }) => {
   const stageCounts = {};
   const typeCounts = {};
@@ -63,7 +64,7 @@ export const buildCoverageReport = ({
   }
 
   return {
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     saveType,
     totals: {
       paths: coverage.total,
@@ -83,4 +84,3 @@ export const buildCoverageReport = ({
     safety: issueCounts,
   };
 };
-

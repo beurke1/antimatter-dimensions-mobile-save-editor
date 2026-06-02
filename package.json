@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "python3 -m http.server 5174",
     "start": "python3 -m http.server 5174",
+    "qa:fixtures": "node scripts/export-qa-fixtures.mjs",
     "test": "node scripts/smoke-test.mjs"
   }
 }

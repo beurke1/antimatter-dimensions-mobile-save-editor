@@ -66,6 +66,7 @@ Core behavior:
 - Readiness panel distinguishes no-save, ready-to-encode, blocked, review, and ready-to-import states.
 - GitHub Actions runs smoke tests on pushes and pull requests.
 - GitHub Pages deployment publishes the static app after smoke tests pass.
+- Synthetic QA fixture saves and expected coverage reports can be generated for public mobile testing.
 
 ## Claude Inbox
 
@@ -147,6 +148,13 @@ Eighth follow-up implementation added:
 - `.github/workflows/pages.yml` runs `npm test`, uploads `index.html` and `src/`, and deploys through GitHub Pages.
 - First CI and Pages workflow runs completed successfully.
 - Public iPhone Safari testing should use the Pages URL above.
+
+Ninth follow-up implementation added:
+
+- `scripts/export-qa-fixtures.mjs` exports synthetic late-game PC and Android saves plus expected coverage reports.
+- `qa-fixtures/` stores the generated fixture saves, reports, manifest, and local instructions.
+- `QA.md` defines the synthetic fixture, mobile viewport, and real-save verification protocol.
+- Smoke tests verify QA fixture artifact generation.
 
 Open engineering tasks:
 

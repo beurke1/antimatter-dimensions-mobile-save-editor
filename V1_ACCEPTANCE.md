@@ -18,6 +18,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Every indexed path is editable inline or through scoped JSON.
 - Unknown paths appear in fallback coverage, never hidden.
 - Coverage report JSON can be copied or downloaded for real-save QA.
+- Synthetic late-game PC and Android fixtures can be exported for repeatable mobile QA.
 
 ## Mobile Navigation
 
@@ -26,6 +27,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Breadcrumbs and child grids support deep object/array browsing.
 - Changed-only filtering works after edits.
 - Text and controls fit at iPhone-sized widths without horizontal page overflow.
+- Mobile viewport checks follow `QA.md` before Berke tests real saves.
 
 ## Editing
 
@@ -55,6 +57,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - GitHub Actions smoke tests pass on `main`.
 - GitHub Pages publishes the static app for iPhone Safari testing.
 - The public Pages URL loads without local tooling.
+- `npm run qa:fixtures` generates the committed fixture saves and expected reports.
 
 ## Coordination
 

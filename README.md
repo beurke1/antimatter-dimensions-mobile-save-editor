@@ -24,6 +24,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Copy/download coverage reports for imported saves.
 - Encode, copy, share, and download.
 - Generated comprehensive PC and Android fixture coverage tests.
+- Synthetic late-game QA fixture exports for public mobile testing.
 
 ## Run Locally
 
@@ -42,6 +43,14 @@ npm test
 The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, reset behavior, safety analysis, and comprehensive category coverage across generated PC/Android late-game fixtures.
 
 GitHub Actions runs the same smoke test on pushes and pull requests. The Pages deployment also runs the smoke test before publishing the static app.
+
+## QA Fixtures
+
+```sh
+npm run qa:fixtures
+```
+
+This writes synthetic PC and Android late-game saves plus expected coverage reports to `qa-fixtures/`. Use `QA.md` for the mobile and real-save verification protocol.
 
 ## Public Mobile Testing
 
