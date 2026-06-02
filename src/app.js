@@ -861,11 +861,30 @@ const renderDecimalStringEditor = (node, value) => {
   `;
 };
 
+const renderLeafJsonEditor = (node, value, open = false) => {
+  return `
+    <details class="leaf-json-editor" ${open ? 'open' : ''}>
+      <summary></summary>
+      <textarea
+        class="field-input field-textarea leaf-json-textarea"
+        spellcheck="false"
+        autocapitalize="off"
+        aria-label="${escapeHtml(node.path)} raw JSON"
+      >${escapeHtml(stringifySaveJson(value))}</textarea>
+      <button type="button" class="secondary-button full" data-action="apply-leaf-json">Apply JSON</button>
+    </details>
+  `;
+};
+
 const renderLeafEditor = (node) => {
   const value = getValueAtSegments(state.data, node.segments);
+  const jsonEditor = renderLeafJsonEditor(node, value);
 
   if (node.type === 'boolean') {
-    return renderBooleanEditor(node, value);
+    return `
+      ${renderBooleanEditor(node, value)}
+      ${jsonEditor}
+    `;
   }
 
   if (node.type === 'number') {
@@ -881,6 +900,7 @@ const renderLeafEditor = (node) => {
         autocomplete="off"
       />
       ${bitfieldEditor}
+      ${jsonEditor}
     `;
   }
 
@@ -898,6 +918,7 @@ const renderLeafEditor = (node) => {
           spellcheck="false"
         >${escapeHtml(value)}</textarea>
         ${decimalStringEditor}
+        ${jsonEditor}
       `;
     }
 
@@ -912,12 +933,11 @@ const renderLeafEditor = (node) => {
         spellcheck="false"
       />
       ${decimalStringEditor}
+      ${jsonEditor}
     `;
   }
 
-  return `
-    <textarea class="field-input field-textarea" data-editor-type="json">${escapeHtml(JSON.stringify(value))}</textarea>
-  `;
+  return renderLeafJsonEditor(node, value, true);
 };
 
 const renderBigNumberEditor = (node, value) => {
@@ -1590,6 +1610,24 @@ document.addEventListener('click', async (event) => {
         throw new Error('Root save JSON must be an object.');
       }
       updateDataAtNode(node, parsed, 'subtree JSON');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : `Invalid JSON for ${node.path}.`);
+      render();
+    }
+    return;
+  }
+
+  if (action === 'apply-leaf-json') {
+    const card = target.closest('[data-node-path]');
+    const node = card ? getNode(card.dataset.nodePath) : null;
+    const textarea = card?.querySelector('.leaf-json-textarea');
+
+    if (!node || !textarea || node.isContainer) {
+      return;
+    }
+
+    try {
+      updateDataAtNode(node, parseJsonValue(textarea.value), 'leaf JSON');
     } catch (error) {
       setError(error instanceof Error ? error.message : `Invalid JSON for ${node.path}.`);
       render();

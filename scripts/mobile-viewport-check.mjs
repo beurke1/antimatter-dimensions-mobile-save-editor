@@ -1109,6 +1109,40 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         };
       }
 
+      if (${JSON.stringify(workflow)} === 'leaf-json-type-change-export') {
+        await setSearch('options.notation');
+        await waitFor(() => card('options.notation'), 'leaf JSON path card');
+        const leafJsonEditor = card('options.notation')?.querySelector('.leaf-json-editor');
+        if (!leafJsonEditor) throw new Error('Missing leaf JSON editor');
+        leafJsonEditor.open = true;
+
+        const leafJsonTextarea = card('options.notation')?.querySelector('.leaf-json-textarea');
+        if (!leafJsonTextarea) throw new Error('Missing leaf JSON textarea');
+        leafJsonTextarea.value = '{"mode":"Engineering","digits":6}';
+        card('options.notation')?.querySelector('[data-action="apply-leaf-json"]')?.click();
+        await waitFor(
+          () => card('options.notation')?.classList.contains('changed') && card('options.notation.mode'),
+          'leaf JSON type change'
+        );
+
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'leaf JSON encode');
+        const { decodeSave } = await import('./src/save-codec.js');
+        const decoded = await decodeSave(encoded);
+        const notation = decoded.data.options?.notation;
+
+        return {
+          workflow: 'leaf-json-type-change-export',
+          encodedPrefix: encoded.slice(0, 37),
+          leafJsonRendered: Boolean(leafJsonEditor),
+          pathBecameContainer: card('options.notation')?.classList.contains('container') ?? false,
+          childPathVisible: Boolean(card('options.notation.mode')),
+          exactObject: notation?.mode === 'Engineering' && notation?.digits === 6,
+          exportedAsObject: Boolean(notation) && typeof notation === 'object' && !Array.isArray(notation),
+          changedRows: document.querySelectorAll('.path-card.changed').length,
+        };
+      }
+
       if (${JSON.stringify(workflow)} === 'deep-scope-edit') {
         await clickScope('celestials');
         await clickScope('celestials.ra');
@@ -1420,6 +1454,14 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('PC decimal string workflow did not produce an encoded PC save');
       }
     }
+    if (caseConfig.editorWorkflow === 'leaf-json-type-change-export') {
+      if (!editorWorkflow?.leafJsonRendered) failures.push('leaf JSON workflow did not render the leaf JSON editor');
+      if (!editorWorkflow?.pathBecameContainer || !editorWorkflow?.childPathVisible) failures.push('leaf JSON workflow did not re-index the type-changed path as a container');
+      if (!editorWorkflow?.exactObject || !editorWorkflow?.exportedAsObject) failures.push('leaf JSON workflow did not export the exact type-changed object');
+      if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) {
+        failures.push('leaf JSON workflow did not produce an encoded PC save');
+      }
+    }
     if (caseConfig.editorWorkflow === 'deep-scope-edit') {
       if (!editorWorkflow?.levelChanged) failures.push('deep scoped browser workflow did not mark celestial pet level changed');
       if (!editorWorkflow?.activeBreadcrumb?.includes('teresa')) {
@@ -1522,6 +1564,12 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createNormalPcSave(),
       editorWorkflow: 'pc-decimal-string-export',
+    },
+    {
+      name: 'pc-leaf-json-type-change-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createNormalPcSave(),
+      editorWorkflow: 'leaf-json-type-change-export',
     },
     {
       name: 'pc-preset-iphone-se',

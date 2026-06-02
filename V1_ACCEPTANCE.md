@@ -34,6 +34,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 ## Editing
 
 - Primitive leaves edit inline.
+- Primitive leaves can also be edited as raw JSON so values can change type without editing the parent object.
 - Booleans use switch controls.
 - Packed integer bitfields expose tap-friendly bit toggles while preserving raw integer editing.
 - PC Decimal strings expose mantissa/exponent controls while preserving exact string export.
@@ -63,7 +64,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 ## Hosting And CI
 
 - GitHub Actions smoke tests pass on `main`.
-- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, review/reset flows, structural add/remove/export controls, bitfield toggle/export controls, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, value-free QA/report copy/download, and encoded output copy/share/download.
+- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, review/reset flows, structural add/remove/export controls, bitfield toggle/export controls, primitive leaf JSON type changes, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, value-free QA/report copy/download, and encoded output copy/share/download.
 - GitHub Pages publishes the static app for iPhone Safari testing.
 - The public Pages URL loads without local tooling.
 - `npm run qa:fixtures` generates the committed fixture saves and expected reports.
