@@ -827,6 +827,54 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         };
       }
 
+      if (${JSON.stringify(workflow)} === 'review-reset-all') {
+        setEditorValue('options.notation', '[data-editor-type="string"]', 'Engineering');
+        await waitFor(() => card('options.notation')?.classList.contains('changed'), 'review string edit');
+
+        card('buyUntil10')?.querySelector('[data-action="toggle-boolean"]')?.click();
+        await waitFor(() => card('buyUntil10')?.classList.contains('changed'), 'review boolean edit');
+
+        await waitFor(() => document.querySelector('.change-review'), 'review panel');
+        const reviewRowsBefore = Array.from(document.querySelectorAll('.change-row'));
+        const reviewText = document.querySelector('.change-review')?.textContent ?? '';
+        const reviewContainsNotation = reviewRowsBefore.some((row) => row.dataset.changePath === 'options.notation' && row.textContent.includes('Mixed scientific') && row.textContent.includes('Engineering'));
+        const reviewContainsBoolean = reviewRowsBefore.some((row) => row.dataset.changePath === 'buyUntil10');
+
+        const changedToggle = () => document.querySelector('[data-action="toggle-changed-filter"]');
+        changedToggle()?.click();
+        await waitFor(() => changedToggle()?.classList.contains('active'), 'changed-only after edits');
+        await waitFor(() => document.querySelectorAll('.path-card.changed').length > 0, 'changed-only cards after edits');
+        const changedOnlyCards = Array.from(document.querySelectorAll('.path-card'));
+        const changedOnlyAllChanged = changedOnlyCards.length > 0 && changedOnlyCards.every((changedCard) => changedCard.classList.contains('changed'));
+        const changedOnlyIncludesNotation = changedOnlyCards.some((changedCard) => changedCard.dataset.nodePath === 'options.notation');
+        changedToggle()?.click();
+        await waitFor(() => !changedToggle()?.classList.contains('active'), 'changed-only reset before review reset');
+
+        document.querySelector('[data-change-path="buyUntil10"] [data-action="reset-change"]')?.click();
+        await waitFor(() => !card('buyUntil10')?.classList.contains('changed'), 'review row reset');
+        const booleanReviewReset = !Array.from(document.querySelectorAll('.change-row')).some((row) => row.dataset.changePath === 'buyUntil10');
+
+        document.querySelector('[data-action="reset-all"]')?.click();
+        await waitFor(() => !document.querySelector('.change-review'), 'review reset all');
+        await waitFor(() => document.querySelectorAll('.path-card.changed').length === 0, 'changed cards cleared');
+        const changedToggleText = document.querySelector('[data-action="toggle-changed-filter"]')?.textContent.trim() ?? '';
+
+        return {
+          workflow: 'review-reset-all',
+          reviewRendered: Boolean(reviewText),
+          reviewRowsBefore: reviewRowsBefore.length,
+          reviewContainsNotation,
+          reviewContainsBoolean,
+          changedOnlyCards: changedOnlyCards.length,
+          changedOnlyAllChanged,
+          changedOnlyIncludesNotation,
+          booleanReviewReset,
+          resetAllCleared: !document.querySelector('.change-review') && document.querySelectorAll('.path-card.changed').length === 0,
+          changedToggleCleared: changedToggleText === 'No changes yet',
+          visibleCardsAfterReset: document.querySelectorAll('.path-card').length,
+        };
+      }
+
       if (${JSON.stringify(workflow)} === 'deep-scope-edit') {
         await clickScope('celestials');
         await clickScope('celestials.ra');
@@ -1056,6 +1104,15 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('PC editor workflow did not produce an encoded PC save');
       }
     }
+    if (caseConfig.editorWorkflow === 'review-reset-all') {
+      if (!editorWorkflow?.reviewRendered || editorWorkflow?.reviewRowsBefore < 2) failures.push('review workflow did not render expected review rows after edits');
+      if (!editorWorkflow?.reviewContainsNotation || !editorWorkflow?.reviewContainsBoolean) failures.push('review workflow did not show expected before/after changed paths');
+      if (!editorWorkflow?.changedOnlyAllChanged || !editorWorkflow?.changedOnlyIncludesNotation) failures.push('changed-only filter did not show only changed rows after edits');
+      if (!editorWorkflow?.booleanReviewReset) failures.push('review row reset did not clear the selected changed path');
+      if (!editorWorkflow?.resetAllCleared || !editorWorkflow?.changedToggleCleared || !editorWorkflow?.visibleCardsAfterReset) {
+        failures.push('reset all did not return the rendered editor to a clean state');
+      }
+    }
     if (caseConfig.editorWorkflow === 'deep-scope-edit') {
       if (!editorWorkflow?.levelChanged) failures.push('deep scoped browser workflow did not mark celestial pet level changed');
       if (!editorWorkflow?.activeBreadcrumb?.includes('teresa')) {
@@ -1124,6 +1181,12 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createComprehensivePcSave(),
       navigationWorkflow: 'pc-navigation',
+    },
+    {
+      name: 'pc-review-reset-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createNormalPcSave(),
+      editorWorkflow: 'review-reset-all',
     },
     {
       name: 'file-import-qa-iphone-se',

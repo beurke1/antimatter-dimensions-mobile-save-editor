@@ -189,6 +189,7 @@ Thirteenth follow-up implementation added:
 - Safety risk warnings now group added/removed subtrees and parent type changes at the nearest changed container instead of duplicating warnings for every descendant path.
 - Rendered mobile verification now exercises decoded JSON file import plus value-free QA summary copy and coverage report copy/download from the actual mobile UI.
 - Rendered mobile verification now checks encoded output Copy, native Share, Share fallback, and Download from the actual mobile UI.
+- Rendered mobile verification now checks Review edits before/after rows, changed-only filtering after edits, review-row reset, and reset-all from the actual mobile UI.
 
 Open engineering tasks:
 

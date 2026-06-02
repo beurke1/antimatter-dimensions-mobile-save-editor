@@ -58,7 +58,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 ## Hosting And CI
 
 - GitHub Actions smoke tests pass on `main`.
-- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, value-free QA/report copy/download, and encoded output copy/share/download.
+- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, review/reset flows, value-free QA/report copy/download, and encoded output copy/share/download.
 - GitHub Pages publishes the static app for iPhone Safari testing.
 - The public Pages URL loads without local tooling.
 - `npm run qa:fixtures` generates the committed fixture saves and expected reports.
