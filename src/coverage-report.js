@@ -29,6 +29,12 @@ const formatSafetySample = (issue) => ({
   message: toStringField(issue.message),
 });
 
+const safetyIssueCountKey = (issue) => {
+  const severity = toStringField(issue.severity, 'info');
+  const title = toStringField(issue.title, 'Issue');
+  return `${severity} | ${title}`;
+};
+
 export const buildCoverageReport = ({
   saveType,
   nodes,
@@ -71,9 +77,11 @@ export const buildCoverageReport = ({
     warning: 0,
     info: 0,
   };
+  const safetyIssueCounts = {};
 
   for (const issue of analysisIssues) {
     increment(issueCounts, issue.severity);
+    increment(safetyIssueCounts, safetyIssueCountKey(issue));
   }
 
   const safetySamples = analysisIssues
@@ -99,6 +107,7 @@ export const buildCoverageReport = ({
     topLevelPaths: topLevelPaths.sort(),
     unknownPaths: unknownPaths.slice(0, 250).sort(),
     safety: issueCounts,
+    safetyIssueCounts: sortByCount(safetyIssueCounts),
     safetySamples,
     safetySamplesOmitted: Math.max(0, analysisIssues.length - safetySamples.length),
   };
@@ -168,6 +177,9 @@ export const buildQaSummary = (coverageReport) => {
     `- Errors: ${safety.error ?? 0}`,
     `- Warnings: ${safety.warning ?? 0}`,
     `- Notes: ${safety.info ?? 0}`,
+    '',
+    '## Safety Issue Counts',
+    ...formatCountBlock(coverageReport.safetyIssueCounts),
     '',
     '## Safety Samples',
     ...formatSafetySamples(coverageReport.safetySamples, coverageReport.safetySamplesOmitted),

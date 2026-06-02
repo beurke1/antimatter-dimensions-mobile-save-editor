@@ -91,6 +91,7 @@
     "warning": 0,
     "info": 0
   },
+  "safetyIssueCounts": {},
   "safetySamples": [],
   "safetySamplesOmitted": 0
 }

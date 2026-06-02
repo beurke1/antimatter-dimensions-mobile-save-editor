@@ -24,7 +24,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Changed-path review with reset controls.
 - Safety check for invalid values and risky structural edits before export, with grouped subtree warnings and direct jumps to affected paths.
 - Stage-aware quick-edit presets with PC/Android numeric format preservation.
-- Copy value-free QA summaries with coverage counts and warning samples, plus copy/download coverage reports for imported saves.
+- Copy value-free QA summaries with coverage counts, safety issue counts, and warning samples, plus copy/download coverage reports for imported saves.
 - Encode, copy, share, and download.
 - Generated progression-stage PC and Android fixture coverage tests.
 - Synthetic Normal, Infinity, Eternity, and late-game QA fixture exports for public mobile testing.

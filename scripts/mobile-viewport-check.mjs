@@ -651,17 +651,19 @@ const exerciseQaWorkflow = async (client, workflow) => {
           workflow: 'value-free-copy',
           clipboardWrites: window.__adSaveEditorClipboardWrites.length,
           qaSummaryCopied: qaSummary.includes('Antimatter Dimensions Real-Save QA Summary'),
-          qaSummaryHasCounts: qaSummary.includes('- Paths:') && qaSummary.includes('## Safety'),
+          qaSummaryHasCounts: qaSummary.includes('- Paths:') && qaSummary.includes('## Safety') && qaSummary.includes('## Safety Issue Counts'),
           summaryValueFree,
           reportCopied: Boolean(report),
           reportHasTotals: Number(report?.totals?.paths ?? 0) > 20,
           reportHasSafety: typeof report?.safety?.error === 'number',
+          reportHasSafetyIssueCounts: Boolean(report?.safetyIssueCounts) && typeof report.safetyIssueCounts === 'object' && !Array.isArray(report.safetyIssueCounts),
           reportValueFree,
           reportDownloaded: Boolean(downloadedReport),
           reportDownloadFilename: downloads.at(-1).download,
           reportDownloadMatchesCopy: downloadedReportText === reportText,
           downloadedReportHasTotals: Number(downloadedReport?.totals?.paths ?? 0) > 20,
           downloadedReportHasSafety: typeof downloadedReport?.safety?.error === 'number',
+          downloadedReportHasSafetyIssueCounts: Boolean(downloadedReport?.safetyIssueCounts) && typeof downloadedReport.safetyIssueCounts === 'object' && !Array.isArray(downloadedReport.safetyIssueCounts),
           downloadedReportValueFree,
         };
       } finally {
@@ -1167,9 +1169,13 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     if (caseConfig.qaWorkflow === 'value-free-copy') {
       if (!qaWorkflow?.qaSummaryCopied || !qaWorkflow?.qaSummaryHasCounts) failures.push('rendered QA summary copy did not include the expected value-free report sections');
       if (!qaWorkflow?.summaryValueFree) failures.push('rendered QA summary copy leaked fixture values or encoded save text');
-      if (!qaWorkflow?.reportCopied || !qaWorkflow?.reportHasTotals || !qaWorkflow?.reportHasSafety) failures.push('rendered coverage report copy did not produce the expected JSON report');
+      if (!qaWorkflow?.reportCopied || !qaWorkflow?.reportHasTotals || !qaWorkflow?.reportHasSafety || !qaWorkflow?.reportHasSafetyIssueCounts) {
+        failures.push('rendered coverage report copy did not produce the expected JSON report');
+      }
       if (!qaWorkflow?.reportValueFree) failures.push('rendered coverage report copy leaked fixture values or encoded save text');
-      if (!qaWorkflow?.reportDownloaded || !qaWorkflow?.downloadedReportHasTotals || !qaWorkflow?.downloadedReportHasSafety) failures.push('rendered coverage report download did not produce the expected JSON report');
+      if (!qaWorkflow?.reportDownloaded || !qaWorkflow?.downloadedReportHasTotals || !qaWorkflow?.downloadedReportHasSafety || !qaWorkflow?.downloadedReportHasSafetyIssueCounts) {
+        failures.push('rendered coverage report download did not produce the expected JSON report');
+      }
       if (qaWorkflow?.reportDownloadFilename !== 'antimatter-dimensions-coverage-report.json' || !qaWorkflow?.reportDownloadMatchesCopy) {
         failures.push('rendered coverage report download did not match the copied JSON report');
       }

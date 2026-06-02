@@ -173,7 +173,7 @@ Twelfth follow-up implementation added:
 - `npm run qa:fixtures` now exports eight fixture saves, eight coverage reports, and a manifest covering the full game progression shape without real user saves.
 - Smoke tests round-trip all eight progression fixtures, verify no fixture has safety errors, and keep the late-game all-category coverage gate.
 - Rendered mobile verification now includes early PC and Android saves in addition to late-game fixtures.
-- QA summaries and coverage reports include value-free safety warning samples so real-save reports can identify noisy or missing warnings without sharing save values.
+- QA summaries and coverage reports include value-free safety issue counts and warning samples so real-save reports can identify noisy or missing warnings without sharing save values.
 - Added a taxonomy guard for stable top-level save keys, including `eternityBuyer`, so known keys stay out of fallback when possible.
 
 Thirteenth follow-up implementation added:
@@ -191,6 +191,7 @@ Thirteenth follow-up implementation added:
 - Rendered mobile verification now checks encoded output Copy, native Share, Share fallback, and Download from the actual mobile UI.
 - Rendered mobile verification now checks Review edits before/after rows, changed-only filtering after edits, review-row reset, and reset-all from the actual mobile UI.
 - Rendered mobile verification now checks Normal-stage quick-edit preset visibility plus PC decimal-string and Android mantissa/exponent preservation from the actual mobile UI.
+- Coverage reports and copied QA summaries now include value-free Safety Issue Counts so warning noise can be calibrated by title even when samples are capped.
 
 Open engineering tasks:
 

@@ -197,8 +197,11 @@ const warningSampleReport = buildCoverageReport({
   generatedAt: '2026-06-02T00:00:00.000Z',
 });
 assert.equal(warningSampleReport.safetySamples.length, pcFormatMismatchIssues.length);
+assert.equal(warningSampleReport.safetyIssueCounts['warning | Android numeric format'], 1);
 assert.ok(warningSampleReport.safetySamples.some((sample) => sample.path === 'antimatter' && sample.title === 'Android numeric format'));
 const warningQaSummary = buildQaSummary(warningSampleReport);
+assert.ok(warningQaSummary.includes('## Safety Issue Counts'));
+assert.ok(warningQaSummary.includes('- warning | Android numeric format: 1'));
 assert.ok(warningQaSummary.includes('## Safety Samples'));
 assert.ok(warningQaSummary.includes('warning | Android numeric format | antimatter'));
 assert.ok(!warningQaSummary.includes('1200'), 'QA warning summary should not include warning sample values');
