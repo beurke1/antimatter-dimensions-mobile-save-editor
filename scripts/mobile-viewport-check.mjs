@@ -437,6 +437,88 @@ const expandSafetyPanel = async (client, minimumRows) => {
   `);
 };
 
+const exerciseNavigationWorkflow = async (client, workflow) => {
+  return evaluate(client, `
+    (async () => {
+      const waitFor = async (predicate, label) => {
+        const deadline = Date.now() + 8000;
+        while (Date.now() < deadline) {
+          const value = predicate();
+          if (value) return value;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        throw new Error(label + ' timed out');
+      };
+      const cards = () => Array.from(document.querySelectorAll('.path-card'));
+      const paths = () => cards().map((card) => card.dataset.nodePath ?? '');
+      const clickAction = async (selector, label) => {
+        const button = document.querySelector(selector);
+        if (!button) throw new Error('Missing ' + label);
+        button.click();
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      };
+      const setSearch = async (value) => {
+        const input = document.querySelector('#path-search');
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      };
+      const setType = async (value) => {
+        const select = document.querySelector('#type-filter');
+        select.value = value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      };
+
+      if (${JSON.stringify(workflow)} !== 'pc-navigation') return null;
+
+      const initialCards = cards().length;
+      await clickAction('[data-action="set-category"][data-category-id="celestials"]', 'Celestials category');
+      await waitFor(() => cards().length > 0 && paths().every((path) => path.startsWith('celestials')), 'Celestials category filter');
+      const celestialsCards = cards().length;
+      const celestialsAllMatch = paths().every((path) => path.startsWith('celestials'));
+
+      await clickAction('[data-action="set-category"][data-category-id="all"]', 'All category');
+      await clickAction('[data-action="set-stage"][data-stage-id="reality"]', 'Reality stage');
+      await waitFor(() => cards().length > 0, 'Reality stage filter');
+      const realityCards = cards().length;
+      const realityActive = document.querySelector('[data-action="set-stage"][data-stage-id="reality"]')?.classList.contains('active') ?? false;
+
+      await clickAction('[data-action="set-stage"][data-stage-id="all"]', 'All stage');
+      await setSearch('replicanti.amount');
+      await waitFor(() => paths().some((path) => path === 'replicanti.amount'), 'Path search');
+      const searchPaths = paths();
+
+      await setSearch('');
+      await setType('boolean');
+      await waitFor(() => cards().length > 0, 'Boolean type filter');
+      const booleanCards = cards().length;
+      const booleanCardsMatch = cards().every((card) => Array.from(card.querySelectorAll('.badge')).some((badge) => badge.textContent.trim() === 'boolean'));
+
+      await setType('all');
+      await clickAction('[data-action="toggle-changed-filter"]', 'Changed-only filter');
+      await waitFor(() => document.querySelector('[data-action="toggle-changed-filter"]')?.classList.contains('active'), 'Changed-only active');
+      const changedOnlyCards = cards().length;
+      await clickAction('[data-action="toggle-changed-filter"]', 'Changed-only filter reset');
+      await waitFor(() => cards().length > 0, 'Changed-only reset');
+
+      return {
+        workflow: 'pc-navigation',
+        initialCards,
+        celestialsCards,
+        celestialsAllMatch,
+        realityCards,
+        realityActive,
+        searchCards: searchPaths.length,
+        searchMatchedReplicanti: searchPaths.includes('replicanti.amount'),
+        booleanCards,
+        booleanCardsMatch,
+        changedOnlyCards,
+      };
+    })()
+  `);
+};
+
 const exerciseEditorWorkflow = async (client, workflow) => {
   return evaluate(client, `
     (async () => {
@@ -643,6 +725,9 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     const safetyPanel = caseConfig.minimumSafetyRows
       ? await expandSafetyPanel(client, caseConfig.minimumSafetyRows)
       : null;
+    const navigationWorkflow = caseConfig.navigationWorkflow
+      ? await exerciseNavigationWorkflow(client, caseConfig.navigationWorkflow)
+      : null;
     const editorWorkflow = caseConfig.editorWorkflow
       ? await exerciseEditorWorkflow(client, caseConfig.editorWorkflow)
       : null;
@@ -682,6 +767,13 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     if (caseConfig.minimumSafetyRows && !safetyPanel?.openedSearch) {
       failures.push('safety path open/find action did not focus browser search on the issue path');
     }
+    if (caseConfig.navigationWorkflow === 'pc-navigation') {
+      if (!navigationWorkflow?.celestialsAllMatch) failures.push('Celestials category filter rendered non-Celestials paths');
+      if (!navigationWorkflow?.realityActive || !navigationWorkflow?.realityCards) failures.push('Reality stage filter did not activate with visible paths');
+      if (!navigationWorkflow?.searchMatchedReplicanti) failures.push('Search did not surface replicanti.amount');
+      if (!navigationWorkflow?.booleanCardsMatch) failures.push('Boolean type filter rendered non-boolean cards');
+      if (navigationWorkflow?.changedOnlyCards !== 0) failures.push('Changed-only filter showed rows before edits');
+    }
     if (caseConfig.editorWorkflow === 'pc-basic') {
       if (!editorWorkflow?.notationChanged) failures.push('PC string editor did not mark notation changed');
       if (!editorWorkflow?.subtreeChanged) failures.push('PC subtree JSON editor did not mark nested option changed');
@@ -711,6 +803,7 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
       viewport: caseConfig.viewport.name,
       decoded,
       safetyPanel,
+      navigationWorkflow,
       editorWorkflow,
       metrics: caseMetrics,
       failures,
@@ -739,6 +832,12 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createNormalPcSave(),
       editorWorkflow: 'pc-basic',
+    },
+    {
+      name: 'pc-navigation-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createComprehensivePcSave(),
+      navigationWorkflow: 'pc-navigation',
     },
     {
       name: 'pc-fixture-iphone-15',

@@ -185,6 +185,7 @@ Thirteenth follow-up implementation added:
 - Safety panels with more than six issues can be expanded and collapsed instead of hiding the rest behind a static count.
 - Rendered mobile verification now includes a warning-heavy save case to check expanded warning-list layout and warning path jumps.
 - Rendered mobile verification now exercises PC string edits, boolean toggles, scoped JSON edits, deep Celestials scoped browsing/editing, reset, Android big-number edits, and encode output.
+- Rendered mobile verification now checks category, stage, search, type, and changed-only filters on a late-game PC save.
 
 Open engineering tasks:
 
