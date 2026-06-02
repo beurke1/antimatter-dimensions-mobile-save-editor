@@ -58,6 +58,7 @@ const state = {
   importCollapsed: false,
   showDetails: false,
   showPresets: false,
+  showAllSafety: false,
 };
 
 const escapeHtml = (value) => {
@@ -225,6 +226,28 @@ const resetAllChanges = () => {
   markDataChanged();
   state.dirty = false;
   setNotice('All edits reset.', 'success');
+  render();
+};
+
+const revealIssuePath = (path) => {
+  const node = getNode(path);
+
+  state.activeCategoryId = 'all';
+  state.activeStageId = 'all';
+  state.typeFilter = 'all';
+  state.showChangedOnly = false;
+  state.visibleLimit = 120;
+
+  if (node) {
+    state.scopePath = node.isContainer ? node.path : node.parentPath ?? 'root';
+    state.query = node.path;
+    setNotice(`${node.path} opened in the path browser.`, 'success');
+  } else {
+    state.scopePath = 'root';
+    state.query = path === 'root' ? '' : path;
+    setNotice(`${path} is not present in the indexed save; searching from root.`, 'neutral');
+  }
+
   render();
 };
 
@@ -802,8 +825,9 @@ const renderSafetyPanel = () => {
     return '';
   }
 
-  const visibleIssues = state.analysisIssues.slice(0, 6);
+  const visibleIssues = state.showAllSafety ? state.analysisIssues : state.analysisIssues.slice(0, 6);
   const remainingCount = Math.max(0, state.analysisIssues.length - visibleIssues.length);
+  const canToggle = state.analysisIssues.length > 6;
 
   return `
     <section class="panel safety-panel" aria-labelledby="safety-title">
@@ -812,9 +836,16 @@ const renderSafetyPanel = () => {
           <h2 id="safety-title">Safety check</h2>
           <p>${state.analysisSummary.errors} error${state.analysisSummary.errors === 1 ? '' : 's'} · ${state.analysisSummary.warnings} warning${state.analysisSummary.warnings === 1 ? '' : 's'} · ${state.analysisSummary.info} note${state.analysisSummary.info === 1 ? '' : 's'}</p>
         </div>
+        ${canToggle ? `
+          <button type="button" class="secondary-button compact" data-action="toggle-safety-list">
+            ${state.showAllSafety ? 'Show fewer' : 'Show all'}
+          </button>
+        ` : ''}
       </div>
       <div class="safety-list">
-        ${visibleIssues.map((issue) => `
+        ${visibleIssues.map((issue) => {
+          const targetNode = getNode(issue.path);
+          return `
           <article class="safety-row ${escapeHtml(issue.severity)}">
             <div>
               <span class="safety-badge">${escapeHtml(issue.severity)}</span>
@@ -822,8 +853,17 @@ const renderSafetyPanel = () => {
               <code>${escapeHtml(issue.path)}</code>
               <p>${escapeHtml(issue.message)}</p>
             </div>
+            <button
+              type="button"
+              class="tiny-button"
+              data-action="open-safety-path"
+              data-issue-path="${escapeHtml(issue.path)}"
+            >
+              ${targetNode ? 'Open' : 'Find'}
+            </button>
           </article>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
       ${remainingCount ? `<p class="safety-more">${remainingCount} more issue${remainingCount === 1 ? '' : 's'}.</p>` : ''}
     </section>
@@ -1026,6 +1066,7 @@ const handleDecode = async () => {
     state.visibleLimit = 120;
     state.importCollapsed = true;
     state.showDetails = false;
+    state.showAllSafety = false;
     rebuildIndex();
     setNotice(`Decoded ${decoded.saveType.toUpperCase()} save — ${state.coverage.total} paths ready to edit.`, 'success');
   } catch (error) {
@@ -1128,6 +1169,12 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (action === 'toggle-safety-list') {
+    state.showAllSafety = !state.showAllSafety;
+    render();
+    return;
+  }
+
   if (action === 'paste') {
     try {
       const text = await navigator.clipboard.readText();
@@ -1163,6 +1210,11 @@ document.addEventListener('click', async (event) => {
     state.scopePath = target.dataset.scopePath ?? 'root';
     state.visibleLimit = 120;
     render();
+    return;
+  }
+
+  if (action === 'open-safety-path') {
+    revealIssuePath(target.dataset.issuePath ?? 'root');
     return;
   }
 

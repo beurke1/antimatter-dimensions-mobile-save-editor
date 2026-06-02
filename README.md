@@ -14,6 +14,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Dark mobile-first, browser-first UI tuned for iPhone-sized screens.
 - Runtime indexing of every path in the imported save.
 - Category browsing with an Uncategorized fallback.
+- Source-backed taxonomy guard for stable AD top-level keys.
 - Stage filtering for the major game phases.
 - Scoped drilldown browsing with breadcrumbs.
 - Search by path, key, type, category, stage, and value preview.
@@ -21,7 +22,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Direct mantissa/exponent edits for Android-style big-number objects.
 - Scoped JSON edits for objects and arrays.
 - Changed-path review with reset controls.
-- Safety check for invalid values and risky structural edits before export.
+- Safety check for invalid values and risky structural edits before export, with direct jumps to affected paths.
 - Stage-aware quick-edit presets with PC/Android numeric format preservation.
 - Copy value-free QA summaries with coverage counts and warning samples, plus copy/download coverage reports for imported saves.
 - Encode, copy, share, and download.

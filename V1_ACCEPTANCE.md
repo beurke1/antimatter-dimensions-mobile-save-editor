@@ -17,6 +17,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Every indexed path is reachable by category, search, or scoped browsing.
 - Every indexed path is editable inline or through scoped JSON.
 - Unknown paths appear in fallback coverage, never hidden.
+- Stable known AD top-level keys are guarded against fallback classification.
 - Value-free QA summaries with coverage counts and warning samples can be copied, and coverage report JSON can be copied or downloaded for real-save QA.
 - Synthetic Normal, Infinity, Eternity, and late-game PC/Android fixtures can be exported for repeatable mobile QA.
 
@@ -42,6 +43,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 ## Safety
 
 - Safety panel shows errors, warnings, and notes with exact paths.
+- Safety rows can expand past the first few issues and jump to affected paths.
 - Non-finite numbers are hard errors.
 - Added paths, removed paths, type changes, negative count-like values, fractional big-number exponents, and late-game edits are review warnings/notes.
 - Readiness panel clearly distinguishes ready-to-encode from ready-to-import.

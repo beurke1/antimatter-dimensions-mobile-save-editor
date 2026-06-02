@@ -176,6 +176,15 @@ Twelfth follow-up implementation added:
 - QA summaries and coverage reports include value-free safety warning samples so real-save reports can identify noisy or missing warnings without sharing save values.
 - Added a taxonomy guard for stable top-level save keys, including `eternityBuyer`, so known keys stay out of fallback when possible.
 
+Thirteenth follow-up implementation added:
+
+- Added `src/schema-reference.js`, a source-backed top-level AD save-key taxonomy guard derived from the official player object shape plus known Android/mobile variants.
+- Smoke tests now verify 100+ stable top-level keys map to useful categories and do not drift into fallback.
+- `lastTenRuns`, `lastTenEternities`, and `lastTenRealities` now classify as Records instead of Core.
+- Safety rows now include an Open/Find action that jumps directly to the affected path in the browser.
+- Safety panels with more than six issues can be expanded and collapsed instead of hiding the rest behind a static count.
+- Rendered mobile verification now includes a warning-heavy save case to check expanded warning-list layout.
+
 Open engineering tasks:
 
 - Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy and progression stages without vendoring legacy data.

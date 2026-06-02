@@ -323,6 +323,28 @@ const viewports = {
   },
 };
 
+const createWarningHeavyPcSave = () => ({
+  antimatter: { mantissa: 1, exponent: 1200.5 },
+  dimensions: {
+    antimatter: [
+      {
+        bought: -1.5,
+        amount: { mantissa: 2, exponent: 4 },
+      },
+    ],
+  },
+  infinityPoints: { mantissa: 1, exponent: 250 },
+  dimensionBoosts: 1.5,
+  galaxies: -1,
+  eternityPoints: { mantissa: 1, exponent: 60 },
+  realities: { mantissa: 1, exponent: 1 },
+  version: 14.5,
+  lastUpdate: 1700000000000,
+  options: {
+    notation: 'Scientific',
+  },
+});
+
 const openApp = async (client, appUrl, viewport) => {
   await client.send('Page.enable');
   await client.send('Runtime.enable');
@@ -371,7 +393,7 @@ const decodeSave = async (client, saveData) => {
 
       const deadline = Date.now() + 8000;
       while (Date.now() < deadline) {
-        if (document.querySelector('.coverage-grid') && document.querySelector('.path-card')) {
+        if (document.querySelector('.path-card')) {
           return {
             notice: document.querySelector('.notice')?.textContent.trim() ?? '',
             visibleCards: document.querySelectorAll('.path-card').length,
@@ -388,6 +410,31 @@ const decodeSave = async (client, saveData) => {
   `);
   assert.ok(result.visibleCards > 0, 'Fixture decode did not render editable path cards.');
   return result;
+};
+
+const expandSafetyPanel = async (client, minimumRows) => {
+  return evaluate(client, `
+    (() => {
+      const beforeRows = document.querySelectorAll('.safety-row').length;
+      const toggle = document.querySelector('[data-action="toggle-safety-list"]');
+      if (toggle) toggle.click();
+      const afterRows = document.querySelectorAll('.safety-row').length;
+      const opener = document.querySelector('[data-action="open-safety-path"]');
+      const openedPath = opener?.dataset.issuePath ?? '';
+      if (opener) opener.click();
+      const searchValue = document.querySelector('#path-search')?.value ?? '';
+      return {
+        beforeRows,
+        afterRows,
+        hasToggle: Boolean(toggle),
+        hasPathOpener: Boolean(opener),
+        openedPath,
+        searchValue,
+        meetsMinimum: afterRows >= ${Number(minimumRows)},
+        openedSearch: Boolean(openedPath) && searchValue === openedPath,
+      };
+    })()
+  `);
 };
 
 const metrics = async (client) => {
@@ -491,6 +538,9 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
   try {
     await openApp(client, appUrl, caseConfig.viewport);
     const decoded = caseConfig.saveData ? await decodeSave(client, caseConfig.saveData) : null;
+    const safetyPanel = caseConfig.minimumSafetyRows
+      ? await expandSafetyPanel(client, caseConfig.minimumSafetyRows)
+      : null;
     const caseMetrics = await metrics(client);
     const screenshotPath = path.join(artifactDir, `${caseConfig.name}.png`);
     await screenshot(client, screenshotPath);
@@ -511,14 +561,28 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     if (caseMetrics.bottomLayout.hasBottomOverlap) {
       failures.push('last panel overlaps the fixed export bar at bottom scroll position');
     }
-    if (caseConfig.saveData && caseMetrics.visibleCategories < 8) {
+    const minimumCategories = caseConfig.minimumCategories ?? 8;
+    if (caseConfig.saveData && caseMetrics.visibleCategories < minimumCategories) {
       failures.push('decoded save did not render the expected category tabs');
+    }
+    if (caseConfig.minimumSafetyRows && !safetyPanel?.hasToggle) {
+      failures.push('warning-heavy save did not render a safety list toggle');
+    }
+    if (caseConfig.minimumSafetyRows && !safetyPanel?.meetsMinimum) {
+      failures.push(`expanded safety list rendered ${safetyPanel?.afterRows ?? 0} rows, expected at least ${caseConfig.minimumSafetyRows}`);
+    }
+    if (caseConfig.minimumSafetyRows && !safetyPanel?.hasPathOpener) {
+      failures.push('warning-heavy save did not render safety path open/find actions');
+    }
+    if (caseConfig.minimumSafetyRows && !safetyPanel?.openedSearch) {
+      failures.push('safety path open/find action did not focus browser search on the issue path');
     }
 
     return {
       name: caseConfig.name,
       viewport: caseConfig.viewport.name,
       decoded,
+      safetyPanel,
       metrics: caseMetrics,
       failures,
       screenshot: path.relative(root, screenshotPath),
@@ -555,6 +619,13 @@ try {
       name: 'android-normal-iphone-15',
       viewport: viewports.iphone15,
       saveData: createNormalAndroidSave(),
+    },
+    {
+      name: 'warnings-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createWarningHeavyPcSave(),
+      minimumCategories: 4,
+      minimumSafetyRows: 8,
     },
     {
       name: 'android-fixture-iphone-se',

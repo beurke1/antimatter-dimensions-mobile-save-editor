@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { categorizePath, CATEGORIES } from '../src/taxonomy.js';
+import { KNOWN_TOP_LEVEL_CATEGORIES } from '../src/schema-reference.js';
 import { PRESETS, applyPreset } from '../src/presets.js';
 import { buildCoverageReport, buildQaSummary } from '../src/coverage-report.js';
 import { buildReadinessSummary } from '../src/readiness.js';
@@ -189,27 +190,14 @@ const requiredCategoryIds = CATEGORIES
   .map((category) => category.id)
   .filter((categoryId) => categoryId !== 'unknown');
 
-const knownTopLevelCategories = new Map([
-  ['antimatter', 'resources'],
-  ['dimensions', 'dimensions'],
-  ['achievementBits', 'achievements'],
-  ['challenge', 'challenges'],
-  ['infinityPoints', 'resources'],
-  ['infinityUpgrades', 'infinity'],
-  ['auto', 'automation'],
-  ['replicanti', 'replicanti'],
-  ['eternityPoints', 'resources'],
-  ['timestudy', 'eternity'],
-  ['dilation', 'eternity'],
-  ['reality', 'reality'],
-  ['blackHole', 'black-hole'],
-  ['celestials', 'celestials'],
-  ['records', 'records'],
-  ['options', 'options'],
-  ['eternityBuyer', 'automation'],
-]);
+assert.ok(KNOWN_TOP_LEVEL_CATEGORIES.length >= 100, 'Known top-level taxonomy guard should cover the broad AD player shape');
+assert.equal(
+  new Set(KNOWN_TOP_LEVEL_CATEGORIES.map(([path]) => path)).size,
+  KNOWN_TOP_LEVEL_CATEGORIES.length,
+  'Known top-level taxonomy guard should not contain duplicate paths'
+);
 
-for (const [path, categoryId] of knownTopLevelCategories) {
+for (const [path, categoryId] of KNOWN_TOP_LEVEL_CATEGORIES) {
   assert.equal(categorizePath([path]).id, categoryId, `${path} should be categorized as ${categoryId}`);
 }
 

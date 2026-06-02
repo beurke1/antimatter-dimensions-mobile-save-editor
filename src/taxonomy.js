@@ -122,9 +122,9 @@ const topLevelCategory = Object.freeze({
   backupTimer: 'core',
   tab: 'core',
   subtab: 'core',
-  lastTenRuns: 'core',
-  lastTenEternities: 'core',
-  lastTenRealities: 'core',
+  lastTenRuns: 'records',
+  lastTenEternities: 'records',
+  lastTenRealities: 'records',
 
   // Resources
   antimatter: 'resources',

@@ -72,6 +72,7 @@ Claude should refine labels, ordering, grouping, and mobile navigation. Codex sh
 - Save and edit risk analysis lives in `src/save-analysis.js`.
 - Readiness calculation lives in `src/readiness.js`.
 - Category mapping lives in `src/taxonomy.js`.
+- Known top-level save-key taxonomy guards live in `src/schema-reference.js`; they protect stable AD keys from fallback classification but must not become a fixed-schema dependency.
 - The UI must never hide an unmapped imported path.
 - Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, coverage report generation, readiness calculation, immutable path edits, change tracking, added-key reset, safety analysis, progression-stage fixture coverage, and all non-fallback category coverage in generated late-game PC/Android fixtures.
 - Smoke tests must verify that synthetic QA fixture artifacts can be generated.

@@ -22,9 +22,10 @@ For each file in `qa-fixtures/*-save.txt`:
 4. Visit each category tab with a nonzero count.
 5. Use every stage filter that has nonzero paths in the fixture.
 6. Drill into `dimensions` on every fixture, and into `celestials` plus `reality.glyphs` when those paths exist.
-7. Edit at least one primitive leaf, one boolean, one Android big-number mantissa/exponent, and one subtree JSON value.
-8. Confirm Review edits shows before/after values and that Reset works.
-9. Tap Encode, then Copy, Share, and Download where the browser permits them.
+7. If safety warnings are visible, use Show all and Open/Find on at least one warning row.
+8. Edit at least one primitive leaf, one boolean, one Android big-number mantissa/exponent, and one subtree JSON value.
+9. Confirm Review edits shows before/after values and that Reset works.
+10. Tap Encode, then Copy, Share, and Download where the browser permits them.
 
 ## Mobile Viewport Pass
 
