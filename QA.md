@@ -51,7 +51,7 @@ Do not commit real saves. For each real save tested:
 
 1. Import the save from the public app.
 2. Open Show coverage & readiness.
-3. Use Copy QA summary for a value-free report suitable for GitHub issues. It includes coverage counts, unknown top-level counts, safety issue counts, path names, and safety warning samples, but not save values.
+3. Use Copy QA summary for a value-free report suitable for GitHub issues. It includes detected game stage, coverage counts, unknown top-level counts, safety issue counts, path names, and safety warning samples, but not save values.
 4. Download the coverage report JSON if Claude needs deeper taxonomy or warning review.
 5. Record any confusing labels, noisy safety warnings, missing warnings, or hard-to-find paths.
 6. Attach only QA summaries, coverage reports, or redacted notes to GitHub issues unless Berke explicitly approves sharing a save file.

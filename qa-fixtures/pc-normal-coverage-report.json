@@ -1,6 +1,7 @@
 {
   "generatedAt": "2026-06-02T00:00:00.000Z",
   "saveType": "pc",
+  "gameStage": "Normal",
   "totals": {
     "paths": 74,
     "editablePaths": 74,

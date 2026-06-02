@@ -37,6 +37,7 @@ const safetyIssueCountKey = (issue) => {
 
 export const buildCoverageReport = ({
   saveType,
+  gameStage = 'Unknown',
   nodes,
   coverage,
   changes = [],
@@ -93,6 +94,7 @@ export const buildCoverageReport = ({
   return {
     generatedAt,
     saveType,
+    gameStage: toStringField(gameStage, 'Unknown'),
     totals: {
       paths: coverage.total,
       editablePaths: coverage.editableCount,
@@ -167,6 +169,7 @@ export const buildQaSummary = (coverageReport) => {
     '',
     `Generated: ${coverageReport.generatedAt}`,
     `Save type: ${String(coverageReport.saveType ?? 'unknown').toUpperCase()}`,
+    `Game stage: ${String(coverageReport.gameStage ?? 'Unknown')}`,
     '',
     '## Totals',
     `- Paths: ${totals.paths ?? 0}`,

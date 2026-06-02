@@ -1,6 +1,7 @@
 {
   "generatedAt": "2026-06-02T00:00:00.000Z",
   "saveType": "android",
+  "gameStage": "Infinity",
   "totals": {
     "paths": 96,
     "editablePaths": 96,

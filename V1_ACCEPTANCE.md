@@ -18,7 +18,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Every indexed path is editable inline or through scoped JSON.
 - Unknown paths appear in fallback coverage, never hidden.
 - Stable known AD top-level keys are guarded against fallback classification.
-- Value-free QA summaries with coverage counts, unknown top-level counts, safety issue counts, and warning samples can be copied, and coverage report JSON can be copied or downloaded for real-save QA.
+- Value-free QA summaries with detected game stage, coverage counts, unknown top-level counts, safety issue counts, and warning samples can be copied, and coverage report JSON can be copied or downloaded for real-save QA.
 - Synthetic Normal, Infinity, Eternity, and late-game PC/Android fixtures can be exported for repeatable mobile QA.
 
 ## Mobile Navigation

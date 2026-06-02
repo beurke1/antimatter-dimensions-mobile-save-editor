@@ -129,6 +129,7 @@ export const createQaArtifacts = async () => {
     const analysisIssues = analyzeSaveData(saveData, definition.saveType);
     const report = buildCoverageReport({
       saveType: definition.saveType,
+      gameStage: definition.gameStage,
       nodes,
       coverage,
       changes: [],

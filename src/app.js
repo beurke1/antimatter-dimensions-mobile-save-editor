@@ -166,6 +166,7 @@ const rebuildIndex = () => {
   state.coverageReport = state.coverage
     ? buildCoverageReport({
       saveType: state.saveType,
+      gameStage: detectStage(state.data),
       nodes: state.nodes,
       coverage: state.coverage,
       changes: state.changes,

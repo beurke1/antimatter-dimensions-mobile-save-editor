@@ -190,6 +190,7 @@ assert.ok(androidFormatMismatchIssues.some((issue) => issue.path === 'infinityPo
 
 const warningSampleReport = buildCoverageReport({
   saveType: SaveType.PC,
+  gameStage: detectStage(samplePcSave),
   nodes,
   coverage,
   changes: [],
@@ -198,8 +199,10 @@ const warningSampleReport = buildCoverageReport({
 });
 assert.equal(warningSampleReport.safetySamples.length, pcFormatMismatchIssues.length);
 assert.equal(warningSampleReport.safetyIssueCounts['warning | Android numeric format'], 1);
+assert.equal(warningSampleReport.gameStage, STAGES.NORMAL);
 assert.ok(warningSampleReport.safetySamples.some((sample) => sample.path === 'antimatter' && sample.title === 'Android numeric format'));
 const warningQaSummary = buildQaSummary(warningSampleReport);
+assert.ok(warningQaSummary.includes('Game stage: Normal'));
 assert.ok(warningQaSummary.includes('## Safety Issue Counts'));
 assert.ok(warningQaSummary.includes('- warning | Android numeric format: 1'));
 assert.ok(warningQaSummary.includes('## Safety Samples'));
@@ -230,6 +233,7 @@ const unknownNodes = buildPathIndex(unknownPathSave, SaveType.PC);
 const unknownCoverage = calculateCoverage(unknownNodes);
 const unknownReport = buildCoverageReport({
   saveType: SaveType.PC,
+  gameStage: detectStage(unknownPathSave),
   nodes: unknownNodes,
   coverage: unknownCoverage,
   changes: [],
@@ -237,6 +241,7 @@ const unknownReport = buildCoverageReport({
   generatedAt: '2026-06-02T00:00:00.000Z',
 });
 assert.equal(unknownReport.totals.unknownPaths, 5);
+assert.equal(unknownReport.gameStage, STAGES.NORMAL);
 assert.deepEqual(unknownReport.unknownTopLevelCounts, {
   qqqBucket: 4,
   zzzFlag: 1,
@@ -351,6 +356,7 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
 
   const report = buildCoverageReport({
     saveType,
+    gameStage: detectStage(decoded.data),
     nodes: fixtureNodes,
     coverage: fixtureCoverage,
     changes: [],
@@ -358,6 +364,7 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
   });
   assert.equal(report.totals.paths, fixtureCoverage.total);
   assert.equal(report.totals.editablePaths, fixtureCoverage.editableCount);
+  assert.equal(report.gameStage, detectStage(decoded.data));
   assert.equal(report.missingCategories.length, 0);
   assert.ok(report.topLevelPaths.includes('celestials'));
   assert.ok(report.valueTypes.object > 0);
@@ -365,6 +372,7 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
   const qaSummary = buildQaSummary(report);
   assert.ok(qaSummary.includes('Real-Save QA Summary'));
   assert.ok(qaSummary.includes(`Save type: ${saveType.toUpperCase()}`));
+  assert.ok(qaSummary.includes(`Game stage: ${report.gameStage}`));
   assert.ok(qaSummary.includes(`- Paths: ${fixtureCoverage.total}`));
   assert.ok(qaSummary.includes('- Errors: 0'));
   assert.ok(!qaSummary.includes('1e1200'), 'QA summary should not include save values');
