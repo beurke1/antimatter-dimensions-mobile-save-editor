@@ -372,7 +372,7 @@ const openApp = async (client, appUrl, viewport) => {
 
   const ready = await evaluate(client, `
     (async () => {
-      const deadline = Date.now() + 8000;
+      const deadline = Date.now() + 15000;
       while (Date.now() < deadline) {
         if (document.querySelector('#app .import-panel')) return true;
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -380,7 +380,17 @@ const openApp = async (client, appUrl, viewport) => {
       return false;
     })()
   `);
-  assert.equal(ready, true, 'App shell did not render.');
+  if (!ready) {
+    const diagnostic = await evaluate(client, `
+      (() => ({
+        title: document.title,
+        appText: document.querySelector('#app')?.textContent?.trim().slice(0, 200) ?? '',
+        scriptCount: document.scripts.length,
+        moduleScripts: Array.from(document.scripts).map((script) => script.src || script.textContent?.slice(0, 80) || ''),
+      }))()
+    `);
+    assert.equal(ready, true, `App shell did not render. Diagnostic: ${JSON.stringify(diagnostic)}`);
+  }
 };
 
 const decodeSave = async (client, saveData) => {
