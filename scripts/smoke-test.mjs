@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { CATEGORIES } from '../src/taxonomy.js';
 import { buildCoverageReport } from '../src/coverage-report.js';
+import { buildReadinessSummary } from '../src/readiness.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
 import { createComprehensiveAndroidSave, createComprehensivePcSave } from './fixture-saves.mjs';
@@ -180,6 +181,34 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
   assert.equal(report.missingCategories.length, 0);
   assert.ok(report.topLevelPaths.includes('celestials'));
   assert.ok(report.valueTypes.object > 0);
+
+  const cleanReadiness = buildReadinessSummary({
+    coverageReport: report,
+    analysisSummary: safetySummary,
+    isDirty: false,
+    encodedOutput: '',
+  });
+  assert.equal(cleanReadiness.status, 'encode');
+  assert.equal(cleanReadiness.canEncode, true);
+  assert.equal(cleanReadiness.readyToImport, false);
+
+  const encodedReadiness = buildReadinessSummary({
+    coverageReport: report,
+    analysisSummary: safetySummary,
+    isDirty: false,
+    encodedOutput: encoded,
+  });
+  assert.equal(encodedReadiness.status, 'ready');
+  assert.equal(encodedReadiness.readyToImport, true);
+
+  const blockedReadiness = buildReadinessSummary({
+    coverageReport: report,
+    analysisSummary: { errors: 1, warnings: 0, info: 0 },
+    isDirty: false,
+    encodedOutput: '',
+  });
+  assert.equal(blockedReadiness.status, 'blocked');
+  assert.equal(blockedReadiness.canEncode, false);
 
   return fixtureCoverage.total;
 };

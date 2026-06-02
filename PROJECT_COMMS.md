@@ -28,6 +28,8 @@ This is a clean-slate app. Earlier copied/prototype code is reference only.
 
 The editor must be comprehensive: every decoded PC or Android save item should appear in the browser. Primitive leaves are edited inline. Objects and arrays are edited through scoped JSON so nested or unusual values are still editable without using full raw JSON.
 
+Use `V1_ACCEPTANCE.md` as the current draft acceptance checklist before Berke tests on iPhone Safari.
+
 ## Current Engineering State
 
 Initial clean scaffold created:
@@ -59,6 +61,7 @@ Core behavior:
 - Encode, copy, share, and download.
 - Generated late-game PC and Android fixtures verify category and scope coverage.
 - Imported saves can export a coverage report JSON for QA/review.
+- Readiness panel distinguishes no-save, ready-to-encode, blocked, review, and ready-to-import states.
 
 ## Claude Inbox
 
@@ -126,6 +129,13 @@ Sixth follow-up implementation added:
 - Mobile coverage panel now has Copy report and Download JSON actions.
 - Reports include totals, category/stage/type/depth counts, top-level paths, unknown paths, safety counts, and changed-path count.
 - Smoke tests assert report totals and category completeness on generated PC/Android fixtures.
+
+Seventh follow-up implementation added:
+
+- `V1_ACCEPTANCE.md` defines the draft minimum bar for Berke testing.
+- `src/readiness.js` computes ready-to-encode versus ready-to-import state.
+- Mobile readiness panel shows path coverage, classification, safety, and export freshness.
+- Smoke tests cover readiness states for clean, encoded, and blocked saves.
 
 Open engineering tasks:
 

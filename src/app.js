@@ -14,6 +14,7 @@ import {
 } from './path-index.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from './save-analysis.js';
 import { buildCoverageReport } from './coverage-report.js';
+import { buildReadinessSummary } from './readiness.js';
 import { CATEGORIES, getCategory } from './taxonomy.js';
 
 const appRoot = document.querySelector('#app');
@@ -40,6 +41,7 @@ const state = {
   analysisSummary: { errors: 0, warnings: 0, info: 0 },
   coverage: null,
   coverageReport: null,
+  readiness: buildReadinessSummary({ coverageReport: null }),
   activeCategoryId: 'all',
   activeStageId: 'all',
   scopePath: 'root',
@@ -136,6 +138,15 @@ const stageMatchesFilter = (stage, filterId) => {
   return normalizedStage.includes(filterId);
 };
 
+const refreshReadiness = () => {
+  state.readiness = buildReadinessSummary({
+    coverageReport: state.coverageReport,
+    analysisSummary: state.analysisSummary,
+    isDirty: state.dirty,
+    encodedOutput: state.encodedOutput,
+  });
+};
+
 const rebuildIndex = () => {
   state.nodes = state.data ? buildPathIndex(state.data, state.saveType) : [];
   state.changes = state.data && state.originalData
@@ -158,6 +169,7 @@ const rebuildIndex = () => {
       analysisIssues: state.analysisIssues,
     })
     : null;
+  refreshReadiness();
 
   if (state.scopePath !== 'root' && !getNodeByPath(state.nodes, state.scopePath)) {
     state.scopePath = 'root';
@@ -176,6 +188,7 @@ const markDataChanged = () => {
   rebuildIndex();
   state.dirty = state.changes.length > 0;
   state.encodedOutput = '';
+  refreshReadiness();
 };
 
 const updateDataAtNode = (node, value, sourceLabel = 'field') => {
@@ -403,6 +416,34 @@ const renderCoverage = () => {
       <div class="coverage-actions">
         <button type="button" class="secondary-button compact" data-action="copy-report">Copy report</button>
         <button type="button" class="secondary-button compact" data-action="download-report">Download JSON</button>
+      </div>
+    </section>
+  `;
+};
+
+const renderReadinessPanel = () => {
+  if (!state.data) {
+    return '';
+  }
+
+  return `
+    <section class="panel readiness-panel ${escapeHtml(state.readiness.status)}" aria-labelledby="readiness-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="readiness-title">Readiness</h2>
+          <p>${escapeHtml(state.readiness.label)}</p>
+        </div>
+      </div>
+      <div class="readiness-list">
+        ${state.readiness.items.map((item) => `
+          <article class="readiness-row ${escapeHtml(item.state)}">
+            <span>${escapeHtml(item.state)}</span>
+            <div>
+              <strong>${escapeHtml(item.label)}</strong>
+              <p>${escapeHtml(item.detail)}</p>
+            </div>
+          </article>
+        `).join('')}
       </div>
     </section>
   `;
@@ -839,6 +880,7 @@ function render() {
         ${renderImportPanel()}
         ${renderMessages()}
         ${renderCoverage()}
+        ${renderReadinessPanel()}
         ${renderCategoryTabs()}
         ${renderStageTabs()}
         ${renderFilters()}
@@ -892,6 +934,7 @@ const handleEncode = async () => {
   try {
     state.encodedOutput = await encodeSaveData(state.data, state.saveType);
     state.dirty = false;
+    refreshReadiness();
     setNotice('Encoded output generated.', 'success');
   } catch (error) {
     setError(error instanceof Error ? error.message : 'Could not encode save.');

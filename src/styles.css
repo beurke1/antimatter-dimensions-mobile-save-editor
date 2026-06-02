@@ -377,6 +377,76 @@ h2 {
   padding: 0 12px 12px;
 }
 
+.readiness-panel.ready {
+  border-color: rgba(20, 115, 79, 0.32);
+}
+
+.readiness-panel.blocked {
+  border-color: rgba(162, 56, 52, 0.32);
+}
+
+.readiness-panel.review,
+.readiness-panel.encode {
+  border-color: rgba(138, 90, 0, 0.28);
+}
+
+.readiness-list {
+  display: grid;
+}
+
+.readiness-row {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-top: 1px solid #e5e9ee;
+}
+
+.readiness-row > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 25px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.readiness-row.pass > span {
+  background: #e3f3ed;
+  color: var(--success);
+}
+
+.readiness-row.warn > span,
+.readiness-row.pending > span {
+  background: #fff3d7;
+  color: var(--amber);
+}
+
+.readiness-row.fail > span {
+  background: #fde8e6;
+  color: var(--danger);
+}
+
+.readiness-row strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.86rem;
+  line-height: 1.25;
+}
+
+.readiness-row p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .category-tabs {
   position: sticky;
   top: 69px;

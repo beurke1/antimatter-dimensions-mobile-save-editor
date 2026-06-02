@@ -34,6 +34,7 @@ Build a mobile-first Antimatter Dimensions save editor that can be used througho
 - Per-path reset and reset-all controls before export.
 - Safety analysis for invalid values, added/removed paths, type changes, and late-game edit notes.
 - Copyable/downloadable coverage report JSON for QA and Claude review.
+- Readiness summary for ready-to-encode versus ready-to-import state.
 - Encode, copy, share, and download output.
 - Generated comprehensive PC and Android fixture tests for category and scope coverage.
 
@@ -65,6 +66,7 @@ Claude should refine labels, ordering, grouping, and mobile navigation. Codex sh
 - Path inventory and immutable edits live in `src/path-index.js`.
 - Coverage report generation lives in `src/coverage-report.js`.
 - Save and edit risk analysis lives in `src/save-analysis.js`.
+- Readiness calculation lives in `src/readiness.js`.
 - Category mapping lives in `src/taxonomy.js`.
 - The UI must never hide an unmapped imported path.
-- Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, added-key reset, safety analysis, and all non-fallback category coverage in generated late-game PC/Android fixtures.
+- Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, coverage report generation, readiness calculation, immutable path edits, change tracking, added-key reset, safety analysis, and all non-fallback category coverage in generated late-game PC/Android fixtures.

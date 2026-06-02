@@ -39,3 +39,5 @@ The smoke test verifies PC and Android round trips, path indexing, scoped naviga
 ## Collaboration
 
 Read `PROJECT_COMMS.md` first. Claude owns design direction; Codex owns implementation and verification.
+
+Use `V1_ACCEPTANCE.md` as the current draft checklist for deciding when the app is ready for Berke to test on iPhone Safari.
