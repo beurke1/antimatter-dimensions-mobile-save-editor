@@ -23,7 +23,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Changed-path review with reset controls.
 - Safety check for invalid values and risky structural edits before export.
 - Stage-aware quick-edit presets with PC/Android numeric format preservation.
-- Copy/download coverage reports for imported saves.
+- Copy value-free QA summaries and copy/download coverage reports for imported saves.
 - Encode, copy, share, and download.
 - Generated comprehensive PC and Android fixture coverage tests.
 - Synthetic late-game QA fixture exports for public mobile testing.

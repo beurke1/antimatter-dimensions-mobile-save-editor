@@ -84,3 +84,73 @@ export const buildCoverageReport = ({
     safety: issueCounts,
   };
 };
+
+const formatCountBlock = (counts) => {
+  const entries = Object.entries(counts ?? {});
+  return entries.length
+    ? entries.map(([key, value]) => `- ${key}: ${value}`)
+    : ['- none'];
+};
+
+const formatListBlock = (items, limit = 40) => {
+  if (!items || items.length === 0) {
+    return ['- none'];
+  }
+
+  const visibleItems = items.slice(0, limit).map((item) => `- ${item}`);
+  const remaining = items.length - visibleItems.length;
+
+  return remaining > 0
+    ? [...visibleItems, `- ... ${remaining} more`]
+    : visibleItems;
+};
+
+export const buildQaSummary = (coverageReport) => {
+  if (!coverageReport) {
+    return '';
+  }
+
+  const totals = coverageReport.totals ?? {};
+  const safety = coverageReport.safety ?? {};
+
+  return [
+    '# Antimatter Dimensions Real-Save QA Summary',
+    '',
+    'This summary intentionally excludes save values and encoded save text.',
+    '',
+    `Generated: ${coverageReport.generatedAt}`,
+    `Save type: ${String(coverageReport.saveType ?? 'unknown').toUpperCase()}`,
+    '',
+    '## Totals',
+    `- Paths: ${totals.paths ?? 0}`,
+    `- Editable paths: ${totals.editablePaths ?? 0}`,
+    `- Leaves: ${totals.leaves ?? 0}`,
+    `- Containers: ${totals.containers ?? 0}`,
+    `- Changed paths: ${totals.changedPaths ?? 0}`,
+    `- Unknown paths: ${totals.unknownPaths ?? 0}`,
+    '',
+    '## Safety',
+    `- Errors: ${safety.error ?? 0}`,
+    `- Warnings: ${safety.warning ?? 0}`,
+    `- Notes: ${safety.info ?? 0}`,
+    '',
+    '## Missing Categories',
+    ...formatListBlock(coverageReport.missingCategories),
+    '',
+    '## Category Counts',
+    ...formatCountBlock(coverageReport.categories),
+    '',
+    '## Stage Counts',
+    ...formatCountBlock(coverageReport.stages),
+    '',
+    '## Value Types',
+    ...formatCountBlock(coverageReport.valueTypes),
+    '',
+    '## Unknown Paths',
+    ...formatListBlock(coverageReport.unknownPaths),
+    '',
+    '## Top-Level Paths',
+    ...formatListBlock(coverageReport.topLevelPaths),
+    '',
+  ].join('\n');
+};

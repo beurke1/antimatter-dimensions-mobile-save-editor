@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { CATEGORIES } from '../src/taxonomy.js';
 import { PRESETS, applyPreset } from '../src/presets.js';
-import { buildCoverageReport } from '../src/coverage-report.js';
+import { buildCoverageReport, buildQaSummary } from '../src/coverage-report.js';
 import { buildReadinessSummary } from '../src/readiness.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
@@ -184,6 +184,14 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
   assert.equal(report.missingCategories.length, 0);
   assert.ok(report.topLevelPaths.includes('celestials'));
   assert.ok(report.valueTypes.object > 0);
+
+  const qaSummary = buildQaSummary(report);
+  assert.ok(qaSummary.includes('Real-Save QA Summary'));
+  assert.ok(qaSummary.includes(`Save type: ${saveType.toUpperCase()}`));
+  assert.ok(qaSummary.includes(`- Paths: ${fixtureCoverage.total}`));
+  assert.ok(qaSummary.includes('- Errors: 0'));
+  assert.ok(!qaSummary.includes('1e1200'), 'QA summary should not include save values');
+  assert.ok(!qaSummary.includes('AntimatterDimensionsSavefileFormat'), 'QA summary should not include encoded save text');
 
   const cleanReadiness = buildReadinessSummary({
     coverageReport: report,

@@ -1,0 +1,43 @@
+name: Real-save QA report
+description: Report coverage and warning behavior from a real save without sharing the save itself.
+title: "Real-save QA: "
+labels:
+  - real-save-qa
+  - verification
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste encoded save strings or private save JSON here.
+        Use the public app, import the save, open **Show coverage & readiness**, then use **Copy QA summary**.
+  - type: textarea
+    id: qa-summary
+    attributes:
+      label: QA summary
+      description: Paste the output from Copy QA summary here. It contains counts and path names only, not save values.
+      placeholder: |
+        # Antimatter Dimensions Real-Save QA Summary
+        ...
+    validations:
+      required: true
+  - type: textarea
+    id: confusing-labels
+    attributes:
+      label: Confusing labels or navigation gaps
+      description: Note any categories, rows, warnings, or controls that were hard to understand.
+    validations:
+      required: false
+  - type: textarea
+    id: safety-noise
+    attributes:
+      label: Safety warning noise
+      description: List warnings that seemed too noisy, unclear, or missing.
+    validations:
+      required: false
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy check
+      options:
+        - label: I did not include an encoded save string or decoded save values.
+          required: true

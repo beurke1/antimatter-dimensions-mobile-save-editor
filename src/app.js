@@ -13,7 +13,7 @@ import {
   setValueAtSegments,
 } from './path-index.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from './save-analysis.js';
-import { buildCoverageReport } from './coverage-report.js';
+import { buildCoverageReport, buildQaSummary } from './coverage-report.js';
 import { buildReadinessSummary } from './readiness.js';
 import { CATEGORIES, getCategory } from './taxonomy.js';
 import { PRESETS, applyPreset } from './presets.js';
@@ -936,6 +936,7 @@ const renderDetailsSection = () => {
         <div><span>Fallback</span><strong>${state.coverage.uncategorizedCount}</strong></div>
       </div>
       <div class="coverage-actions">
+        <button type="button" class="secondary-button compact" data-action="copy-qa-summary">Copy QA summary</button>
         <button type="button" class="secondary-button compact" data-action="copy-report">Copy report</button>
         <button type="button" class="secondary-button compact" data-action="download-report">Download JSON</button>
       </div>
@@ -1114,6 +1115,10 @@ const getCoverageReportText = () => {
   return state.coverageReport ? JSON.stringify(state.coverageReport, null, 2) : '';
 };
 
+const getQaSummaryText = () => {
+  return buildQaSummary(state.coverageReport);
+};
+
 /* ── EVENT DELEGATION ── */
 
 document.addEventListener('click', async (event) => {
@@ -1279,6 +1284,13 @@ document.addEventListener('click', async (event) => {
   if (action === 'copy-report') {
     const copied = await copyText(getCoverageReportText());
     copied ? setNotice('Coverage report copied.', 'success') : setError('Could not copy coverage report.');
+    render();
+    return;
+  }
+
+  if (action === 'copy-qa-summary') {
+    const copied = await copyText(getQaSummaryText());
+    copied ? setNotice('QA summary copied.', 'success') : setError('Could not copy QA summary.');
     render();
     return;
   }

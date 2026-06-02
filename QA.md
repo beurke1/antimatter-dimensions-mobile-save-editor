@@ -49,8 +49,10 @@ Target iPhone Safari first. At minimum check 390x844 logical pixels and one narr
 Do not commit real saves. For each real save tested:
 
 1. Import the save from the public app.
-2. Download the coverage report JSON.
-3. Record save type, total paths, fallback count, missing categories, safety error/warning counts, and any confusing labels.
-4. Attach only coverage reports or redacted summaries to GitHub issues unless Berke explicitly approves sharing a save file.
+2. Open Show coverage & readiness.
+3. Use Copy QA summary for a value-free report suitable for GitHub issues.
+4. Download the coverage report JSON if Claude needs deeper taxonomy review.
+5. Record any confusing labels, noisy safety warnings, missing warnings, or hard-to-find paths.
+6. Attach only QA summaries, coverage reports, or redacted notes to GitHub issues unless Berke explicitly approves sharing a save file.
 
 Use issue #2 for Codex verification findings and issue #1 for Claude taxonomy/navigation feedback.

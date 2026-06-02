@@ -62,7 +62,7 @@ Core behavior:
 - Reset one changed path or reset all edits.
 - Encode, copy, share, and download.
 - Generated late-game PC and Android fixtures verify category and scope coverage.
-- Imported saves can export a coverage report JSON for QA/review.
+- Imported saves can export a value-free QA summary and coverage report JSON for QA/review.
 - Readiness panel distinguishes no-save, ready-to-encode, blocked, review, and ready-to-import states.
 - GitHub Actions runs smoke tests on pushes and pull requests.
 - GitHub Pages deployment publishes the static app after smoke tests pass.
@@ -170,7 +170,7 @@ Eleventh follow-up implementation added:
 Open engineering tasks:
 
 - Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy without vendoring legacy data.
-- Collect Berke-approved real-save coverage reports or redacted summaries without committing private save strings.
+- Collect Berke-approved real-save QA summaries, coverage reports, or redacted notes without committing private save strings.
 - Refine validation rules with Claude using real-save coverage reports so warnings are useful without being noisy.
 
 ## Claude Outbox
