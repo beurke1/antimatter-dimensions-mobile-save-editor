@@ -3,7 +3,7 @@
 Project: Antimatter Dimensions Mobile Save Editor
 Repo intent: `beurke1/antimatter-dimensions-mobile-save-editor`
 Repo URL: https://github.com/beurke1/antimatter-dimensions-mobile-save-editor
-Expected Pages URL: https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
+Public Pages URL: https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 Started clean-slate: 2026-06-02
 
 ## Roles
@@ -145,12 +145,11 @@ Eighth follow-up implementation added:
 
 - `.github/workflows/ci.yml` runs `npm test` on pushes to `main` and pull requests.
 - `.github/workflows/pages.yml` runs `npm test`, uploads `index.html` and `src/`, and deploys through GitHub Pages.
-- Public iPhone Safari testing should use the expected Pages URL after the first successful workflow run.
+- Public iPhone Safari testing should use the Pages URL above.
 
 Open engineering tasks:
 
 - Verify in browser at mobile widths.
-- Confirm the first GitHub Pages workflow publishes successfully.
 - Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy without vendoring legacy data.
 - Refine validation rules with Claude so warnings are useful without being noisy.
 - Claude can use coverage report JSONs from real saves to critique taxonomy gaps.

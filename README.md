@@ -4,7 +4,7 @@ Clean-slate mobile save editor for Antimatter Dimensions.
 
 GitHub repo: https://github.com/beurke1/antimatter-dimensions-mobile-save-editor
 
-Expected public test URL after the first Pages deployment:
+Public test URL:
 https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 
 ## What Works
@@ -45,7 +45,7 @@ GitHub Actions runs the same smoke test on pushes and pull requests. The Pages d
 
 ## Public Mobile Testing
 
-After the Pages workflow completes on `main`, use the public test URL above for iPhone Safari checks.
+Use the public test URL above for iPhone Safari checks.
 
 ## Collaboration
 
