@@ -201,6 +201,7 @@ Thirteenth follow-up implementation added:
 - The mobile path browser now supports structural edits: object cards can add a new key from JSON, array cards can append a JSON item, and any non-root path can be removed. Existing review, reset, safety, and export flows handle the resulting added/removed paths.
 - Rendered mobile verification now includes a structural edit/export case that adds `options.customNote`, appends to `dimensions.antimatter`, removes `options.notation`, encodes the save, decodes the output, and asserts the exported structure exactly matches those edits.
 - The synthetic PC late-game QA fixture now follows the current source player shape much more closely, expanding from 235 to 1,576 indexed paths across automation, records, speedrun, Reality glyph/filter/automator state, Celestials, Pelle rifts, and dense options. Smoke tests assert representative source-landmark paths remain present.
+- Packed integer bitfields now expose mobile bit toggles for paths such as challenge completions, achievement bit arrays, upgrade bits, unlock bits, quote/progress/hint bits, and tab notification bits, while preserving raw integer edits. Rendered mobile verification toggles `challenge.normal.completedBits` bit 2 and decodes the encoded save to assert the exact packed value `4`.
 
 Open engineering tasks:
 

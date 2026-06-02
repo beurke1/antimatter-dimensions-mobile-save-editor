@@ -60,6 +60,7 @@ const state = {
   showDetails: false,
   showPresets: false,
   showAllSafety: false,
+  openBitfieldPath: null,
 };
 
 const escapeHtml = (value) => {
@@ -140,6 +141,25 @@ const stageCssClass = (stage) => {
   }
 
   return '';
+};
+
+const BITFIELD_PATH_PATTERN = /(?:achievementBits|secretAchievementBits|triggeredTabNotificationBits|hiddenTabBits|hiddenSubtabBits|completedBits|upgradeBits|upgReqs|unlockBits|quoteBits|progressBits|hintBits|requirementBits)/iu;
+const BITFIELD_BIT_COUNT = 32;
+
+const isBitfieldNode = (node, value) => {
+  if (!node || node.type !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+    return false;
+  }
+
+  const candidateText = `${node.path} ${node.parentPath ?? ''} ${node.key}`;
+  return BITFIELD_PATH_PATTERN.test(candidateText);
+};
+
+const getBitfieldState = (value) => {
+  const bits = BigInt(value);
+  return Array.from({ length: BITFIELD_BIT_COUNT }, (_, index) => {
+    return ((bits >> BigInt(index)) & 1n) === 1n;
+  });
 };
 
 const refreshReadiness = () => {
@@ -307,6 +327,23 @@ const addChildToContainer = (card) => {
   markDataChanged();
   setNotice(`${formatPath(childSegments)} added. Review before encoding.`, 'success');
   render();
+};
+
+const toggleBitAtNode = (node, bitIndex) => {
+  const currentValue = getValueAtSegments(state.data, node.segments);
+
+  if (
+    !isBitfieldNode(node, currentValue) ||
+    !Number.isInteger(bitIndex) ||
+    bitIndex < 0 ||
+    bitIndex >= BITFIELD_BIT_COUNT
+  ) {
+    return;
+  }
+
+  const nextValue = Number(BigInt(currentValue) ^ (1n << BigInt(bitIndex)));
+  state.openBitfieldPath = node.path;
+  updateDataAtNode(node, nextValue, 'bit toggle');
 };
 
 const revealIssuePath = (path) => {
@@ -696,6 +733,33 @@ const renderBooleanEditor = (node, value) => {
   `;
 };
 
+const renderBitfieldEditor = (node, value) => {
+  const bitStates = getBitfieldState(value);
+  const enabledCount = bitStates.filter(Boolean).length;
+
+  return `
+    <details class="bitfield-editor" ${state.openBitfieldPath === node.path ? 'open' : ''}>
+      <summary>
+        <span>${enabledCount} on</span>
+      </summary>
+      <div class="bit-grid" aria-label="${escapeHtml(node.path)} bit toggles">
+        ${bitStates.map((enabled, index) => `
+          <button
+            type="button"
+            class="${enabled ? 'active' : ''}"
+            data-action="toggle-bit"
+            data-bit-index="${index}"
+            aria-pressed="${enabled ? 'true' : 'false'}"
+            aria-label="${escapeHtml(`${node.path} bit ${index}`)}"
+          >
+            ${index}
+          </button>
+        `).join('')}
+      </div>
+    </details>
+  `;
+};
+
 const renderLeafEditor = (node) => {
   const value = getValueAtSegments(state.data, node.segments);
 
@@ -704,6 +768,8 @@ const renderLeafEditor = (node) => {
   }
 
   if (node.type === 'number') {
+    const bitfieldEditor = isBitfieldNode(node, value) ? renderBitfieldEditor(node, value) : '';
+
     return `
       <input
         class="field-input"
@@ -713,6 +779,7 @@ const renderLeafEditor = (node) => {
         value="${escapeHtml(value)}"
         autocomplete="off"
       />
+      ${bitfieldEditor}
     `;
   }
 
@@ -1384,6 +1451,17 @@ document.addEventListener('click', async (event) => {
 
     if (node) {
       updateDataAtNode(node, !getValueAtSegments(state.data, node.segments), 'switch');
+    }
+    return;
+  }
+
+  if (action === 'toggle-bit') {
+    const card = target.closest('[data-node-path]');
+    const node = card ? getNode(card.dataset.nodePath) : null;
+    const bitIndex = Number(target.dataset.bitIndex);
+
+    if (node) {
+      toggleBitAtNode(node, bitIndex);
     }
     return;
   }

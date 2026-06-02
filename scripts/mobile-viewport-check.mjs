@@ -1046,6 +1046,40 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         };
       }
 
+      if (${JSON.stringify(workflow)} === 'bitfield-toggle-export') {
+        const bitfieldPath = 'challenge.normal.completedBits';
+        await setSearch(bitfieldPath);
+        await waitFor(() => card(bitfieldPath), 'bitfield path card');
+        const beforeValue = Number(card(bitfieldPath)?.querySelector('[data-editor-type="number"]')?.value ?? 0);
+        const bitfieldEditor = card(bitfieldPath)?.querySelector('.bitfield-editor');
+        if (!bitfieldEditor) throw new Error('Missing bitfield editor');
+        bitfieldEditor.open = true;
+
+        const bitButton = card(bitfieldPath)?.querySelector('[data-action="toggle-bit"][data-bit-index="2"]');
+        if (!bitButton) throw new Error('Missing bit 2 button');
+        bitButton.click();
+        await waitFor(() => card(bitfieldPath)?.classList.contains('changed'), 'bitfield edit');
+
+        const afterInputValue = Number(card(bitfieldPath)?.querySelector('[data-editor-type="number"]')?.value ?? 0);
+        const bit2Active = card(bitfieldPath)?.querySelector('[data-action="toggle-bit"][data-bit-index="2"]')?.classList.contains('active') ?? false;
+
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'bitfield encode');
+        const { decodeSave } = await import('./src/save-codec.js');
+        const decoded = await decodeSave(encoded);
+
+        return {
+          workflow: 'bitfield-toggle-export',
+          encodedPrefix: encoded.slice(0, 37),
+          bitfieldRendered: Boolean(bitfieldEditor),
+          beforeValue,
+          afterInputValue,
+          bit2Active,
+          exactCompletedBits: decoded.data.challenge?.normal?.completedBits === 4,
+          changedRows: document.querySelectorAll('.path-card.changed').length,
+        };
+      }
+
       if (${JSON.stringify(workflow)} === 'deep-scope-edit') {
         await clickScope('celestials');
         await clickScope('celestials.ra');
@@ -1337,6 +1371,16 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('structural editor workflow did not produce an encoded PC save');
       }
     }
+    if (caseConfig.editorWorkflow === 'bitfield-toggle-export') {
+      if (!editorWorkflow?.bitfieldRendered) failures.push('bitfield workflow did not render bit toggle controls');
+      if (editorWorkflow?.beforeValue !== 0 || editorWorkflow?.afterInputValue !== 4 || !editorWorkflow?.bit2Active) {
+        failures.push('bitfield workflow did not toggle bit 2 into the raw integer field');
+      }
+      if (!editorWorkflow?.exactCompletedBits) failures.push('bitfield workflow did not preserve the exact packed integer in encoded output');
+      if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) {
+        failures.push('bitfield workflow did not produce an encoded PC save');
+      }
+    }
     if (caseConfig.editorWorkflow === 'deep-scope-edit') {
       if (!editorWorkflow?.levelChanged) failures.push('deep scoped browser workflow did not mark celestial pet level changed');
       if (!editorWorkflow?.activeBreadcrumb?.includes('teresa')) {
@@ -1427,6 +1471,12 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createNormalPcSave(),
       editorWorkflow: 'structural-add-remove',
+    },
+    {
+      name: 'pc-bitfield-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createNormalPcSave(),
+      editorWorkflow: 'bitfield-toggle-export',
     },
     {
       name: 'pc-preset-iphone-se',

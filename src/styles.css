@@ -521,6 +521,7 @@ button:disabled { cursor: default; opacity: 0.45; }
 
 .filter-bar input:focus, .filter-bar select:focus { border-color: var(--primary); }
 
+.filter-bar input { text-overflow: ellipsis; }
 .filter-bar select { appearance: none; -webkit-appearance: none; }
 
 .changed-toggle {
@@ -932,13 +933,13 @@ button:disabled { cursor: default; opacity: 0.45; }
   font-size: 0.8rem;
 }
 
-.structure-editor, .subtree-editor {
+.bitfield-editor, .structure-editor, .subtree-editor {
   min-width: 0;
   max-width: 100%;
   margin-top: 10px;
 }
 
-.structure-editor summary, .subtree-editor summary {
+.bitfield-editor summary, .structure-editor summary, .subtree-editor summary {
   min-height: 38px;
   display: flex;
   align-items: center;
@@ -950,16 +951,50 @@ button:disabled { cursor: default; opacity: 0.45; }
   -webkit-appearance: none;
 }
 
+.bitfield-editor summary::-webkit-details-marker,
 .structure-editor summary::-webkit-details-marker,
 .subtree-editor summary::-webkit-details-marker { display: none; }
+.bitfield-editor summary::before { content: '+ Edit bits'; }
+.bitfield-editor[open] summary::before { content: '- Collapse bits'; }
 .structure-editor summary::before { content: '+ Add child'; }
 .structure-editor[open] summary::before { content: '- Collapse add'; }
 .subtree-editor summary::before { content: '+ Edit JSON'; }
 .subtree-editor[open] summary::before { content: '- Collapse JSON'; }
+.bitfield-editor summary span {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.bitfield-editor[open] summary span { display: inline-flex; }
 .structure-editor[open] summary { content: ''; }
 .structure-editor[open] summary span { display: none; }
 .subtree-editor[open] summary { content: ''; }
 .subtree-editor[open] summary span { display: none; }
+
+.bit-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.bit-grid button {
+  min-width: 0;
+  min-height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.bit-grid button.active {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+  color: var(--success);
+}
 
 .structure-fields {
   display: grid;
