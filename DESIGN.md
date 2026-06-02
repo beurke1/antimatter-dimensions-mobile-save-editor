@@ -32,6 +32,7 @@ Build a mobile-first Antimatter Dimensions save editor that can be used througho
 - Scoped JSON editing for objects, arrays, and edge-case values.
 - Changed-path review with original/current previews.
 - Per-path reset and reset-all controls before export.
+- Safety analysis for invalid values, added/removed paths, type changes, and late-game edit notes.
 - Encode, copy, share, and download output.
 
 ## Taxonomy
@@ -60,6 +61,7 @@ Claude should refine labels, ordering, grouping, and mobile navigation. Codex sh
 
 - Codec logic lives in `src/save-codec.js`.
 - Path inventory and immutable edits live in `src/path-index.js`.
+- Save and edit risk analysis lives in `src/save-analysis.js`.
 - Category mapping lives in `src/taxonomy.js`.
 - The UI must never hide an unmapped imported path.
-- Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, immutable path edits, change tracking, and added-key reset.
+- Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, immutable path edits, change tracking, added-key reset, and safety analysis.

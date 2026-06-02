@@ -15,6 +15,7 @@ Clean-slate mobile save editor for Antimatter Dimensions.
 - Direct mantissa/exponent edits for Android-style big-number objects.
 - Scoped JSON edits for objects and arrays.
 - Changed-path review with reset controls.
+- Safety check for invalid values and risky structural edits before export.
 - Encode, copy, share, and download.
 
 ## Run Locally
@@ -31,7 +32,7 @@ Open `http://localhost:5174`.
 npm test
 ```
 
-The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage counting, immutable path edits, change tracking, and reset behavior.
+The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage counting, immutable path edits, change tracking, reset behavior, and safety analysis.
 
 ## Collaboration
 

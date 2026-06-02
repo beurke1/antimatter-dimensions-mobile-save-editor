@@ -12,6 +12,7 @@ import {
   isNodeWithinScope,
   setValueAtSegments,
 } from './path-index.js';
+import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from './save-analysis.js';
 import { CATEGORIES, getCategory } from './taxonomy.js';
 
 const appRoot = document.querySelector('#app');
@@ -34,6 +35,8 @@ const state = {
   source: null,
   nodes: [],
   changes: [],
+  analysisIssues: [],
+  analysisSummary: { errors: 0, warnings: 0, info: 0 },
   coverage: null,
   activeCategoryId: 'all',
   activeStageId: 'all',
@@ -136,6 +139,13 @@ const rebuildIndex = () => {
   state.changes = state.data && state.originalData
     ? buildChangeIndex(state.originalData, state.data, state.saveType)
     : [];
+  state.analysisIssues = state.data
+    ? [
+      ...analyzeSaveData(state.data, state.saveType),
+      ...analyzeEditRisks(state.changes),
+    ]
+    : [];
+  state.analysisSummary = summarizeAnalysis(state.analysisIssues);
   state.coverage = state.nodes.length ? calculateCoverage(state.nodes) : null;
 
   if (state.scopePath !== 'root' && !getNodeByPath(state.nodes, state.scopePath)) {
@@ -373,6 +383,10 @@ const renderCoverage = () => {
         <span>Changed</span>
         <strong>${state.changes.length}</strong>
       </div>
+      <div>
+        <span>Warnings</span>
+        <strong>${state.analysisSummary.errors + state.analysisSummary.warnings}</strong>
+      </div>
     </section>
   `;
 };
@@ -495,6 +509,39 @@ const renderChangeReview = () => {
         `).join('')}
       </div>
       ${remainingCount ? `<p class="change-more">${remainingCount} more shown by the Changed filter.</p>` : ''}
+    </section>
+  `;
+};
+
+const renderSafetyPanel = () => {
+  if (!state.data || state.analysisIssues.length === 0) {
+    return '';
+  }
+
+  const visibleIssues = state.analysisIssues.slice(0, 8);
+  const remainingCount = Math.max(0, state.analysisIssues.length - visibleIssues.length);
+
+  return `
+    <section class="panel safety-panel" aria-labelledby="safety-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="safety-title">Safety check</h2>
+          <p>${state.analysisSummary.errors} errors · ${state.analysisSummary.warnings} warnings · ${state.analysisSummary.info} notes</p>
+        </div>
+      </div>
+      <div class="safety-list">
+        ${visibleIssues.map((issue) => `
+          <article class="safety-row ${escapeHtml(issue.severity)}">
+            <div>
+              <span>${escapeHtml(issue.severity)}</span>
+              <strong>${escapeHtml(issue.title)}</strong>
+              <code>${escapeHtml(issue.path)}</code>
+              <p>${escapeHtml(issue.message)}</p>
+            </div>
+          </article>
+        `).join('')}
+      </div>
+      ${remainingCount ? `<p class="safety-more">${remainingCount} more issue${remainingCount === 1 ? '' : 's'} in this save.</p>` : ''}
     </section>
   `;
 };
@@ -779,6 +826,7 @@ function render() {
         ${renderStageTabs()}
         ${renderFilters()}
         ${renderScopeNavigator()}
+        ${renderSafetyPanel()}
         ${renderChangeReview()}
         ${renderBrowser()}
         ${renderOutput()}
@@ -815,6 +863,12 @@ const handleDecode = async () => {
 
 const handleEncode = async () => {
   if (!state.data) {
+    return;
+  }
+
+  if (state.analysisSummary.errors > 0) {
+    setError(`Fix ${state.analysisSummary.errors} safety error${state.analysisSummary.errors === 1 ? '' : 's'} before encoding.`);
+    render();
     return;
   }
 

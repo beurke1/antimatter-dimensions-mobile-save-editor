@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
+import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
 import {
   buildChangeIndex,
   buildPathIndex,
@@ -112,8 +113,22 @@ assert.ok(changes.some((change) => change.path === 'root'));
 const addedSave = setValueAtSegments(samplePcSave, ['options', 'customFlag'], true);
 const addedChanges = buildChangeIndex(samplePcSave, addedSave, SaveType.PC);
 assert.ok(addedChanges.some((change) => change.path === 'options.customFlag' && change.changeType === 'added'));
+assert.ok(analyzeEditRisks(addedChanges).some((risk) => risk.path === 'options.customFlag' && risk.severity === 'warning'));
 
 const removedAddedSave = deleteValueAtSegments(addedSave, ['options', 'customFlag']);
 assert.deepEqual(removedAddedSave, samplePcSave);
+
+const invalidSaveIssues = analyzeSaveData({
+  ...sampleAndroidSave,
+  antimatter: { mantissa: 1, exponent: 1.5 },
+  dimensionBoosts: Number.POSITIVE_INFINITY,
+}, SaveType.Android);
+const invalidSummary = summarizeAnalysis(invalidSaveIssues);
+assert.equal(invalidSummary.errors, 1);
+assert.ok(invalidSaveIssues.some((issue) => issue.path === 'antimatter' && issue.severity === 'warning'));
+assert.ok(invalidSaveIssues.some((issue) => issue.path === 'dimensionBoosts' && issue.severity === 'error'));
+
+const missingCoreIssues = analyzeSaveData({ antimatter: '10' }, SaveType.PC);
+assert.equal(summarizeAnalysis(missingCoreIssues).warnings, 2);
 
 console.log(`Smoke tests passed: ${coverage.total} indexed paths, round trips and change tracking verified.`);

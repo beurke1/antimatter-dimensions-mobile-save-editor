@@ -54,6 +54,7 @@ Core behavior:
 - Edit Android-style big-number objects with mantissa/exponent controls.
 - Edit containers with scoped JSON.
 - Review changed paths with before/after previews.
+- Analyze invalid values and risky edits before export.
 - Reset one changed path or reset all edits.
 - Encode, copy, share, and download.
 
@@ -95,9 +96,16 @@ Third follow-up implementation added:
 - Search, type, stage, category, and changed filters now apply inside the active scope.
 - Smoke tests cover direct children, breadcrumb ancestry, and descendant scope matching.
 
+Fourth follow-up implementation added:
+
+- `src/save-analysis.js` analyzes decoded saves and edit risks.
+- Safety check panel lists errors, warnings, and notes with exact paths.
+- Encoding is blocked only for hard safety errors such as non-finite numbers.
+- Added/removed paths, type changes, fractional big-number exponents, negative count-like values, and late-game edits are surfaced for review.
+- Smoke tests cover save analysis and edit-risk summaries.
+
 Open engineering tasks:
 
 - Verify in browser at mobile widths.
-- Publish a new GitHub repo once the GitHub creation path is available.
 - Add fixture-based tests using real reference saves once we decide whether to vendor fixtures into this repo.
-- Add richer validation and edit-risk warnings before encode.
+- Refine validation rules with Claude so warnings are useful without being noisy.
