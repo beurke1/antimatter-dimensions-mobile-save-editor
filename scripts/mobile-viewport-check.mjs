@@ -769,6 +769,82 @@ const exerciseExportWorkflow = async (client, workflow) => {
   `);
 };
 
+const exercisePresetWorkflow = async (client, workflow) => {
+  return evaluate(client, `
+    (async () => {
+      const waitFor = async (predicate, label) => {
+        const deadline = Date.now() + 8000;
+        while (Date.now() < deadline) {
+          const value = predicate();
+          if (value) return value;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        throw new Error(label + ' timed out');
+      };
+      const card = (path) => document.querySelector(\`[data-node-path="\${CSS.escape(path)}"]\`);
+      const presetButtons = () => Array.from(document.querySelectorAll('[data-action="apply-preset"]'));
+      const presetIds = () => presetButtons().map((button) => button.dataset.presetId ?? '');
+      const clickPreset = (presetId) => {
+        const button = document.querySelector(\`[data-action="apply-preset"][data-preset-id="\${CSS.escape(presetId)}"]\`);
+        if (!button) throw new Error(\`Missing preset \${presetId}\`);
+        button.click();
+      };
+
+      if (${JSON.stringify(workflow)} === 'pc-normal-preset') {
+        const beforePresetIds = presetIds();
+        clickPreset('antimatter-e308');
+        await waitFor(() => card('antimatter')?.classList.contains('changed'), 'PC preset antimatter change');
+
+        const antimatterInput = card('antimatter')?.querySelector('[data-editor-type="string"]');
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'PC preset encode');
+
+        return {
+          workflow: 'pc-normal-preset',
+          presetCount: beforePresetIds.length,
+          normalOnlyPresets: beforePresetIds.length === 3 &&
+            beforePresetIds.includes('antimatter-e308') &&
+            !beforePresetIds.includes('break-infinity') &&
+            !beforePresetIds.includes('reality-machines-1000'),
+          antimatterChanged: card('antimatter')?.classList.contains('changed') ?? false,
+          antimatterInputType: antimatterInput?.dataset.editorType ?? '',
+          antimatterInputValue: antimatterInput?.value ?? '',
+          encodedPrefix: encoded.slice(0, 37),
+          reviewRowPresent: Array.from(document.querySelectorAll('.change-row')).some((row) => row.dataset.changePath === 'antimatter'),
+        };
+      }
+
+      if (${JSON.stringify(workflow)} === 'android-normal-preset') {
+        const beforePresetIds = presetIds();
+        clickPreset('antimatter-e308');
+        await waitFor(() => card('antimatter')?.classList.contains('changed'), 'Android preset antimatter change');
+
+        const mantissaInput = card('antimatter')?.querySelector('[data-editor-type="big-mantissa"]');
+        const exponentInput = card('antimatter')?.querySelector('[data-editor-type="big-exponent"]');
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'Android preset encode');
+
+        return {
+          workflow: 'android-normal-preset',
+          presetCount: beforePresetIds.length,
+          normalOnlyPresets: beforePresetIds.length === 3 &&
+            beforePresetIds.includes('antimatter-e308') &&
+            !beforePresetIds.includes('break-infinity') &&
+            !beforePresetIds.includes('reality-machines-1000'),
+          antimatterChanged: card('antimatter')?.classList.contains('changed') ?? false,
+          hasBigNumberEditor: Boolean(mantissaInput && exponentInput),
+          mantissaValue: mantissaInput?.value ?? '',
+          exponentValue: exponentInput?.value ?? '',
+          encodedPrefix: encoded.slice(0, 39),
+          reviewRowPresent: Array.from(document.querySelectorAll('.change-row')).some((row) => row.dataset.changePath === 'antimatter'),
+        };
+      }
+
+      return null;
+    })()
+  `);
+};
+
 const exerciseEditorWorkflow = async (client, workflow) => {
   return evaluate(client, `
     (async () => {
@@ -1033,6 +1109,9 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     const qaWorkflow = caseConfig.qaWorkflow
       ? await exerciseQaWorkflow(client, caseConfig.qaWorkflow)
       : null;
+    const presetWorkflow = caseConfig.presetWorkflow
+      ? await exercisePresetWorkflow(client, caseConfig.presetWorkflow)
+      : null;
     const editorWorkflow = caseConfig.editorWorkflow
       ? await exerciseEditorWorkflow(client, caseConfig.editorWorkflow)
       : null;
@@ -1096,6 +1175,22 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
       }
       if (!qaWorkflow?.downloadedReportValueFree) failures.push('rendered coverage report download leaked fixture values or encoded save text');
     }
+    if (caseConfig.presetWorkflow === 'pc-normal-preset') {
+      if (!presetWorkflow?.normalOnlyPresets) failures.push('PC Normal preset panel did not restrict visible presets to Normal-stage presets');
+      if (!presetWorkflow?.antimatterChanged || !presetWorkflow?.reviewRowPresent) failures.push('PC preset did not mark antimatter changed for review');
+      if (presetWorkflow?.antimatterInputType !== 'string' || presetWorkflow?.antimatterInputValue !== '1.79e308') {
+        failures.push('PC preset did not preserve decimal-string rendering');
+      }
+      if (!presetWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) failures.push('PC preset workflow did not produce an encoded PC save');
+    }
+    if (caseConfig.presetWorkflow === 'android-normal-preset') {
+      if (!presetWorkflow?.normalOnlyPresets) failures.push('Android Normal preset panel did not restrict visible presets to Normal-stage presets');
+      if (!presetWorkflow?.antimatterChanged || !presetWorkflow?.reviewRowPresent) failures.push('Android preset did not mark antimatter changed for review');
+      if (!presetWorkflow?.hasBigNumberEditor || presetWorkflow?.mantissaValue !== '1.79' || presetWorkflow?.exponentValue !== '308') {
+        failures.push('Android preset did not preserve mantissa/exponent rendering');
+      }
+      if (!presetWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsAndroidSaveFormat')) failures.push('Android preset workflow did not produce an encoded Android save');
+    }
     if (caseConfig.editorWorkflow === 'pc-basic') {
       if (!editorWorkflow?.notationChanged) failures.push('PC string editor did not mark notation changed');
       if (!editorWorkflow?.subtreeChanged) failures.push('PC subtree JSON editor did not mark nested option changed');
@@ -1145,6 +1240,7 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
       safetyPanel,
       navigationWorkflow,
       qaWorkflow,
+      presetWorkflow,
       editorWorkflow,
       exportWorkflow,
       metrics: caseMetrics,
@@ -1189,6 +1285,12 @@ try {
       editorWorkflow: 'review-reset-all',
     },
     {
+      name: 'pc-preset-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createNormalPcSave(),
+      presetWorkflow: 'pc-normal-preset',
+    },
+    {
       name: 'file-import-qa-iphone-se',
       viewport: viewports.iphoneSe,
       fileImportData: createNormalPcSave(),
@@ -1205,6 +1307,12 @@ try {
       viewport: viewports.iphone15,
       saveData: createNormalAndroidSave(),
       editorWorkflow: 'android-big-number',
+    },
+    {
+      name: 'android-preset-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createNormalAndroidSave(),
+      presetWorkflow: 'android-normal-preset',
     },
     {
       name: 'warnings-iphone-se',

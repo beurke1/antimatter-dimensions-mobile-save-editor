@@ -190,6 +190,7 @@ Thirteenth follow-up implementation added:
 - Rendered mobile verification now exercises decoded JSON file import plus value-free QA summary copy and coverage report copy/download from the actual mobile UI.
 - Rendered mobile verification now checks encoded output Copy, native Share, Share fallback, and Download from the actual mobile UI.
 - Rendered mobile verification now checks Review edits before/after rows, changed-only filtering after edits, review-row reset, and reset-all from the actual mobile UI.
+- Rendered mobile verification now checks Normal-stage quick-edit preset visibility plus PC decimal-string and Android mantissa/exponent preservation from the actual mobile UI.
 
 Open engineering tasks:
 
