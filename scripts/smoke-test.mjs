@@ -6,7 +6,7 @@ import { PRESETS, applyPreset } from '../src/presets.js';
 import { buildCoverageReport, buildQaSummary } from '../src/coverage-report.js';
 import { buildReadinessSummary } from '../src/readiness.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
-import { STAGES, detectStage, isPositiveQuantity } from '../src/stage.js';
+import { STAGES, detectStage, detectStageDetails, isPositiveQuantity } from '../src/stage.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
 import { createQaArtifacts } from './export-qa-fixtures.mjs';
 import {
@@ -191,6 +191,7 @@ assert.ok(androidFormatMismatchIssues.some((issue) => issue.path === 'infinityPo
 const warningSampleReport = buildCoverageReport({
   saveType: SaveType.PC,
   gameStage: detectStage(samplePcSave),
+  gameStageSignals: detectStageDetails(samplePcSave).signals,
   nodes,
   coverage,
   changes: [],
@@ -200,9 +201,11 @@ const warningSampleReport = buildCoverageReport({
 assert.equal(warningSampleReport.safetySamples.length, pcFormatMismatchIssues.length);
 assert.equal(warningSampleReport.safetyIssueCounts['warning | Android numeric format'], 1);
 assert.equal(warningSampleReport.gameStage, STAGES.NORMAL);
+assert.deepEqual(warningSampleReport.gameStageSignals, []);
 assert.ok(warningSampleReport.safetySamples.some((sample) => sample.path === 'antimatter' && sample.title === 'Android numeric format'));
 const warningQaSummary = buildQaSummary(warningSampleReport);
 assert.ok(warningQaSummary.includes('Game stage: Normal'));
+assert.ok(warningQaSummary.includes('Game stage signals: none'));
 assert.ok(warningQaSummary.includes('## Safety Issue Counts'));
 assert.ok(warningQaSummary.includes('- warning | Android numeric format: 1'));
 assert.ok(warningQaSummary.includes('## Safety Samples'));
@@ -234,6 +237,7 @@ const unknownCoverage = calculateCoverage(unknownNodes);
 const unknownReport = buildCoverageReport({
   saveType: SaveType.PC,
   gameStage: detectStage(unknownPathSave),
+  gameStageSignals: detectStageDetails(unknownPathSave).signals,
   nodes: unknownNodes,
   coverage: unknownCoverage,
   changes: [],
@@ -242,6 +246,7 @@ const unknownReport = buildCoverageReport({
 });
 assert.equal(unknownReport.totals.unknownPaths, 5);
 assert.equal(unknownReport.gameStage, STAGES.NORMAL);
+assert.deepEqual(unknownReport.gameStageSignals, []);
 assert.deepEqual(unknownReport.unknownTopLevelCounts, {
   qqqBucket: 4,
   zzzFlag: 1,
@@ -293,6 +298,16 @@ assert.equal(isPositiveQuantity(undefined), false);
 assert.equal(isPositiveQuantity(false), false);
 assert.equal(detectStage(samplePcSave), STAGES.NORMAL);
 assert.equal(detectStage(sampleAndroidSave), STAGES.NORMAL);
+assert.deepEqual(detectStageDetails(null), { stage: STAGES.NONE, signals: [] });
+assert.deepEqual(detectStageDetails(samplePcSave), { stage: STAGES.NORMAL, signals: [] });
+assert.deepEqual(detectStageDetails(createInfinityPcSave()), {
+  stage: STAGES.INFINITY,
+  signals: ['infinityPoints', 'infinities', 'break', 'replicanti.unl'],
+});
+assert.deepEqual(detectStageDetails(createEternityAndroidSave()), {
+  stage: STAGES.ETERNITY,
+  signals: ['eternityPoints', 'eternities', 'bigEternities', 'timeShards', 'timestudy.theorem'],
+});
 assert.equal(
   detectStage({
     ...samplePcSave,
@@ -306,13 +321,29 @@ assert.equal(
   STAGES.NORMAL,
   'present but zero later-stage trees should not imply late-game progress'
 );
+assert.deepEqual(
+  detectStageDetails({
+    ...samplePcSave,
+    infinityPoints: '0',
+    eternityPoints: '0',
+    realities: '0',
+    reality: { realityMachines: '0', imaginaryMachines: 0 },
+    celestials: {},
+    blackHole: [],
+  }),
+  { stage: STAGES.NORMAL, signals: [] },
+  'present but zero later-stage trees should not expose stage signals'
+);
 
 const assertProgressionFixture = async ([fixtureId, saveData, saveType, expectedStage]) => {
   const encoded = await encodeSaveData(saveData, saveType);
   const decoded = await decodeSave(encoded);
   assert.equal(decoded.saveType, saveType, `${fixtureId} should decode as ${saveType}`);
   assert.deepEqual(decoded.data, saveData, `${fixtureId} should round-trip through the codec`);
-  assert.equal(detectStage(decoded.data), expectedStage, `${fixtureId} should be detected as ${expectedStage}`);
+  const stageDetails = detectStageDetails(decoded.data);
+  assert.equal(stageDetails.stage, expectedStage, `${fixtureId} should be detected as ${expectedStage}`);
+  assert.equal(detectStage(decoded.data), expectedStage, `${fixtureId} detectStage should match detectStageDetails`);
+  assert.equal(stageDetails.signals.length > 0, expectedStage !== STAGES.NORMAL, `${fixtureId} should expose only non-normal stage signals`);
 
   const fixtureNodes = buildPathIndex(decoded.data, saveType);
   const fixtureCoverage = calculateCoverage(fixtureNodes);
@@ -331,6 +362,7 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
 
   const fixtureNodes = buildPathIndex(decoded.data, saveType);
   const fixtureCoverage = calculateCoverage(fixtureNodes);
+  const stageDetails = detectStageDetails(decoded.data);
   assert.equal(fixtureCoverage.total, fixtureNodes.length);
   assert.equal(fixtureCoverage.editableCount, fixtureNodes.length);
 
@@ -356,7 +388,8 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
 
   const report = buildCoverageReport({
     saveType,
-    gameStage: detectStage(decoded.data),
+    gameStage: stageDetails.stage,
+    gameStageSignals: stageDetails.signals,
     nodes: fixtureNodes,
     coverage: fixtureCoverage,
     changes: [],
@@ -364,7 +397,8 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
   });
   assert.equal(report.totals.paths, fixtureCoverage.total);
   assert.equal(report.totals.editablePaths, fixtureCoverage.editableCount);
-  assert.equal(report.gameStage, detectStage(decoded.data));
+  assert.equal(report.gameStage, stageDetails.stage);
+  assert.deepEqual(report.gameStageSignals, stageDetails.signals);
   assert.equal(report.missingCategories.length, 0);
   assert.ok(report.topLevelPaths.includes('celestials'));
   assert.ok(report.valueTypes.object > 0);
@@ -373,6 +407,7 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
   assert.ok(qaSummary.includes('Real-Save QA Summary'));
   assert.ok(qaSummary.includes(`Save type: ${saveType.toUpperCase()}`));
   assert.ok(qaSummary.includes(`Game stage: ${report.gameStage}`));
+  assert.ok(qaSummary.includes(`Game stage signals: ${report.gameStageSignals.join(', ')}`));
   assert.ok(qaSummary.includes(`- Paths: ${fixtureCoverage.total}`));
   assert.ok(qaSummary.includes('- Errors: 0'));
   assert.ok(!qaSummary.includes('1e1200'), 'QA summary should not include save values');
@@ -433,6 +468,10 @@ assert.deepEqual(
 assert.equal(qaArtifacts.files.length, (progressionFixtures.length * 2) + 2);
 assert.ok(qaArtifacts.manifest.fixtures.every((fixture) => fixture.expectedTotals.paths > 20));
 assert.ok(qaArtifacts.manifest.fixtures.every((fixture) => fixture.expectedSafety.error === 0));
+assert.deepEqual(
+  qaArtifacts.manifest.fixtures.map((fixture) => fixture.gameStageSignals.length > 0),
+  [false, true, true, true, false, true, true, true]
+);
 
 for (const file of qaArtifacts.files) {
   const committedContent = await readFile(new URL(`../qa-fixtures/${file.path}`, import.meta.url), 'utf8');

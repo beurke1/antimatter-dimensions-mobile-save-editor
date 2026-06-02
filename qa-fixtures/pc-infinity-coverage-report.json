@@ -2,6 +2,12 @@
   "generatedAt": "2026-06-02T00:00:00.000Z",
   "saveType": "pc",
   "gameStage": "Infinity",
+  "gameStageSignals": [
+    "infinityPoints",
+    "infinities",
+    "break",
+    "replicanti.unl"
+  ],
   "totals": {
     "paths": 96,
     "editablePaths": 96,

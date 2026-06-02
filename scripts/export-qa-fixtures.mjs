@@ -5,6 +5,7 @@ import { buildCoverageReport } from '../src/coverage-report.js';
 import { buildPathIndex, calculateCoverage } from '../src/path-index.js';
 import { SaveType, encodeSaveData } from '../src/save-codec.js';
 import { analyzeSaveData } from '../src/save-analysis.js';
+import { detectStageDetails } from '../src/stage.js';
 import {
   createComprehensiveAndroidSave,
   createComprehensivePcSave,
@@ -127,9 +128,16 @@ export const createQaArtifacts = async () => {
     const nodes = buildPathIndex(saveData, definition.saveType);
     const coverage = calculateCoverage(nodes);
     const analysisIssues = analyzeSaveData(saveData, definition.saveType);
+    const stageDetails = detectStageDetails(saveData);
+
+    if (stageDetails.stage !== definition.gameStage) {
+      throw new Error(`${definition.id} detected as ${stageDetails.stage}, expected ${definition.gameStage}`);
+    }
+
     const report = buildCoverageReport({
       saveType: definition.saveType,
-      gameStage: definition.gameStage,
+      gameStage: stageDetails.stage,
+      gameStageSignals: stageDetails.signals,
       nodes,
       coverage,
       changes: [],
@@ -152,6 +160,7 @@ export const createQaArtifacts = async () => {
       saveType: definition.saveType,
       saveFile: definition.saveFile,
       coverageReportFile: definition.reportFile,
+      gameStageSignals: report.gameStageSignals,
       expectedTotals: report.totals,
       expectedSafety: report.safety,
       missingCategories: report.missingCategories,

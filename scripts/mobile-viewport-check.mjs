@@ -653,12 +653,14 @@ const exerciseQaWorkflow = async (client, workflow) => {
           qaSummaryCopied: qaSummary.includes('Antimatter Dimensions Real-Save QA Summary'),
           qaSummaryHasCounts: qaSummary.includes('- Paths:') &&
             qaSummary.includes('Game stage:') &&
+            qaSummary.includes('Game stage signals:') &&
             qaSummary.includes('## Safety') &&
             qaSummary.includes('## Safety Issue Counts') &&
             qaSummary.includes('## Unknown Top-Level Counts'),
           summaryValueFree,
           reportCopied: Boolean(report),
           reportHasGameStage: typeof report?.gameStage === 'string' && report.gameStage.length > 0,
+          reportHasGameStageSignals: Array.isArray(report?.gameStageSignals),
           reportHasTotals: Number(report?.totals?.paths ?? 0) > 20,
           reportHasSafety: typeof report?.safety?.error === 'number',
           reportHasSafetyIssueCounts: Boolean(report?.safetyIssueCounts) && typeof report.safetyIssueCounts === 'object' && !Array.isArray(report.safetyIssueCounts),
@@ -668,6 +670,7 @@ const exerciseQaWorkflow = async (client, workflow) => {
           reportDownloadFilename: downloads.at(-1).download,
           reportDownloadMatchesCopy: downloadedReportText === reportText,
           downloadedReportHasGameStage: typeof downloadedReport?.gameStage === 'string' && downloadedReport.gameStage.length > 0,
+          downloadedReportHasGameStageSignals: Array.isArray(downloadedReport?.gameStageSignals),
           downloadedReportHasTotals: Number(downloadedReport?.totals?.paths ?? 0) > 20,
           downloadedReportHasSafety: typeof downloadedReport?.safety?.error === 'number',
           downloadedReportHasSafetyIssueCounts: Boolean(downloadedReport?.safetyIssueCounts) && typeof downloadedReport.safetyIssueCounts === 'object' && !Array.isArray(downloadedReport.safetyIssueCounts),
@@ -1177,11 +1180,11 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     if (caseConfig.qaWorkflow === 'value-free-copy') {
       if (!qaWorkflow?.qaSummaryCopied || !qaWorkflow?.qaSummaryHasCounts) failures.push('rendered QA summary copy did not include the expected value-free report sections');
       if (!qaWorkflow?.summaryValueFree) failures.push('rendered QA summary copy leaked fixture values or encoded save text');
-      if (!qaWorkflow?.reportCopied || !qaWorkflow?.reportHasGameStage || !qaWorkflow?.reportHasTotals || !qaWorkflow?.reportHasSafety || !qaWorkflow?.reportHasSafetyIssueCounts || !qaWorkflow?.reportHasUnknownTopLevelCounts) {
+      if (!qaWorkflow?.reportCopied || !qaWorkflow?.reportHasGameStage || !qaWorkflow?.reportHasGameStageSignals || !qaWorkflow?.reportHasTotals || !qaWorkflow?.reportHasSafety || !qaWorkflow?.reportHasSafetyIssueCounts || !qaWorkflow?.reportHasUnknownTopLevelCounts) {
         failures.push('rendered coverage report copy did not produce the expected JSON report');
       }
       if (!qaWorkflow?.reportValueFree) failures.push('rendered coverage report copy leaked fixture values or encoded save text');
-      if (!qaWorkflow?.reportDownloaded || !qaWorkflow?.downloadedReportHasGameStage || !qaWorkflow?.downloadedReportHasTotals || !qaWorkflow?.downloadedReportHasSafety || !qaWorkflow?.downloadedReportHasSafetyIssueCounts || !qaWorkflow?.downloadedReportHasUnknownTopLevelCounts) {
+      if (!qaWorkflow?.reportDownloaded || !qaWorkflow?.downloadedReportHasGameStage || !qaWorkflow?.downloadedReportHasGameStageSignals || !qaWorkflow?.downloadedReportHasTotals || !qaWorkflow?.downloadedReportHasSafety || !qaWorkflow?.downloadedReportHasSafetyIssueCounts || !qaWorkflow?.downloadedReportHasUnknownTopLevelCounts) {
         failures.push('rendered coverage report download did not produce the expected JSON report');
       }
       if (qaWorkflow?.reportDownloadFilename !== 'antimatter-dimensions-coverage-report.json' || !qaWorkflow?.reportDownloadMatchesCopy) {

@@ -9,6 +9,7 @@
       "saveType": "pc",
       "saveFile": "pc-normal-save.txt",
       "coverageReportFile": "pc-normal-coverage-report.json",
+      "gameStageSignals": [],
       "expectedTotals": {
         "paths": 74,
         "editablePaths": 74,
@@ -60,6 +61,12 @@
       "saveType": "pc",
       "saveFile": "pc-infinity-save.txt",
       "coverageReportFile": "pc-infinity-coverage-report.json",
+      "gameStageSignals": [
+        "infinityPoints",
+        "infinities",
+        "break",
+        "replicanti.unl"
+      ],
       "expectedTotals": {
         "paths": 96,
         "editablePaths": 96,
@@ -110,6 +117,12 @@
       "saveType": "pc",
       "saveFile": "pc-eternity-save.txt",
       "coverageReportFile": "pc-eternity-coverage-report.json",
+      "gameStageSignals": [
+        "eternityPoints",
+        "eternities",
+        "timeShards",
+        "timestudy.theorem"
+      ],
       "expectedTotals": {
         "paths": 136,
         "editablePaths": 136,
@@ -160,6 +173,11 @@
       "saveType": "pc",
       "saveFile": "pc-late-game-save.txt",
       "coverageReportFile": "pc-coverage-report.json",
+      "gameStageSignals": [
+        "realities",
+        "reality.realityMachines",
+        "reality.imaginaryMachines"
+      ],
       "expectedTotals": {
         "paths": 235,
         "editablePaths": 235,
@@ -207,6 +225,7 @@
       "saveType": "android",
       "saveFile": "android-normal-save.txt",
       "coverageReportFile": "android-normal-coverage-report.json",
+      "gameStageSignals": [],
       "expectedTotals": {
         "paths": 69,
         "editablePaths": 69,
@@ -258,6 +277,13 @@
       "saveType": "android",
       "saveFile": "android-infinity-save.txt",
       "coverageReportFile": "android-infinity-coverage-report.json",
+      "gameStageSignals": [
+        "infinityPoints",
+        "infinities",
+        "bigCrunches",
+        "brake",
+        "replicanti.unl"
+      ],
       "expectedTotals": {
         "paths": 96,
         "editablePaths": 96,
@@ -308,6 +334,13 @@
       "saveType": "android",
       "saveFile": "android-eternity-save.txt",
       "coverageReportFile": "android-eternity-coverage-report.json",
+      "gameStageSignals": [
+        "eternityPoints",
+        "eternities",
+        "bigEternities",
+        "timeShards",
+        "timestudy.theorem"
+      ],
       "expectedTotals": {
         "paths": 135,
         "editablePaths": 135,
@@ -358,6 +391,12 @@
       "saveType": "android",
       "saveFile": "android-late-game-save.txt",
       "coverageReportFile": "android-coverage-report.json",
+      "gameStageSignals": [
+        "realities",
+        "bigRealities",
+        "reality.realityMachines",
+        "reality.imaginaryMachines"
+      ],
       "expectedTotals": {
         "paths": 196,
         "editablePaths": 196,

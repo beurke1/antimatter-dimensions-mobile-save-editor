@@ -17,7 +17,7 @@ import { buildCoverageReport, buildQaSummary } from './coverage-report.js';
 import { buildReadinessSummary } from './readiness.js';
 import { CATEGORIES, getCategory } from './taxonomy.js';
 import { PRESETS, applyPreset } from './presets.js';
-import { detectStage } from './stage.js';
+import { detectStage, detectStageDetails } from './stage.js';
 
 const appRoot = document.querySelector('#app');
 const searchableTypes = new Set(['string', 'number', 'boolean', 'null', 'big-number', 'array', 'object']);
@@ -163,10 +163,12 @@ const rebuildIndex = () => {
     : [];
   state.analysisSummary = summarizeAnalysis(state.analysisIssues);
   state.coverage = state.nodes.length ? calculateCoverage(state.nodes) : null;
+  const stageDetails = state.data ? detectStageDetails(state.data) : null;
   state.coverageReport = state.coverage
     ? buildCoverageReport({
       saveType: state.saveType,
-      gameStage: detectStage(state.data),
+      gameStage: stageDetails.stage,
+      gameStageSignals: stageDetails.signals,
       nodes: state.nodes,
       coverage: state.coverage,
       changes: state.changes,

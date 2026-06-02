@@ -2,6 +2,13 @@
   "generatedAt": "2026-06-02T00:00:00.000Z",
   "saveType": "android",
   "gameStage": "Infinity",
+  "gameStageSignals": [
+    "infinityPoints",
+    "infinities",
+    "bigCrunches",
+    "brake",
+    "replicanti.unl"
+  ],
   "totals": {
     "paths": 96,
     "editablePaths": 96,

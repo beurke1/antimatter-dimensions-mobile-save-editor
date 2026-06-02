@@ -35,9 +35,26 @@ const safetyIssueCountKey = (issue) => {
   return `${severity} | ${title}`;
 };
 
+const toStringList = (items) => {
+  const seen = new Set();
+  const strings = [];
+
+  for (const item of items ?? []) {
+    const text = toStringField(item).trim();
+
+    if (text && !seen.has(text)) {
+      strings.push(text);
+      seen.add(text);
+    }
+  }
+
+  return strings;
+};
+
 export const buildCoverageReport = ({
   saveType,
   gameStage = 'Unknown',
+  gameStageSignals = [],
   nodes,
   coverage,
   changes = [],
@@ -95,6 +112,7 @@ export const buildCoverageReport = ({
     generatedAt,
     saveType,
     gameStage: toStringField(gameStage, 'Unknown'),
+    gameStageSignals: toStringList(gameStageSignals),
     totals: {
       paths: coverage.total,
       editablePaths: coverage.editableCount,
@@ -138,6 +156,10 @@ const formatListBlock = (items, limit = 40) => {
     : visibleItems;
 };
 
+const formatInlineList = (items) => {
+  return items?.length ? items.join(', ') : 'none';
+};
+
 const formatSafetySamples = (samples, omitted = 0, limit = 20) => {
   if (!samples || samples.length === 0) {
     return ['- none'];
@@ -170,6 +192,7 @@ export const buildQaSummary = (coverageReport) => {
     `Generated: ${coverageReport.generatedAt}`,
     `Save type: ${String(coverageReport.saveType ?? 'unknown').toUpperCase()}`,
     `Game stage: ${String(coverageReport.gameStage ?? 'Unknown')}`,
+    `Game stage signals: ${formatInlineList(coverageReport.gameStageSignals)}`,
     '',
     '## Totals',
     `- Paths: ${totals.paths ?? 0}`,

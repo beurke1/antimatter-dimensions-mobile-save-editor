@@ -38,43 +38,81 @@ export const isPositiveQuantity = (value) => {
 
 const isEnabled = (value) => value === true;
 
-export const detectStage = (data) => {
-  if (!data || typeof data !== 'object') {
-    return STAGES.NONE;
-  }
-
-  if (
-    isPositiveQuantity(data.realities) ||
-    isPositiveQuantity(data.bigRealities) ||
-    isPositiveQuantity(data.reality?.realityMachines) ||
-    isPositiveQuantity(data.reality?.imaginaryMachines)
-  ) {
-    return STAGES.REALITY;
-  }
-
-  if (
-    isPositiveQuantity(data.eternityPoints) ||
-    isPositiveQuantity(data.eternities) ||
-    isPositiveQuantity(data.bigEternities) ||
-    isPositiveQuantity(data.timeShards) ||
-    isPositiveQuantity(data.timestudy?.theorem) ||
-    isPositiveQuantity(data.dilation?.tachyonParticles) ||
-    isPositiveQuantity(data.dilation?.dilatedTime) ||
-    isEnabled(data.dilation?.active)
-  ) {
-    return STAGES.ETERNITY;
-  }
-
-  if (
-    isPositiveQuantity(data.infinityPoints) ||
-    isPositiveQuantity(data.infinities) ||
-    isPositiveQuantity(data.bigCrunches) ||
-    isEnabled(data.break) ||
-    isEnabled(data.brake) ||
-    isEnabled(data.replicanti?.unl)
-  ) {
-    return STAGES.INFINITY;
-  }
-
-  return STAGES.NORMAL;
+const getPathValue = (data, path) => {
+  return path.split('.').reduce((current, segment) => current?.[segment], data);
 };
+
+const quantitySignal = (path) => ({
+  path,
+  isTriggered: (data) => isPositiveQuantity(getPathValue(data, path)),
+});
+
+const enabledSignal = (path) => ({
+  path,
+  isTriggered: (data) => isEnabled(getPathValue(data, path)),
+});
+
+const STAGE_DETECTION_RULES = Object.freeze([
+  {
+    stage: STAGES.REALITY,
+    signals: Object.freeze([
+      quantitySignal('realities'),
+      quantitySignal('bigRealities'),
+      quantitySignal('reality.realityMachines'),
+      quantitySignal('reality.imaginaryMachines'),
+    ]),
+  },
+  {
+    stage: STAGES.ETERNITY,
+    signals: Object.freeze([
+      quantitySignal('eternityPoints'),
+      quantitySignal('eternities'),
+      quantitySignal('bigEternities'),
+      quantitySignal('timeShards'),
+      quantitySignal('timestudy.theorem'),
+      quantitySignal('dilation.tachyonParticles'),
+      quantitySignal('dilation.dilatedTime'),
+      enabledSignal('dilation.active'),
+    ]),
+  },
+  {
+    stage: STAGES.INFINITY,
+    signals: Object.freeze([
+      quantitySignal('infinityPoints'),
+      quantitySignal('infinities'),
+      quantitySignal('bigCrunches'),
+      enabledSignal('break'),
+      enabledSignal('brake'),
+      enabledSignal('replicanti.unl'),
+    ]),
+  },
+]);
+
+export const detectStageDetails = (data) => {
+  if (!data || typeof data !== 'object') {
+    return {
+      stage: STAGES.NONE,
+      signals: [],
+    };
+  }
+
+  for (const rule of STAGE_DETECTION_RULES) {
+    const signals = rule.signals
+      .filter((signal) => signal.isTriggered(data))
+      .map((signal) => signal.path);
+
+    if (signals.length > 0) {
+      return {
+        stage: rule.stage,
+        signals,
+      };
+    }
+  }
+
+  return {
+    stage: STAGES.NORMAL,
+    signals: [],
+  };
+};
+
+export const detectStage = (data) => detectStageDetails(data).stage;

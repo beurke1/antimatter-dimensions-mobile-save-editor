@@ -2,6 +2,12 @@
   "generatedAt": "2026-06-02T00:00:00.000Z",
   "saveType": "pc",
   "gameStage": "Eternity",
+  "gameStageSignals": [
+    "eternityPoints",
+    "eternities",
+    "timeShards",
+    "timestudy.theorem"
+  ],
   "totals": {
     "paths": 136,
     "editablePaths": 136,

@@ -2,6 +2,12 @@
   "generatedAt": "2026-06-02T00:00:00.000Z",
   "saveType": "android",
   "gameStage": "Reality",
+  "gameStageSignals": [
+    "realities",
+    "bigRealities",
+    "reality.realityMachines",
+    "reality.imaginaryMachines"
+  ],
   "totals": {
     "paths": 196,
     "editablePaths": 196,
