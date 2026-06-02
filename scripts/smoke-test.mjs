@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { categorizePath, CATEGORIES } from '../src/taxonomy.js';
 import { KNOWN_TOP_LEVEL_CATEGORIES } from '../src/schema-reference.js';
 import { PRESETS, applyPreset } from '../src/presets.js';
-import { buildCoverageReport, buildQaSummary } from '../src/coverage-report.js';
+import { buildCoverageReport, buildPathInventorySummary, buildQaSummary } from '../src/coverage-report.js';
 import { buildReadinessSummary } from '../src/readiness.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
 import { STAGES, detectStage, detectStageDetails, isPositiveQuantity } from '../src/stage.js';
@@ -313,6 +313,21 @@ assert.ok(unknownQaSummary.includes('- Report samples omitted: 0'));
 assert.ok(unknownQaSummary.includes('- qqqBucket: 4'));
 assert.ok(unknownQaSummary.includes('- zzzFlag: 1'));
 assert.ok(!unknownQaSummary.includes('private-value'), 'Unknown path QA summary should not include unknown save values');
+const unknownPathInventory = buildPathInventorySummary({
+  saveType: SaveType.PC,
+  gameStage: STAGES.NORMAL,
+  scopePath: 'root',
+  filters: { category: 'unknown', stage: 'all', type: 'all', changedOnly: false, query: 'qqq' },
+  nodes: unknownNodes.filter((node) => node.categoryId === 'unknown'),
+  totalPaths: unknownNodes.length,
+  generatedAt: '2026-06-02T00:00:00.000Z',
+});
+assert.ok(unknownPathInventory.includes('# Antimatter Dimensions Path Inventory'));
+assert.ok(unknownPathInventory.includes('category=unknown'));
+assert.ok(unknownPathInventory.includes('Matched paths: 5 of'));
+assert.ok(unknownPathInventory.includes('- qqqBucket.alpha.token | string | Uncategorized | Fallback'));
+assert.ok(!unknownPathInventory.includes('private-value'), 'Path inventory should not include leaf preview values');
+assert.ok(!unknownPathInventory.includes('AntimatterDimensionsSavefileFormat'), 'Path inventory should not include encoded save text');
 
 const largeUnknownSave = {
   ...samplePcSave,

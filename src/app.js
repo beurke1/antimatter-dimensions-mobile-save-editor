@@ -14,7 +14,7 @@ import {
   setValueAtSegments,
 } from './path-index.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from './save-analysis.js';
-import { buildCoverageReport, buildQaSummary } from './coverage-report.js';
+import { buildCoverageReport, buildPathInventorySummary, buildQaSummary } from './coverage-report.js';
 import { buildReadinessSummary } from './readiness.js';
 import { CATEGORIES, getCategory } from './taxonomy.js';
 import { PRESETS, applyPreset } from './presets.js';
@@ -1151,6 +1151,7 @@ const renderBrowser = () => {
           <h2 id="browser-title">${escapeHtml(category?.title ?? 'All Paths')}</h2>
           <p>${results.length} path${results.length === 1 ? '' : 's'} · all editable inline or via subtree JSON</p>
         </div>
+        <button type="button" class="secondary-button compact" data-action="copy-path-inventory">Copy paths</button>
       </div>
       <div class="path-list">
         ${visible.map(renderNodeCard).join('')}
@@ -1517,6 +1518,28 @@ const getQaSummaryText = () => {
   return buildQaSummary(state.coverageReport);
 };
 
+const getPathInventoryText = () => {
+  if (!state.data) {
+    return '';
+  }
+
+  return buildPathInventorySummary({
+    saveType: state.saveType,
+    gameStage: state.coverageReport?.gameStage ?? detectStage(state.data),
+    scopePath: state.scopePath,
+    filters: {
+      category: state.activeCategoryId,
+      stage: state.activeStageId,
+      type: state.typeFilter,
+      changedOnly: state.showChangedOnly,
+      query: state.query,
+    },
+    nodes: filteredNodes(),
+    totalPaths: state.nodes.length,
+    generatedAt: state.coverageReport?.generatedAt,
+  });
+};
+
 /* ── EVENT DELEGATION ── */
 
 document.addEventListener('click', async (event) => {
@@ -1735,6 +1758,13 @@ document.addEventListener('click', async (event) => {
   if (action === 'copy-report') {
     const copied = await copyText(getCoverageReportText());
     copied ? setNotice('Coverage report copied.', 'success') : setError('Could not copy coverage report.');
+    render();
+    return;
+  }
+
+  if (action === 'copy-path-inventory') {
+    const copied = await copyText(getPathInventoryText());
+    copied ? setNotice('Filtered path inventory copied.', 'success') : setError('Could not copy path inventory.');
     render();
     return;
   }

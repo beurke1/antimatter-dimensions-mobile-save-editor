@@ -640,6 +640,18 @@ const exerciseQaWorkflow = async (client, workflow) => {
         await waitFor(() => downloads.length >= 1 && downloads.at(-1).download, 'coverage report download');
         const downloadedReportText = await downloads.at(-1).blob.text();
 
+        const pathInventoryButton = document.querySelector('[data-action="copy-path-inventory"]');
+        const pathInventoryButtonRect = pathInventoryButton?.getBoundingClientRect();
+        const pathInventoryButtonVisible = Boolean(pathInventoryButtonRect) &&
+          pathInventoryButtonRect.width >= 70 &&
+          pathInventoryButtonRect.height >= 32 &&
+          pathInventoryButtonRect.left >= 0 &&
+          pathInventoryButtonRect.right <= window.innerWidth + 1;
+
+        await clickAction('[data-action="copy-path-inventory"]', 'Copy path inventory');
+        await waitFor(() => window.__adSaveEditorClipboardWrites?.length >= 3, 'path inventory copy');
+        const pathInventory = window.__adSaveEditorClipboardWrites.at(-1) ?? '';
+
         let report = null;
         let downloadedReport = null;
         try {
@@ -657,6 +669,7 @@ const exerciseQaWorkflow = async (client, workflow) => {
         const summaryValueFree = leakedFixtures.every((fixtureValue) => !qaSummary.includes(fixtureValue));
         const reportValueFree = leakedFixtures.every((fixtureValue) => !reportText.includes(fixtureValue));
         const downloadedReportValueFree = leakedFixtures.every((fixtureValue) => !downloadedReportText.includes(fixtureValue));
+        const pathInventoryValueFree = leakedFixtures.every((fixtureValue) => !pathInventory.includes(fixtureValue));
 
         return {
           workflow: 'value-free-copy',
@@ -690,6 +703,14 @@ const exerciseQaWorkflow = async (client, workflow) => {
           downloadedReportHasSafetyIssueCounts: Boolean(downloadedReport?.safetyIssueCounts) && typeof downloadedReport.safetyIssueCounts === 'object' && !Array.isArray(downloadedReport.safetyIssueCounts),
           downloadedReportHasUnknownTopLevelCounts: Boolean(downloadedReport?.unknownTopLevelCounts) && typeof downloadedReport.unknownTopLevelCounts === 'object' && !Array.isArray(downloadedReport.unknownTopLevelCounts),
           downloadedReportValueFree,
+          pathInventoryCopied: pathInventory.includes('Antimatter Dimensions Path Inventory'),
+          pathInventoryHasMetadata: pathInventory.includes('Matched paths:') &&
+            pathInventory.includes('Filters:') &&
+            pathInventory.includes('Save type:'),
+          pathInventoryHasPaths: pathInventory.includes('antimatter | string | Resources') ||
+            pathInventory.includes('antimatter | big-number | Resources'),
+          pathInventoryButtonVisible,
+          pathInventoryValueFree,
         };
       } finally {
         URL.createObjectURL = originalCreateObjectUrl;
@@ -1432,6 +1453,10 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('rendered coverage report download did not match the copied JSON report');
       }
       if (!qaWorkflow?.downloadedReportValueFree) failures.push('rendered coverage report download leaked fixture values or encoded save text');
+      if (!qaWorkflow?.pathInventoryCopied || !qaWorkflow?.pathInventoryHasMetadata || !qaWorkflow?.pathInventoryHasPaths || !qaWorkflow?.pathInventoryButtonVisible) {
+        failures.push('rendered path inventory copy did not include the expected value-free path metadata');
+      }
+      if (!qaWorkflow?.pathInventoryValueFree) failures.push('rendered path inventory copy leaked fixture values or encoded save text');
     }
     if (caseConfig.presetWorkflow === 'pc-normal-preset') {
       if (!presetWorkflow?.normalOnlyPresets) failures.push('PC Normal preset panel did not restrict visible presets to Normal-stage presets');

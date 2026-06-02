@@ -240,3 +240,34 @@ export const buildQaSummary = (coverageReport) => {
     '',
   ].join('\n');
 };
+
+export const buildPathInventorySummary = ({
+  saveType,
+  gameStage = 'Unknown',
+  scopePath = 'root',
+  filters = {},
+  nodes = [],
+  totalPaths = nodes.length,
+  generatedAt = new Date().toISOString(),
+}) => {
+  const pathRows = nodes.map((node) => {
+    return `- ${node.path} | ${node.type} | ${node.categoryTitle} | ${node.stage}`;
+  });
+
+  return [
+    '# Antimatter Dimensions Path Inventory',
+    '',
+    'This inventory intentionally excludes save values and encoded save text.',
+    '',
+    `Generated: ${generatedAt}`,
+    `Save type: ${String(saveType ?? 'unknown').toUpperCase()}`,
+    `Game stage: ${String(gameStage ?? 'Unknown')}`,
+    `Scope: ${String(scopePath ?? 'root')}`,
+    `Filters: category=${String(filters.category ?? 'all')}; stage=${String(filters.stage ?? 'all')}; type=${String(filters.type ?? 'all')}; changed=${filters.changedOnly ? 'yes' : 'no'}; query=${String(filters.query ?? '') || 'none'}`,
+    `Matched paths: ${nodes.length} of ${totalPaths}`,
+    '',
+    '## Paths',
+    ...(pathRows.length ? pathRows : ['- none']),
+    '',
+  ].join('\n');
+};

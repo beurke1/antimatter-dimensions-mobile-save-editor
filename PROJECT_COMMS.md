@@ -206,6 +206,7 @@ Thirteenth follow-up implementation added:
 - Primitive leaf cards now include a collapsed raw JSON editor so a leaf can become any valid JSON type without editing its parent object. Rendered mobile verification changes `options.notation` from a string into an object, encodes, decodes, and asserts the exported object is exact.
 - Array container cards now support append, indexed insert, and indexed replace from JSON. Rendered mobile verification inserts and replaces items in `dimensions.antimatter`, encodes, decodes, and asserts exact item positions plus shifted-item preservation.
 - The Android late-game QA fixture has been expanded from 196 to 2,256 indexed paths, using Android `{ mantissa, exponent }` big-number objects across dense automation, dimensions, records, speedrun, Reality, Celestials, Pelle, and options branches.
+- Browser panels now expose Copy paths for the current filtered result set. The copied inventory contains path, type, category, and stage metadata only, making it safe for real-save QA and Claude review without sharing save values.
 
 Open engineering tasks:
 

@@ -20,6 +20,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Unknown paths appear in fallback coverage, never hidden.
 - Stable known AD top-level keys are guarded against fallback classification.
 - Value-free QA summaries with detected game stage and stage signal paths, coverage counts, unknown top-level counts, unknown-path sample omission counts, safety issue counts, and warning samples can be copied, and coverage report JSON can be copied or downloaded for real-save QA.
+- Filtered path inventories can be copied without save values for real-save QA and Claude taxonomy review.
 - Synthetic Normal, Infinity, Eternity, and late-game PC/Android fixtures can be exported for repeatable mobile QA, with late-game fixtures covering 1,500+ PC paths and 2,200+ Android-format paths.
 
 ## Mobile Navigation
@@ -64,7 +65,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 ## Hosting And CI
 
 - GitHub Actions smoke tests pass on `main`.
-- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, review/reset flows, structural add/remove/export controls, indexed array insert/replace/export controls, bitfield toggle/export controls, primitive leaf JSON type changes, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, value-free QA/report copy/download, and encoded output copy/share/download.
+- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, review/reset flows, structural add/remove/export controls, indexed array insert/replace/export controls, bitfield toggle/export controls, primitive leaf JSON type changes, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, value-free QA/report/path-inventory copy/download, and encoded output copy/share/download.
 - GitHub Pages publishes the static app for iPhone Safari testing.
 - The public Pages URL loads without local tooling.
 - `npm run qa:fixtures` generates the committed fixture saves and expected reports.

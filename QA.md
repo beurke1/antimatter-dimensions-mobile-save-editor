@@ -55,7 +55,8 @@ Do not commit real saves. For each real save tested:
 2. Open Show coverage & readiness.
 3. Use Copy QA summary for a value-free report suitable for GitHub issues. It includes detected game stage, stage signal paths, coverage counts, unknown top-level counts, unknown-path sample omission counts, safety issue counts, path names, and safety warning samples, but not save values.
 4. Download the coverage report JSON if Claude needs deeper taxonomy or warning review.
-5. Record any confusing labels, noisy safety warnings, missing warnings, or hard-to-find paths.
-6. Attach only QA summaries, coverage reports, or redacted notes to GitHub issues unless Berke explicitly approves sharing a save file.
+5. Use Copy paths after applying relevant search/category/stage/type filters when Claude needs a value-free path inventory for a specific confusing area.
+6. Record any confusing labels, noisy safety warnings, missing warnings, or hard-to-find paths.
+7. Attach only QA summaries, coverage reports, copied path inventories, or redacted notes to GitHub issues unless Berke explicitly approves sharing a save file.
 
 Use issue #2 for Codex verification findings and issue #1 for Claude taxonomy/navigation feedback.
