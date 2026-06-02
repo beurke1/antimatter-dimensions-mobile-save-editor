@@ -634,6 +634,102 @@ const exerciseQaWorkflow = async (client, workflow) => {
   `);
 };
 
+const exerciseExportWorkflow = async (client, workflow) => {
+  return evaluate(client, `
+    (async () => {
+      if (${JSON.stringify(workflow)} !== 'encoded-output-actions') return null;
+
+      const waitFor = async (predicate, label) => {
+        const deadline = Date.now() + 8000;
+        while (Date.now() < deadline) {
+          const value = predicate();
+          if (value) return value;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        throw new Error(label + ' timed out');
+      };
+      const clickAction = async (selector, label) => {
+        const button = document.querySelector(selector);
+        if (!button) throw new Error('Missing ' + label);
+        button.click();
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      };
+
+      const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'encoded output');
+      const clipboardWrites = [];
+      const nativeShares = [];
+      const downloads = [];
+      const originalCreateObjectUrl = URL.createObjectURL;
+      const originalRevokeObjectUrl = URL.revokeObjectURL;
+      const originalAnchorClick = HTMLAnchorElement.prototype.click;
+
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async (value) => {
+            clipboardWrites.push(String(value));
+            window.__adSaveEditorExportClipboardWrites = clipboardWrites;
+          },
+          readText: async () => clipboardWrites.at(-1) ?? '',
+        },
+      });
+      Object.defineProperty(navigator, 'share', {
+        configurable: true,
+        value: async (payload) => {
+          nativeShares.push(payload);
+          window.__adSaveEditorNativeShares = nativeShares;
+        },
+      });
+      URL.createObjectURL = (blob) => {
+        const href = 'blob:ad-save-editor-test-' + downloads.length;
+        downloads.push({ href, blob, download: '' });
+        window.__adSaveEditorDownloads = downloads;
+        return href;
+      };
+      URL.revokeObjectURL = () => {};
+      HTMLAnchorElement.prototype.click = function click() {
+        const latest = downloads.at(-1);
+        if (latest) latest.download = this.download;
+      };
+
+      try {
+        await clickAction('[data-action="copy"]', 'Copy output');
+        await waitFor(() => clipboardWrites.length >= 1, 'output copy');
+
+        await clickAction('[data-action="share"]', 'native Share output');
+        await waitFor(() => nativeShares.length >= 1, 'native share');
+
+        Object.defineProperty(navigator, 'share', {
+          configurable: true,
+          value: undefined,
+        });
+        await clickAction('[data-action="share"]', 'fallback Share output');
+        await waitFor(() => clipboardWrites.length >= 2, 'share fallback copy');
+
+        await clickAction('.output-panel [data-action="download"]', 'Download output');
+        await waitFor(() => downloads.length >= 1 && downloads.at(-1).download, 'download output');
+        const downloadText = await downloads.at(-1).blob.text();
+
+        return {
+          workflow: 'encoded-output-actions',
+          encodedPrefix: encoded.slice(0, 37),
+          copyWroteEncoded: clipboardWrites[0] === encoded,
+          nativeShareCalled: nativeShares.length === 1,
+          nativeShareTextMatches: nativeShares[0]?.text === encoded,
+          fallbackShareCopied: clipboardWrites.at(-1) === encoded,
+          downloadFilename: downloads.at(-1).download,
+          downloadTextMatches: downloadText === encoded,
+          clipboardWrites: clipboardWrites.length,
+        };
+      } finally {
+        URL.createObjectURL = originalCreateObjectUrl;
+        URL.revokeObjectURL = originalRevokeObjectUrl;
+        HTMLAnchorElement.prototype.click = originalAnchorClick;
+      }
+    })()
+  `);
+};
+
 const exerciseEditorWorkflow = async (client, workflow) => {
   return evaluate(client, `
     (async () => {
@@ -853,6 +949,9 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     const editorWorkflow = caseConfig.editorWorkflow
       ? await exerciseEditorWorkflow(client, caseConfig.editorWorkflow)
       : null;
+    const exportWorkflow = caseConfig.exportWorkflow
+      ? await exerciseExportWorkflow(client, caseConfig.exportWorkflow)
+      : null;
     const caseMetrics = await metrics(client);
     const screenshotPath = path.join(artifactDir, `${caseConfig.name}.png`);
     await screenshot(client, screenshotPath);
@@ -928,6 +1027,15 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('Android editor workflow did not produce an encoded Android save');
       }
     }
+    if (caseConfig.exportWorkflow === 'encoded-output-actions') {
+      if (!exportWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) failures.push('export workflow did not start from an encoded PC save');
+      if (!exportWorkflow?.copyWroteEncoded) failures.push('Copy action did not write encoded output to clipboard');
+      if (!exportWorkflow?.nativeShareCalled || !exportWorkflow?.nativeShareTextMatches) failures.push('Share action did not call native share with encoded output');
+      if (!exportWorkflow?.fallbackShareCopied) failures.push('Share fallback did not copy encoded output');
+      if (exportWorkflow?.downloadFilename !== 'antimatter-dimensions-save.txt' || !exportWorkflow?.downloadTextMatches) {
+        failures.push('Download action did not prepare the encoded save text file');
+      }
+    }
 
     return {
       name: caseConfig.name,
@@ -937,6 +1045,7 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
       navigationWorkflow,
       qaWorkflow,
       editorWorkflow,
+      exportWorkflow,
       metrics: caseMetrics,
       failures,
       screenshot: path.relative(root, screenshotPath),
@@ -964,6 +1073,7 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createNormalPcSave(),
       editorWorkflow: 'pc-basic',
+      exportWorkflow: 'encoded-output-actions',
     },
     {
       name: 'pc-navigation-iphone-se',

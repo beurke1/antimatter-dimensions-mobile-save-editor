@@ -188,6 +188,7 @@ Thirteenth follow-up implementation added:
 - Rendered mobile verification now checks category, stage, search, type, and changed-only filters on a late-game PC save.
 - Safety risk warnings now group added/removed subtrees and parent type changes at the nearest changed container instead of duplicating warnings for every descendant path.
 - Rendered mobile verification now exercises decoded JSON file import plus value-free QA summary and coverage report copy from the actual mobile UI.
+- Rendered mobile verification now checks encoded output Copy, native Share, Share fallback, and Download from the actual mobile UI.
 
 Open engineering tasks:
 
