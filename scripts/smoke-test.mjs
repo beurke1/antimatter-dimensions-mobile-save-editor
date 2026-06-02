@@ -5,6 +5,7 @@ import { PRESETS, applyPreset } from '../src/presets.js';
 import { buildCoverageReport } from '../src/coverage-report.js';
 import { buildReadinessSummary } from '../src/readiness.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
+import { STAGES, detectStage, isPositiveQuantity } from '../src/stage.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
 import { createQaArtifacts } from './export-qa-fixtures.mjs';
 import { createComprehensiveAndroidSave, createComprehensivePcSave } from './fixture-saves.mjs';
@@ -296,4 +297,39 @@ assert.equal(brakeApplied.brake, true, 'break-infinity preset sets brake on Andr
 // Unknown preset throws
 assert.throws(() => applyPreset(basePC, 'does-not-exist'), /Unknown preset/);
 
-console.log(`Smoke tests passed: ${coverage.total} sample paths, ${pcCoverageTotal} PC fixture paths, ${androidCoverageTotal} Android fixture paths verified, ${PRESETS.length} presets validated.`);
+// Stage detection inspects values, not key presence. AD saves always contain
+// reality/eternity/infinity keys initialized to zero, so a fresh save must not
+// be mis-detected as a later stage.
+assert.equal(isPositiveQuantity(0), false);
+assert.equal(isPositiveQuantity(5), true);
+assert.equal(isPositiveQuantity('0'), false);
+assert.equal(isPositiveQuantity('1e250'), true);
+assert.equal(isPositiveQuantity('1e1000'), true, 'overflowing decimal strings count as positive');
+assert.equal(isPositiveQuantity({ mantissa: 0, exponent: 0 }), false);
+assert.equal(isPositiveQuantity({ mantissa: 1, exponent: 1000 }), true);
+assert.equal(isPositiveQuantity(null), false);
+assert.equal(isPositiveQuantity(undefined), false);
+assert.equal(isPositiveQuantity(false), false);
+
+assert.equal(detectStage(samplePcSave), STAGES.NORMAL, 'fresh PC sample is Normal');
+assert.equal(detectStage(sampleAndroidSave), STAGES.NORMAL, 'fresh Android sample is Normal');
+assert.equal(detectStage({ ...samplePcSave, infinityPoints: '1e10' }), STAGES.INFINITY);
+assert.equal(detectStage({ ...samplePcSave, brake: true }), STAGES.INFINITY);
+assert.equal(detectStage({ ...samplePcSave, eternityPoints: '1e5' }), STAGES.ETERNITY);
+assert.equal(detectStage({ ...samplePcSave, realities: '3' }), STAGES.REALITY);
+assert.equal(detectStage(createComprehensivePcSave()), STAGES.REALITY, 'late-game PC fixture is Reality');
+assert.equal(detectStage(createComprehensiveAndroidSave()), STAGES.REALITY, 'late-game Android fixture is Reality');
+
+// Regression: a present-but-zero late-game tree must not be read as Reality.
+assert.equal(
+  detectStage({
+    ...samplePcSave,
+    reality: { realityMachines: '0', imaginaryMachines: 0 },
+    celestials: {},
+    realities: '0',
+  }),
+  STAGES.NORMAL,
+  'empty reality/celestials objects do not imply Reality stage',
+);
+
+console.log(`Smoke tests passed: ${coverage.total} sample paths, ${pcCoverageTotal} PC fixture paths, ${androidCoverageTotal} Android fixture paths verified, ${PRESETS.length} presets validated, stage detection verified.`);
