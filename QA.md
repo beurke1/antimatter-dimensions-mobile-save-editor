@@ -28,6 +28,14 @@ For each file in `qa-fixtures/*-save.txt`:
 
 ## Mobile Viewport Pass
 
+Automated check:
+
+```sh
+npm run verify:mobile
+```
+
+This starts a temporary local server, launches headless Chrome, decodes synthetic PC and Android saves, checks rendered iPhone-sized layouts, and writes screenshots plus `latest.json` to `artifacts/mobile-viewport/`.
+
 Target iPhone Safari first. At minimum check 390x844 logical pixels and one narrower layout such as 375x667.
 
 - The page must not have horizontal page scrolling.
