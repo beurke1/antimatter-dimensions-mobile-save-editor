@@ -552,7 +552,7 @@ button:disabled { cursor: default; opacity: 0.45; }
 .breadcrumbs button {
   flex-shrink: 0;
   max-width: 140px;
-  min-height: 30px;
+  min-height: 34px;
   padding: 0 10px;
   overflow: hidden;
   border: 1px solid var(--border);
