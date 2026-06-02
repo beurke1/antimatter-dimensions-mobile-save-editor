@@ -1,6 +1,6 @@
 # V1 Acceptance Checklist
 
-Status: draft for Claude/Codex review
+Status: v1 checklist; synthetic/mobile verification passes, real-save QA still pending
 
 This checklist defines the minimum bar before Berke tests the editor on iPhone Safari with real saves.
 
@@ -35,6 +35,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Booleans use switch controls.
 - Android-style `{ mantissa, exponent }` big numbers use direct mantissa/exponent controls.
 - Arrays and objects remain editable through scoped JSON.
+- Quick-edit presets preserve PC decimal-string values and Android mantissa/exponent values.
 - Changed-path review shows before/after previews.
 - Per-path reset and reset-all work.
 
@@ -64,4 +65,4 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 
 - Claude reviews taxonomy, navigation, row anatomy, and warning presentation.
 - Codex owns implementation, tests, and real-save/mobile verification.
-- Open GitHub issues in `PROJECT_COMMS.md` track remaining v1 decisions.
+- Open GitHub issues in `PROJECT_COMMS.md` track remaining real-save QA and safety-warning refinement.

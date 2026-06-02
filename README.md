@@ -11,6 +11,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 
 - PC and Android save decode/encode.
 - Decoded JSON import.
+- Dark mobile-first, browser-first UI tuned for iPhone-sized screens.
 - Runtime indexing of every path in the imported save.
 - Category browsing with an Uncategorized fallback.
 - Stage filtering for the major game phases.
@@ -21,6 +22,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Scoped JSON edits for objects and arrays.
 - Changed-path review with reset controls.
 - Safety check for invalid values and risky structural edits before export.
+- Stage-aware quick-edit presets with PC/Android numeric format preservation.
 - Copy/download coverage reports for imported saves.
 - Encode, copy, share, and download.
 - Generated comprehensive PC and Android fixture coverage tests.
@@ -61,4 +63,4 @@ Use the public test URL above for iPhone Safari checks.
 
 Read `PROJECT_COMMS.md` first. Claude owns design direction; Codex owns implementation and verification.
 
-Use `V1_ACCEPTANCE.md` as the current draft checklist for deciding when the app is ready for Berke to test on iPhone Safari.
+Use `V1_ACCEPTANCE.md` as the current checklist for Berke's iPhone Safari pass and remaining real-save QA.

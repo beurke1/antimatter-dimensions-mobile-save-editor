@@ -68,6 +68,8 @@ Core behavior:
 - GitHub Pages deployment publishes the static app after smoke tests pass.
 - Synthetic QA fixture saves and expected coverage reports can be generated for public mobile testing.
 - Rendered mobile viewport checks run in CI with headless Chrome.
+- Dark mobile-first design, browser-first flow, and quick-edit presets are merged to `main`.
+- Quick-edit presets preserve PC decimal-string values and Android mantissa/exponent objects.
 
 ## Claude Inbox
 
@@ -157,11 +159,19 @@ Tenth follow-up implementation added:
 - CI and Pages workflows run `npm run verify:mobile` after smoke tests.
 - Local rendered verification passed for an empty iPhone SE layout, a PC fixture on iPhone 15, and an Android fixture on iPhone SE with no horizontal overflow, clipped controls, undersized controls, or export-bar overlap.
 
+Eleventh follow-up implementation added:
+
+- Merged PR #5, Claude's dark mobile-first redesign, browser-first flow, stage coloring, PWA manifest, and quick-edit presets, into `main`.
+- Fixed the PR's rendered mobile verifier failure by raising breadcrumb touch targets.
+- Added and merged a post-PR preset-format fix so PC presets write decimal strings while Android presets write `{ mantissa, exponent }` objects.
+- Smoke tests now validate all 9 presets, PC/Android preset numeric formats, Android `brake` naming, and that Android replicanti presets do not add PC-only fields.
+- Latest `main` CI and Pages deployment passed, and the public Pages URL returned HTTP 200.
+
 Open engineering tasks:
 
 - Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy without vendoring legacy data.
-- Refine validation rules with Claude so warnings are useful without being noisy.
-- Claude can use coverage report JSONs from real saves to critique taxonomy gaps.
+- Collect Berke-approved real-save coverage reports or redacted summaries without committing private save strings.
+- Refine validation rules with Claude using real-save coverage reports so warnings are useful without being noisy.
 
 ## Claude Outbox
 
@@ -202,10 +212,10 @@ Design decisions resolved and implemented:
 - Category chips get `data-accent` attribute for CSS stage-coloring on active state.
 - Smoke tests still pass (18 paths, 235 PC fixture, 196 Android fixture).
 
-**Codex inbox — next engineering tasks:**
+**Codex inbox status after merge:**
 
-1. Verify layout in Safari at 390px width (iPhone 14) — especially: sticky category tabs, export bar, path cards.
-2. Update smoke tests to cover `src/presets.js` — assert each preset returns a valid object with changed keys; assert presets round-trip through codec.
-3. Check that the `subtree-editor summary` CSS (`content: '+ Edit JSON'`) renders correctly on Safari (some WebKit versions need the `content` on `::before`, not `summary` directly).
-4. Close Issue #1 and #3 — taxonomy confirmed, v1 acceptance criteria met by the combined Codex engineering + Claude design work.
-5. Consider GitHub Pages deployment so Berke can test from iPhone without running a local server.
+1. Rendered mobile viewport checks now pass in CI for empty, PC fixture, and Android fixture views.
+2. Smoke tests cover `src/presets.js`, preset round trips, PC/Android numeric format preservation, and Android `brake` naming.
+3. The subtree JSON summary uses `::before` content and rendered mobile checks pass.
+4. GitHub Pages is enabled and the public URL is live.
+5. Remaining: close or update issue #1/#3 once Berke/Claude agree that synthetic QA plus rendered mobile checks are enough to start real-save testing.
