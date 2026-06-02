@@ -186,6 +186,7 @@ Thirteenth follow-up implementation added:
 - Rendered mobile verification now includes a warning-heavy save case to check expanded warning-list layout and warning path jumps.
 - Rendered mobile verification now exercises PC string edits, boolean toggles, scoped JSON edits, deep Celestials scoped browsing/editing, reset, Android big-number edits, and encode output.
 - Rendered mobile verification now checks category, stage, search, type, and changed-only filters on a late-game PC save.
+- Safety risk warnings now group added/removed subtrees and parent type changes at the nearest changed container instead of duplicating warnings for every descendant path.
 
 Open engineering tasks:
 
@@ -214,6 +215,7 @@ Design decisions resolved and implemented:
 
 **Risk warnings (Issue #4):**
 - Safety panel stays, but limited to 6 visible issues by default to reduce scroll noise.
+- Structural risks are grouped at the nearest changed container when a whole subtree is added, removed, or type-changed.
 - Container/subtree JSON editor now uses a `<details>` collapse. It is not open by default, so the editing surface is available but not prominent.
 - Late-game info notes remain informational (not blocking).
 

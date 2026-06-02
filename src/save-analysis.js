@@ -28,6 +28,24 @@ const makeIssue = (severity, path, title, message) => ({
   message,
 });
 
+const isDescendantOf = (segments, ancestorSegments) => {
+  if (ancestorSegments.length >= segments.length) {
+    return false;
+  }
+
+  return ancestorSegments.every((segment, index) => segment === segments[index]);
+};
+
+const hasStructuralAncestor = (change, structuralChanges) => {
+  return structuralChanges.some((candidate) => {
+    if (candidate.path === change.path) {
+      return false;
+    }
+
+    return isDescendantOf(change.segments, candidate.segments);
+  });
+};
+
 const isDecimalString = (value) => {
   return typeof value === 'string' && DECIMAL_STRING_PATTERN.test(value.trim());
 };
@@ -113,9 +131,18 @@ export const analyzeSaveData = (data, saveType = 'pc') => {
 
 export const analyzeEditRisks = (changes) => {
   const risks = [];
+  const structuralChanges = changes.filter((change) => {
+    return change.changeType === 'added' ||
+      change.changeType === 'removed' ||
+      change.beforeType !== change.afterType;
+  });
 
   for (const change of changes) {
     if (change.path === 'root' && change.changeType === 'changed') {
+      continue;
+    }
+
+    if (hasStructuralAncestor(change, structuralChanges)) {
       continue;
     }
 

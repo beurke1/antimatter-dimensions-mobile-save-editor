@@ -45,7 +45,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Safety panel shows errors, warnings, and notes with exact paths.
 - Safety rows can expand past the first few issues and jump to affected paths.
 - Non-finite numbers are hard errors.
-- Added paths, removed paths, type changes, negative count-like values, fractional big-number exponents, and late-game edits are review warnings/notes.
+- Added paths, removed paths, parent type changes, negative count-like values, fractional big-number exponents, and late-game edits are review warnings/notes; subtree structural edits are grouped at the nearest changed container to reduce duplicate warning noise.
 - Readiness panel clearly distinguishes ready-to-encode from ready-to-import.
 
 ## Export

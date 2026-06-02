@@ -22,7 +22,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Direct mantissa/exponent edits for Android-style big-number objects.
 - Scoped JSON edits for objects and arrays.
 - Changed-path review with reset controls.
-- Safety check for invalid values and risky structural edits before export, with direct jumps to affected paths.
+- Safety check for invalid values and risky structural edits before export, with grouped subtree warnings and direct jumps to affected paths.
 - Stage-aware quick-edit presets with PC/Android numeric format preservation.
 - Copy value-free QA summaries with coverage counts and warning samples, plus copy/download coverage reports for imported saves.
 - Encode, copy, share, and download.

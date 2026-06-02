@@ -133,6 +133,33 @@ const addedChanges = buildChangeIndex(samplePcSave, addedSave, SaveType.PC);
 assert.ok(addedChanges.some((change) => change.path === 'options.customFlag' && change.changeType === 'added'));
 assert.ok(analyzeEditRisks(addedChanges).some((risk) => risk.path === 'options.customFlag' && risk.severity === 'warning'));
 
+const addedContainerSave = setValueAtSegments(samplePcSave, ['options', 'customGroup'], { enabled: true, level: 2 });
+const addedContainerRisks = analyzeEditRisks(buildChangeIndex(samplePcSave, addedContainerSave, SaveType.PC));
+assert.ok(addedContainerRisks.some((risk) => risk.path === 'options.customGroup' && risk.title === 'Added path'));
+assert.equal(
+  addedContainerRisks.some((risk) => risk.path === 'options.customGroup.enabled' || risk.path === 'options.customGroup.level'),
+  false,
+  'Added containers should not duplicate structural warnings for every added child'
+);
+
+const removedContainerSave = deleteValueAtSegments(samplePcSave, ['replicanti']);
+const removedContainerRisks = analyzeEditRisks(buildChangeIndex(samplePcSave, removedContainerSave, SaveType.PC));
+assert.ok(removedContainerRisks.some((risk) => risk.path === 'replicanti' && risk.title === 'Removed path'));
+assert.equal(
+  removedContainerRisks.some((risk) => risk.path === 'replicanti.unl' || risk.path === 'replicanti.amount'),
+  false,
+  'Removed containers should not duplicate structural warnings for every removed child'
+);
+
+const typeChangedContainerSave = setValueAtSegments(samplePcSave, ['replicanti'], false);
+const typeChangedContainerRisks = analyzeEditRisks(buildChangeIndex(samplePcSave, typeChangedContainerSave, SaveType.PC));
+assert.ok(typeChangedContainerRisks.some((risk) => risk.path === 'replicanti' && risk.title === 'Type changed'));
+assert.equal(
+  typeChangedContainerRisks.some((risk) => risk.path === 'replicanti.unl' || risk.path === 'replicanti.amount'),
+  false,
+  'Parent type changes should not duplicate removed-child structural warnings'
+);
+
 const removedAddedSave = deleteValueAtSegments(addedSave, ['options', 'customFlag']);
 assert.deepEqual(removedAddedSave, samplePcSave);
 

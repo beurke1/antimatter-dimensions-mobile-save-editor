@@ -32,7 +32,7 @@ Build a mobile-first Antimatter Dimensions save editor that can be used througho
 - Scoped JSON editing for objects, arrays, and edge-case values.
 - Changed-path review with original/current previews.
 - Per-path reset and reset-all controls before export.
-- Safety analysis for invalid values, added/removed paths, type changes, and late-game edit notes.
+- Safety analysis for invalid values, grouped added/removed subtree risks, type changes, and late-game edit notes.
 - Copyable/downloadable coverage report JSON for QA and Claude review.
 - Readiness summary for ready-to-encode versus ready-to-import state.
 - Encode, copy, share, and download output.
