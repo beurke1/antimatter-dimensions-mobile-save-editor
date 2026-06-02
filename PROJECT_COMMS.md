@@ -145,6 +145,7 @@ Eighth follow-up implementation added:
 
 - `.github/workflows/ci.yml` runs `npm test` on pushes to `main` and pull requests.
 - `.github/workflows/pages.yml` runs `npm test`, uploads `index.html` and `src/`, and deploys through GitHub Pages.
+- First CI and Pages workflow runs completed successfully.
 - Public iPhone Safari testing should use the Pages URL above.
 
 Open engineering tasks:
