@@ -129,7 +129,7 @@ Sixth follow-up implementation added:
 
 - `src/coverage-report.js` generates a structured coverage report for any imported save.
 - Mobile coverage panel now has Copy report and Download JSON actions.
-- Reports include totals, category/stage/type/depth counts, top-level paths, unknown paths, safety counts, and changed-path count.
+- Reports include totals, category/stage/type/depth counts, top-level paths, unknown paths, unknown top-level counts, safety counts, and changed-path count.
 - Smoke tests assert report totals and category completeness on generated PC/Android fixtures.
 
 Seventh follow-up implementation added:
@@ -173,7 +173,7 @@ Twelfth follow-up implementation added:
 - `npm run qa:fixtures` now exports eight fixture saves, eight coverage reports, and a manifest covering the full game progression shape without real user saves.
 - Smoke tests round-trip all eight progression fixtures, verify no fixture has safety errors, and keep the late-game all-category coverage gate.
 - Rendered mobile verification now includes early PC and Android saves in addition to late-game fixtures.
-- QA summaries and coverage reports include value-free safety issue counts and warning samples so real-save reports can identify noisy or missing warnings without sharing save values.
+- QA summaries and coverage reports include value-free unknown top-level counts, safety issue counts, and warning samples so real-save reports can identify taxonomy gaps or noisy warnings without sharing save values.
 - Added a taxonomy guard for stable top-level save keys, including `eternityBuyer`, so known keys stay out of fallback when possible.
 
 Thirteenth follow-up implementation added:
@@ -192,6 +192,7 @@ Thirteenth follow-up implementation added:
 - Rendered mobile verification now checks Review edits before/after rows, changed-only filtering after edits, review-row reset, and reset-all from the actual mobile UI.
 - Rendered mobile verification now checks Normal-stage quick-edit preset visibility plus PC decimal-string and Android mantissa/exponent preservation from the actual mobile UI.
 - Coverage reports and copied QA summaries now include value-free Safety Issue Counts so warning noise can be calibrated by title even when samples are capped.
+- Coverage reports and copied QA summaries now include value-free Unknown Top-Level Counts so fallback taxonomy gaps can be grouped even when unknown path lists are capped.
 
 Open engineering tasks:
 

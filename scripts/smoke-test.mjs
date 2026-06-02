@@ -216,6 +216,37 @@ const countLikeIssues = analyzeSaveData({
 assert.ok(countLikeIssues.some((issue) => issue.path === 'dimensionBoosts' && issue.title === 'Fractional count'));
 assert.ok(countLikeIssues.some((issue) => issue.path === 'galaxies' && issue.title === 'Negative count'));
 
+const unknownPathSave = {
+  ...samplePcSave,
+  qqqBucket: {
+    alpha: {
+      token: 'private-value',
+    },
+    beta: 3,
+  },
+  zzzFlag: false,
+};
+const unknownNodes = buildPathIndex(unknownPathSave, SaveType.PC);
+const unknownCoverage = calculateCoverage(unknownNodes);
+const unknownReport = buildCoverageReport({
+  saveType: SaveType.PC,
+  nodes: unknownNodes,
+  coverage: unknownCoverage,
+  changes: [],
+  analysisIssues: [],
+  generatedAt: '2026-06-02T00:00:00.000Z',
+});
+assert.equal(unknownReport.totals.unknownPaths, 5);
+assert.deepEqual(unknownReport.unknownTopLevelCounts, {
+  qqqBucket: 4,
+  zzzFlag: 1,
+});
+const unknownQaSummary = buildQaSummary(unknownReport);
+assert.ok(unknownQaSummary.includes('## Unknown Top-Level Counts'));
+assert.ok(unknownQaSummary.includes('- qqqBucket: 4'));
+assert.ok(unknownQaSummary.includes('- zzzFlag: 1'));
+assert.ok(!unknownQaSummary.includes('private-value'), 'Unknown path QA summary should not include unknown save values');
+
 const requiredCategoryIds = CATEGORIES
   .map((category) => category.id)
   .filter((categoryId) => categoryId !== 'unknown');

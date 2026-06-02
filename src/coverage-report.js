@@ -48,6 +48,7 @@ export const buildCoverageReport = ({
   const depthCounts = {};
   const topLevelPaths = [];
   const unknownPaths = [];
+  const unknownTopLevelCounts = {};
 
   for (const node of nodes) {
     increment(stageCounts, node.stage);
@@ -60,6 +61,7 @@ export const buildCoverageReport = ({
 
     if (node.categoryId === 'unknown') {
       unknownPaths.push(node.path);
+      increment(unknownTopLevelCounts, String(node.segments[0] ?? 'root'));
     }
   }
 
@@ -106,6 +108,7 @@ export const buildCoverageReport = ({
     depths: sortByCount(depthCounts),
     topLevelPaths: topLevelPaths.sort(),
     unknownPaths: unknownPaths.slice(0, 250).sort(),
+    unknownTopLevelCounts: sortByCount(unknownTopLevelCounts),
     safety: issueCounts,
     safetyIssueCounts: sortByCount(safetyIssueCounts),
     safetySamples,
@@ -198,6 +201,9 @@ export const buildQaSummary = (coverageReport) => {
     '',
     '## Unknown Paths',
     ...formatListBlock(coverageReport.unknownPaths),
+    '',
+    '## Unknown Top-Level Counts',
+    ...formatCountBlock(coverageReport.unknownTopLevelCounts),
     '',
     '## Top-Level Paths',
     ...formatListBlock(coverageReport.topLevelPaths),
