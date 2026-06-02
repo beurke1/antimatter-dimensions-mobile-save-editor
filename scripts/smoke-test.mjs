@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { CATEGORIES } from '../src/taxonomy.js';
+import { buildCoverageReport } from '../src/coverage-report.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
 import { createComprehensiveAndroidSave, createComprehensivePcSave } from './fixture-saves.mjs';
@@ -166,6 +167,19 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
 
   const safetySummary = summarizeAnalysis(analyzeSaveData(decoded.data, saveType));
   assert.equal(safetySummary.errors, 0);
+
+  const report = buildCoverageReport({
+    saveType,
+    nodes: fixtureNodes,
+    coverage: fixtureCoverage,
+    changes: [],
+    analysisIssues: [],
+  });
+  assert.equal(report.totals.paths, fixtureCoverage.total);
+  assert.equal(report.totals.editablePaths, fixtureCoverage.editableCount);
+  assert.equal(report.missingCategories.length, 0);
+  assert.ok(report.topLevelPaths.includes('celestials'));
+  assert.ok(report.valueTypes.object > 0);
 
   return fixtureCoverage.total;
 };

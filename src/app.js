@@ -13,6 +13,7 @@ import {
   setValueAtSegments,
 } from './path-index.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from './save-analysis.js';
+import { buildCoverageReport } from './coverage-report.js';
 import { CATEGORIES, getCategory } from './taxonomy.js';
 
 const appRoot = document.querySelector('#app');
@@ -38,6 +39,7 @@ const state = {
   analysisIssues: [],
   analysisSummary: { errors: 0, warnings: 0, info: 0 },
   coverage: null,
+  coverageReport: null,
   activeCategoryId: 'all',
   activeStageId: 'all',
   scopePath: 'root',
@@ -147,6 +149,15 @@ const rebuildIndex = () => {
     : [];
   state.analysisSummary = summarizeAnalysis(state.analysisIssues);
   state.coverage = state.nodes.length ? calculateCoverage(state.nodes) : null;
+  state.coverageReport = state.coverage
+    ? buildCoverageReport({
+      saveType: state.saveType,
+      nodes: state.nodes,
+      coverage: state.coverage,
+      changes: state.changes,
+      analysisIssues: state.analysisIssues,
+    })
+    : null;
 
   if (state.scopePath !== 'root' && !getNodeByPath(state.nodes, state.scopePath)) {
     state.scopePath = 'root';
@@ -362,30 +373,36 @@ const renderCoverage = () => {
   }
 
   return `
-    <section class="coverage-grid" aria-label="Coverage summary">
-      <div>
-        <span>Total paths</span>
-        <strong>${state.coverage.total}</strong>
+    <section class="panel coverage-panel" aria-label="Coverage summary">
+      <div class="coverage-grid">
+        <div>
+          <span>Total paths</span>
+          <strong>${state.coverage.total}</strong>
+        </div>
+        <div>
+          <span>Leaves</span>
+          <strong>${state.coverage.leafCount}</strong>
+        </div>
+        <div>
+          <span>Containers</span>
+          <strong>${state.coverage.containerCount}</strong>
+        </div>
+        <div>
+          <span>Fallback</span>
+          <strong>${state.coverage.uncategorizedCount}</strong>
+        </div>
+        <div>
+          <span>Changed</span>
+          <strong>${state.changes.length}</strong>
+        </div>
+        <div>
+          <span>Warnings</span>
+          <strong>${state.analysisSummary.errors + state.analysisSummary.warnings}</strong>
+        </div>
       </div>
-      <div>
-        <span>Leaves</span>
-        <strong>${state.coverage.leafCount}</strong>
-      </div>
-      <div>
-        <span>Containers</span>
-        <strong>${state.coverage.containerCount}</strong>
-      </div>
-      <div>
-        <span>Fallback</span>
-        <strong>${state.coverage.uncategorizedCount}</strong>
-      </div>
-      <div>
-        <span>Changed</span>
-        <strong>${state.changes.length}</strong>
-      </div>
-      <div>
-        <span>Warnings</span>
-        <strong>${state.analysisSummary.errors + state.analysisSummary.warnings}</strong>
+      <div class="coverage-actions">
+        <button type="button" class="secondary-button compact" data-action="copy-report">Copy report</button>
+        <button type="button" class="secondary-button compact" data-action="download-report">Download JSON</button>
       </div>
     </section>
   `;
@@ -884,19 +901,41 @@ const handleEncode = async () => {
 };
 
 const copyOutput = async () => {
-  if (!state.encodedOutput) {
+  return copyText(state.encodedOutput, document.querySelector('#encoded-output'));
+};
+
+const copyText = async (value, fallbackElement = null) => {
+  if (!value) {
     return false;
   }
 
   try {
-    await navigator.clipboard.writeText(state.encodedOutput);
+    await navigator.clipboard.writeText(value);
     return true;
   } catch {
-    const output = document.querySelector('#encoded-output');
+    const output = fallbackElement;
     output?.focus();
     output?.select();
     return document.execCommand('copy');
   }
+};
+
+const downloadText = (value, filename, type = 'text/plain;charset=utf-8') => {
+  if (!value) {
+    return;
+  }
+
+  const blob = new Blob([value], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const getCoverageReportText = () => {
+  return state.coverageReport ? JSON.stringify(state.coverageReport, null, 2) : '';
 };
 
 document.addEventListener('click', async (event) => {
@@ -1029,6 +1068,24 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (action === 'copy-report') {
+    const copied = await copyText(getCoverageReportText());
+    copied ? setNotice('Coverage report copied.', 'success') : setError('Could not copy coverage report.');
+    render();
+    return;
+  }
+
+  if (action === 'download-report') {
+    downloadText(
+      getCoverageReportText(),
+      'antimatter-dimensions-coverage-report.json',
+      'application/json;charset=utf-8'
+    );
+    setNotice('Coverage report downloaded.', 'success');
+    render();
+    return;
+  }
+
   if (action === 'share') {
     if (navigator.share && state.encodedOutput) {
       try {
@@ -1055,13 +1112,7 @@ document.addEventListener('click', async (event) => {
       return;
     }
 
-    const blob = new Blob([state.encodedOutput], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'antimatter-dimensions-save.txt';
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadText(state.encodedOutput, 'antimatter-dimensions-save.txt');
     setNotice('Download prepared.', 'success');
     render();
   }

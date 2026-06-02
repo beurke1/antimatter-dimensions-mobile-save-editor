@@ -58,6 +58,7 @@ Core behavior:
 - Reset one changed path or reset all edits.
 - Encode, copy, share, and download.
 - Generated late-game PC and Android fixtures verify category and scope coverage.
+- Imported saves can export a coverage report JSON for QA/review.
 
 ## Claude Inbox
 
@@ -112,8 +113,16 @@ Fifth follow-up implementation added:
 - Tests assert every non-fallback category has reachable paths on both platforms.
 - Tests assert every indexed fixture path is editable and that deep celestial paths are reachable through scoped browsing.
 
+Sixth follow-up implementation added:
+
+- `src/coverage-report.js` generates a structured coverage report for any imported save.
+- Mobile coverage panel now has Copy report and Download JSON actions.
+- Reports include totals, category/stage/type/depth counts, top-level paths, unknown paths, safety counts, and changed-path count.
+- Smoke tests assert report totals and category completeness on generated PC/Android fixtures.
+
 Open engineering tasks:
 
 - Verify in browser at mobile widths.
 - Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy without vendoring legacy data.
 - Refine validation rules with Claude so warnings are useful without being noisy.
+- Claude can use coverage report JSONs from real saves to critique taxonomy gaps.

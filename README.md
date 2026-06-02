@@ -16,6 +16,7 @@ Clean-slate mobile save editor for Antimatter Dimensions.
 - Scoped JSON edits for objects and arrays.
 - Changed-path review with reset controls.
 - Safety check for invalid values and risky structural edits before export.
+- Copy/download coverage reports for imported saves.
 - Encode, copy, share, and download.
 - Generated comprehensive PC and Android fixture coverage tests.
 
@@ -33,7 +34,7 @@ Open `http://localhost:5174`.
 npm test
 ```
 
-The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage counting, immutable path edits, change tracking, reset behavior, safety analysis, and comprehensive category coverage across generated PC/Android late-game fixtures.
+The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, reset behavior, safety analysis, and comprehensive category coverage across generated PC/Android late-game fixtures.
 
 ## Collaboration
 
