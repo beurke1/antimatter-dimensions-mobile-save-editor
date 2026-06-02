@@ -25,6 +25,7 @@ Build a mobile-first Antimatter Dimensions save editor that can be used througho
 - Runtime path index generated from the actual imported save.
 - Category chips for broad game-stage navigation.
 - Stage filters for Normal, Infinity, Eternity, Reality, Meta, and fallback content.
+- Scoped drilldown browsing with breadcrumbs and direct child navigation.
 - Search over path, key, type, category, stage, and preview value.
 - Type-aware inline editing for primitive leaves.
 - Direct mantissa/exponent editing for Android-style big-number objects.
@@ -61,4 +62,4 @@ Claude should refine labels, ordering, grouping, and mobile navigation. Codex sh
 - Path inventory and immutable edits live in `src/path-index.js`.
 - Category mapping lives in `src/taxonomy.js`.
 - The UI must never hide an unmapped imported path.
-- Smoke tests must verify PC round trip, Android round trip, path indexing, immutable path edits, change tracking, and added-key reset.
+- Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, immutable path edits, change tracking, and added-key reset.

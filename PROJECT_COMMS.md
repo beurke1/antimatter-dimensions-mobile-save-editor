@@ -49,6 +49,7 @@ Core behavior:
 - Generate runtime path index from imported data.
 - Categorize every path with an Uncategorized fallback.
 - Search, type-filter, stage-filter, and changed-only filter paths.
+- Browse within a selected subtree with breadcrumbs and direct-child controls.
 - Edit primitive values inline.
 - Edit Android-style big-number objects with mantissa/exponent controls.
 - Edit containers with scoped JSON.
@@ -86,9 +87,17 @@ Second follow-up implementation added:
 - Direct mobile controls for detected `{ mantissa, exponent }` big-number objects.
 - JSON subtree editing still remains available under those objects as an escape hatch.
 
+Third follow-up implementation added:
+
+- Scoped path browsing with breadcrumb buttons.
+- Direct-child grid for drilling into objects and arrays.
+- Container cards now have an Open action that narrows the browser to that subtree.
+- Search, type, stage, category, and changed filters now apply inside the active scope.
+- Smoke tests cover direct children, breadcrumb ancestry, and descendant scope matching.
+
 Open engineering tasks:
 
 - Verify in browser at mobile widths.
 - Publish a new GitHub repo once the GitHub creation path is available.
 - Add fixture-based tests using real reference saves once we decide whether to vendor fixtures into this repo.
-- Add better validation and dirty-change review before encode.
+- Add richer validation and edit-risk warnings before encode.

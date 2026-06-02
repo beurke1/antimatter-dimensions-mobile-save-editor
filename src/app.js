@@ -4,8 +4,12 @@ import {
   buildPathIndex,
   calculateCoverage,
   deleteValueAtSegments,
+  getAncestorNodes,
+  getDirectChildNodes,
+  getNodeByPath,
   getValueAtSegments,
   getValueType,
+  isNodeWithinScope,
   setValueAtSegments,
 } from './path-index.js';
 import { CATEGORIES, getCategory } from './taxonomy.js';
@@ -33,6 +37,7 @@ const state = {
   coverage: null,
   activeCategoryId: 'all',
   activeStageId: 'all',
+  scopePath: 'root',
   query: '',
   typeFilter: 'all',
   showChangedOnly: false,
@@ -132,10 +137,14 @@ const rebuildIndex = () => {
     ? buildChangeIndex(state.originalData, state.data, state.saveType)
     : [];
   state.coverage = state.nodes.length ? calculateCoverage(state.nodes) : null;
+
+  if (state.scopePath !== 'root' && !getNodeByPath(state.nodes, state.scopePath)) {
+    state.scopePath = 'root';
+  }
 };
 
 const getNode = (path) => {
-  return state.nodes.find((node) => node.path === path);
+  return getNodeByPath(state.nodes, path);
 };
 
 const getChange = (path) => {
@@ -240,8 +249,13 @@ const commitLeafInput = (input) => {
 const filteredNodes = () => {
   const normalizedQuery = state.query.trim().toLowerCase();
   const changedPathSet = new Set(state.changes.map((change) => change.path));
+  const nodeByPath = new Map(state.nodes.map((node) => [node.path, node]));
 
   return state.nodes.filter((node) => {
+    if (!isNodeWithinScope(node, state.scopePath, nodeByPath)) {
+      return false;
+    }
+
     if (state.activeCategoryId !== 'all' && node.categoryId !== state.activeCategoryId) {
       return false;
     }
@@ -485,6 +499,62 @@ const renderChangeReview = () => {
   `;
 };
 
+const renderScopeNavigator = () => {
+  if (!state.data || state.nodes.length === 0) {
+    return '';
+  }
+
+  const scopeNode = getNode(state.scopePath) ?? getNode('root');
+  const breadcrumbs = getAncestorNodes(state.nodes, scopeNode.path);
+  const children = getDirectChildNodes(state.nodes, scopeNode.path);
+  const visibleChildren = children.slice(0, 72);
+  const hiddenChildren = Math.max(0, children.length - visibleChildren.length);
+
+  return `
+    <section class="panel scope-panel" aria-labelledby="scope-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="scope-title">Browse scope</h2>
+          <p>${escapeHtml(scopeNode.path)} · ${scopeNode.childCount} direct child${scopeNode.childCount === 1 ? '' : 'ren'}</p>
+        </div>
+        ${scopeNode.path !== 'root' ? '<button type="button" class="secondary-button compact" data-action="set-scope" data-scope-path="root">Root</button>' : ''}
+      </div>
+      <nav class="breadcrumbs" aria-label="Path breadcrumbs">
+        ${breadcrumbs.map((crumb, index) => `
+          <button
+            type="button"
+            class="${crumb.path === scopeNode.path ? 'active' : ''}"
+            data-action="set-scope"
+            data-scope-path="${escapeHtml(crumb.path)}"
+          >
+            ${escapeHtml(index === 0 ? 'root' : crumb.key)}
+          </button>
+        `).join('')}
+      </nav>
+      ${visibleChildren.length ? `
+        <div class="child-grid" aria-label="Direct child paths">
+          ${visibleChildren.map((child) => {
+            const childChange = getChange(child.path);
+            return `
+              <button
+                type="button"
+                class="${child.isContainer ? 'container-child' : ''} ${childChange ? 'changed-child' : ''}"
+                data-action="set-scope"
+                data-scope-path="${escapeHtml(child.path)}"
+                ${child.isContainer ? '' : 'disabled'}
+              >
+                <span>${escapeHtml(child.key)}</span>
+                <small>${escapeHtml(child.type)}${child.isContainer ? ` · ${child.childCount}` : ''}${childChange ? ' · changed' : ''}</small>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
+      ${hiddenChildren ? `<p class="scope-more">${hiddenChildren} more direct children. Use search in this scope to narrow them.</p>` : ''}
+    </section>
+  `;
+};
+
 const renderBooleanEditor = (node, value) => {
   return `
     <button
@@ -623,7 +693,10 @@ const renderNodeCard = (node) => {
       ` : ''}
       ${node.type === 'big-number' ? renderBigNumberEditor(node, value) : ''}
       ${isContainer ? `
-        <div class="container-meta">${node.childCount} child ${node.childCount === 1 ? 'item' : 'items'} · ${escapeHtml(category.title)}</div>
+        <div class="container-meta">
+          <span>${node.childCount} child ${node.childCount === 1 ? 'item' : 'items'} · ${escapeHtml(category.title)}</span>
+          <button type="button" class="tiny-button" data-action="set-scope" data-scope-path="${escapeHtml(node.path)}">Open</button>
+        </div>
         ${renderContainerEditor(node)}
       ` : `
         <div class="leaf-editor">${renderLeafEditor(node)}</div>
@@ -705,6 +778,7 @@ function render() {
         ${renderCategoryTabs()}
         ${renderStageTabs()}
         ${renderFilters()}
+        ${renderScopeNavigator()}
         ${renderChangeReview()}
         ${renderBrowser()}
         ${renderOutput()}
@@ -727,6 +801,7 @@ const handleDecode = async () => {
     state.encodedOutput = '';
     state.activeCategoryId = 'all';
     state.activeStageId = 'all';
+    state.scopePath = 'root';
     state.showChangedOnly = false;
     state.visibleLimit = 120;
     rebuildIndex();
@@ -810,6 +885,13 @@ document.addEventListener('click', async (event) => {
 
   if (action === 'set-stage') {
     state.activeStageId = target.dataset.stageId;
+    state.visibleLimit = 120;
+    render();
+    return;
+  }
+
+  if (action === 'set-scope') {
+    state.scopePath = target.dataset.scopePath ?? 'root';
     state.visibleLimit = 120;
     render();
     return;

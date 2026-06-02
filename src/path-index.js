@@ -211,6 +211,54 @@ export const calculateCoverage = (nodes) => {
   };
 };
 
+export const getNodeByPath = (nodes, path) => {
+  return nodes.find((node) => node.path === path);
+};
+
+export const getDirectChildNodes = (nodes, path) => {
+  return nodes.filter((node) => node.parentPath === path);
+};
+
+export const getAncestorNodes = (nodes, path) => {
+  const ancestors = [];
+  const nodeByPath = new Map(nodes.map((node) => [node.path, node]));
+  let current = nodeByPath.get(path);
+
+  while (current) {
+    ancestors.unshift(current);
+
+    if (!current.parentPath) {
+      break;
+    }
+
+    current = nodeByPath.get(current.parentPath);
+  }
+
+  return ancestors;
+};
+
+export const isNodeWithinScope = (node, scopePath, nodeByPath = new Map()) => {
+  if (scopePath === 'root') {
+    return true;
+  }
+
+  if (node.path === scopePath) {
+    return true;
+  }
+
+  let parentPath = node.parentPath;
+
+  while (parentPath) {
+    if (parentPath === scopePath) {
+      return true;
+    }
+
+    parentPath = nodeByPath.get(parentPath)?.parentPath;
+  }
+
+  return false;
+};
+
 export const valuesAreEqual = (left, right) => {
   return JSON.stringify(left) === JSON.stringify(right);
 };

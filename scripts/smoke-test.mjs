@@ -5,7 +5,10 @@ import {
   buildPathIndex,
   calculateCoverage,
   deleteValueAtSegments,
+  getAncestorNodes,
+  getDirectChildNodes,
   getValueAtSegments,
+  isNodeWithinScope,
   setValueAtSegments,
 } from '../src/path-index.js';
 
@@ -78,6 +81,24 @@ assert.ok(nodes.some((node) => node.path === 'dimensions.antimatter[0].amount'))
 assert.ok(nodes.some((node) => node.path === 'challenge.normal.current'));
 assert.equal(coverage.total, nodes.length);
 assert.equal(coverage.editableCount, nodes.length);
+
+const nodeByPath = new Map(nodes.map((node) => [node.path, node]));
+const rootChildren = getDirectChildNodes(nodes, 'root');
+assert.ok(rootChildren.some((node) => node.path === 'dimensions'));
+
+const dimensionAmountNode = nodeByPath.get('dimensions.antimatter[0].amount');
+assert.ok(dimensionAmountNode);
+assert.equal(isNodeWithinScope(dimensionAmountNode, 'dimensions', nodeByPath), true);
+assert.equal(isNodeWithinScope(dimensionAmountNode, 'options', nodeByPath), false);
+
+const breadcrumbs = getAncestorNodes(nodes, 'dimensions.antimatter[0].amount').map((node) => node.path);
+assert.deepEqual(breadcrumbs, [
+  'root',
+  'dimensions',
+  'dimensions.antimatter',
+  'dimensions.antimatter[0]',
+  'dimensions.antimatter[0].amount',
+]);
 
 const updated = setValueAtSegments(samplePcSave, ['dimensions', 'antimatter', 0, 'amount'], '99');
 assert.equal(getValueAtSegments(updated, ['dimensions', 'antimatter', 0, 'amount']), '99');
