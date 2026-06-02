@@ -2,90 +2,105 @@ export const CATEGORIES = Object.freeze([
   {
     id: 'core',
     title: 'Core',
+    accentStage: 'normal',
     stage: 'Normal',
     description: 'Root metadata, time, tabs, tutorials, and game flags.',
   },
   {
     id: 'resources',
     title: 'Resources',
+    accentStage: 'normal',
     stage: 'All game',
     description: 'Currency pools and prestige resources.',
   },
   {
     id: 'dimensions',
     title: 'Dimensions',
+    accentStage: 'normal',
     stage: 'Normal',
     description: 'Dimension, tickspeed, boost, galaxy, and sacrifice state.',
   },
   {
     id: 'achievements',
     title: 'Achievements',
+    accentStage: 'normal',
     stage: 'All game',
     description: 'Achievement bits, secret achievements, unlocks, and notifications.',
   },
   {
     id: 'challenges',
     title: 'Challenges',
+    accentStage: 'normal',
     stage: 'Normal to Eternity',
     description: 'Normal, Infinity, and Eternity challenge state.',
   },
   {
     id: 'infinity',
     title: 'Infinity',
+    accentStage: 'infinity',
     stage: 'Infinity',
     description: 'Infinity upgrades, records, break state, and IP multiplier state.',
   },
   {
     id: 'automation',
     title: 'Automation',
+    accentStage: 'normal',
     stage: 'All game',
     description: 'Autobuyers and automated systems.',
   },
   {
     id: 'replicanti',
     title: 'Replicanti',
+    accentStage: 'infinity',
     stage: 'Infinity',
     description: 'Replicanti amount, upgrades, galaxies, and related challenge counters.',
   },
   {
     id: 'eternity',
     title: 'Eternity',
+    accentStage: 'eternity',
     stage: 'Eternity',
     description: 'Eternity points, studies, upgrades, shards, and dilation.',
   },
   {
     id: 'reality',
     title: 'Reality',
+    accentStage: 'reality',
     stage: 'Reality',
     description: 'Reality machines, glyphs, perks, automator, and imaginary progress.',
   },
   {
     id: 'black-hole',
     title: 'Black Hole',
+    accentStage: 'reality',
     stage: 'Reality',
     description: 'Black hole state, pause controls, and related timing.',
   },
   {
     id: 'celestials',
     title: 'Celestials',
+    accentStage: 'reality',
     stage: 'Reality',
     description: 'Teresa, Effarig, Enslaved, V, Ra, Laitela, Pelle, and related state.',
   },
   {
     id: 'records',
     title: 'Records',
+    accentStage: 'normal',
     stage: 'All game',
     description: 'Runs, requirement checks, speedrun state, and best records.',
   },
   {
     id: 'options',
     title: 'Options',
+    accentStage: 'meta',
     stage: 'Meta',
     description: 'Settings, IAP, UI preferences, and account-level state.',
   },
   {
     id: 'unknown',
     title: 'Uncategorized',
+    accentStage: 'fallback',
     stage: 'Fallback',
     description: 'New or unmapped save keys. These remain fully reachable.',
   },
@@ -94,6 +109,7 @@ export const CATEGORIES = Object.freeze([
 const CATEGORY_BY_ID = new Map(CATEGORIES.map((category) => [category.id, category]));
 
 const topLevelCategory = Object.freeze({
+  // Core
   version: 'core',
   lastUpdate: 'core',
   news: 'core',
@@ -104,7 +120,13 @@ const topLevelCategory = Object.freeze({
   tutorialActive: 'core',
   usedUnpause: 'core',
   backupTimer: 'core',
+  tab: 'core',
+  subtab: 'core',
+  lastTenRuns: 'core',
+  lastTenEternities: 'core',
+  lastTenRealities: 'core',
 
+  // Resources
   antimatter: 'resources',
   matter: 'resources',
   infinityPoints: 'resources',
@@ -115,7 +137,11 @@ const topLevelCategory = Object.freeze({
   partInfinityPoint: 'resources',
   partInfinitied: 'resources',
   partSimulatedReality: 'resources',
+  realityMachines: 'resources',
+  imaginaryMachines: 'resources',
+   eternityBuyer: 'resources',
 
+  // Dimensions
   dimensions: 'dimensions',
   buyUntil10: 'dimensions',
   sacrificed: 'dimensions',
@@ -125,13 +151,18 @@ const topLevelCategory = Object.freeze({
   totalTickBought: 'dimensions',
   postC4Tier: 'dimensions',
   highestTierBoughtThisDimboost: 'dimensions',
+  tickspeed: 'dimensions',
 
+  // Achievements
   achievementBits: 'achievements',
   secretAchievementBits: 'achievements',
   achievements: 'achievements',
   secretAchievements: 'achievements',
   secretUnlocks: 'achievements',
+  achTimer: 'achievements',
+  achievementChecks: 'achievements',
 
+  // Challenges
   challenge: 'challenges',
   eternityChalls: 'challenges',
   chall2Pow: 'challenges',
@@ -142,6 +173,7 @@ const topLevelCategory = Object.freeze({
   eterc8ids: 'challenges',
   eterc8repl: 'challenges',
 
+  // Infinity
   infinity: 'infinity',
   infinities: 'infinity',
   bigCrunches: 'infinity',
@@ -156,11 +188,16 @@ const topLevelCategory = Object.freeze({
   breakInfinityRebuyables: 'infinity',
   IPMultPurchases: 'infinity',
   ipMultUpgrades: 'infinity',
+  infMultBuy: 'infinity',
+  infinityGoal: 'infinity',
 
+  // Automation
   auto: 'automation',
 
+  // Replicanti
   replicanti: 'replicanti',
 
+  // Eternity
   eternityUpgrades: 'eternity',
   eternityUpgradeBits: 'eternity',
   epmultUpgrades: 'eternity',
@@ -170,25 +207,46 @@ const topLevelCategory = Object.freeze({
   timestudy: 'eternity',
   dilation: 'eternity',
   respec: 'eternity',
+  eterc: 'eternity',
+  thisEternity: 'eternity',
+  thisInfinity: 'eternity',
+  thisReality: 'reality',
+  thisInfinityTime: 'eternity',
 
+  // Reality
   reality: 'reality',
   bigRealities: 'reality',
+  glyphs: 'reality',
+  perks: 'reality',
+  automator: 'reality',
+  imaginaryRebuyables: 'reality',
+  realityBuyer: 'reality',
 
+  // Black Hole
   blackHole: 'black-hole',
   blackHolePause: 'black-hole',
   blackHoleAutoPauseMode: 'black-hole',
   blackHolePauseTime: 'black-hole',
   blackHoleNegative: 'black-hole',
 
+  // Celestials
   celestials: 'celestials',
 
+  // Records
   records: 'records',
   shownRuns: 'records',
   requirementChecks: 'records',
   speedrun: 'records',
+  startDate: 'records',
+  totalTimePlayed: 'records',
+  realTimePlayed: 'records',
+  bestReplicantiInfinitySubMs: 'records',
+  previousInfinities: 'records',
 
+  // Options
   options: 'options',
   IAP: 'options',
+  playerName: 'options',
 });
 
 export const getCategory = (categoryId) => {
@@ -207,7 +265,7 @@ export const categorizePath = (segments) => {
     return getCategory(directCategory);
   }
 
-  if (/glyph|perk|automator/iu.test(topKey)) {
+  if (/glyph|perk|automator|imaginary/iu.test(topKey)) {
     return getCategory('reality');
   }
 
@@ -215,10 +273,45 @@ export const categorizePath = (segments) => {
     return getCategory('achievements');
   }
 
-  if (/record|best|run|requirement/iu.test(topKey)) {
+  if (/record|best|run|requirement|speed/iu.test(topKey)) {
     return getCategory('records');
+  }
+
+  if (/replicanti|repl/iu.test(topKey)) {
+    return getCategory('replicanti');
+  }
+
+  if (/celestial|teresa|effarig|enslaved|laitela|pelle|\bra\b/iu.test(topKey)) {
+    return getCategory('celestials');
+  }
+
+  if (/blackhole|black.?hole/iu.test(topKey)) {
+    return getCategory('black-hole');
+  }
+
+  if (/dilation|dilat/iu.test(topKey)) {
+    return getCategory('eternity');
+  }
+
+  if (/infinity|inf(?!o)/iu.test(topKey)) {
+    return getCategory('infinity');
+  }
+
+  if (/eternity|etern/iu.test(topKey)) {
+    return getCategory('eternity');
+  }
+
+  if (/reality|realit/iu.test(topKey)) {
+    return getCategory('reality');
+  }
+
+  if (/dimension|galaxy|boost|galaxi/iu.test(topKey)) {
+    return getCategory('dimensions');
+  }
+
+  if (/auto|buyer/iu.test(topKey)) {
+    return getCategory('automation');
   }
 
   return getCategory('unknown');
 };
-

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { CATEGORIES } from '../src/taxonomy.js';
+import { PRESETS, applyPreset } from '../src/presets.js';
 import { buildCoverageReport } from '../src/coverage-report.js';
 import { buildReadinessSummary } from '../src/readiness.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
@@ -244,4 +245,34 @@ for (const file of qaArtifacts.files) {
   }
 }
 
-console.log(`Smoke tests passed: ${coverage.total} sample paths, ${pcCoverageTotal} PC fixture paths, ${androidCoverageTotal} Android fixture paths verified.`);
+// Preset tests
+assert.ok(PRESETS.length >= 9, 'At least 9 presets defined');
+
+// Every preset has required fields
+for (const preset of PRESETS) {
+  assert.ok(preset.id, `Preset missing id`);
+  assert.ok(preset.label, `Preset ${preset.id} missing label`);
+  assert.ok(preset.description, `Preset ${preset.id} missing description`);
+  assert.ok(preset.stage, `Preset ${preset.id} missing stage`);
+  assert.ok(typeof preset.apply === 'function', `Preset ${preset.id} missing apply function`);
+}
+
+// PC presets produce valid data that round-trips
+const basePC = createComprehensivePcSave();
+for (const preset of PRESETS.filter((p) => p.id !== 'reality-machines-1000')) {
+  const applied = applyPreset(basePC, preset.id);
+  assert.ok(applied && typeof applied === 'object' && !Array.isArray(applied), `Preset ${preset.id} returns a plain object`);
+  const encoded = await encodeSaveData(applied, SaveType.PC);
+  const reDecoded = await decodeSave(encoded);
+  assert.ok(reDecoded.data, `Preset ${preset.id} round-trips through PC codec`);
+}
+
+// Android-specific preset: break uses 'brake' key
+const baseMobilePC = { ...sampleAndroidSave };
+const brakeApplied = applyPreset(baseMobilePC, 'break-infinity');
+assert.equal(brakeApplied.brake, true, 'break-infinity preset sets brake on Android-style saves');
+
+// Unknown preset throws
+assert.throws(() => applyPreset(basePC, 'does-not-exist'), /Unknown preset/);
+
+console.log(`Smoke tests passed: ${coverage.total} sample paths, ${pcCoverageTotal} PC fixture paths, ${androidCoverageTotal} Android fixture paths verified, ${PRESETS.length} presets validated.`);

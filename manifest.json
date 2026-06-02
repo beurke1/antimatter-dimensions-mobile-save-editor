@@ -1,0 +1,10 @@
+{
+  "name": "AD Save Editor",
+  "short_name": "AD Editor",
+  "description": "Antimatter Dimensions mobile save editor",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090c14",
+  "theme_color": "#090c14",
+  "icons": []
+}
