@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-02T00:00:00.000Z",
+  "publicTestUrl": "https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/",
+  "fixtures": [
+    {
+      "id": "pc-late-game",
+      "saveType": "pc",
+      "saveFile": "pc-late-game-save.txt",
+      "coverageReportFile": "pc-coverage-report.json",
+      "expectedTotals": {
+        "paths": 235,
+        "editablePaths": 235,
+        "leaves": 155,
+        "containers": 80,
+        "changedPaths": 0,
+        "unknownPaths": 0
+      },
+      "expectedSafety": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "missingCategories": [],
+      "categoryCounts": {
+        "celestials": 29,
+        "eternity": 28,
+        "reality": 28,
+        "dimensions": 25,
+        "records": 21,
+        "challenges": 19,
+        "black-hole": 17,
+        "infinity": 13,
+        "core": 12,
+        "automation": 11,
+        "resources": 10,
+        "achievements": 9,
+        "options": 7,
+        "replicanti": 6,
+        "unknown": 0
+      },
+      "stageCounts": {
+        "Reality": 74,
+        "All game": 51,
+        "Normal": 37,
+        "Eternity": 28,
+        "Infinity": 19,
+        "Normal to Eternity": 19,
+        "Meta": 7
+      }
+    },
+    {
+      "id": "android-late-game",
+      "saveType": "android",
+      "saveFile": "android-late-game-save.txt",
+      "coverageReportFile": "android-coverage-report.json",
+      "expectedTotals": {
+        "paths": 196,
+        "editablePaths": 196,
+        "leaves": 124,
+        "containers": 72,
+        "changedPaths": 0,
+        "unknownPaths": 0
+      },
+      "expectedSafety": {
+        "error": 0,
+        "warning": 0,
+        "info": 0
+      },
+      "missingCategories": [],
+      "categoryCounts": {
+        "dimensions": 33,
+        "eternity": 23,
+        "resources": 23,
+        "reality": 19,
+        "infinity": 16,
+        "records": 13,
+        "core": 11,
+        "automation": 10,
+        "black-hole": 10,
+        "achievements": 9,
+        "celestials": 9,
+        "replicanti": 8,
+        "challenges": 7,
+        "options": 5,
+        "unknown": 0
+      },
+      "stageCounts": {
+        "All game": 55,
+        "Normal": 44,
+        "Reality": 38,
+        "Infinity": 24,
+        "Eternity": 23,
+        "Normal to Eternity": 7,
+        "Meta": 5
+      }
+    }
+  ]
+}

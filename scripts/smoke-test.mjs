@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { CATEGORIES } from '../src/taxonomy.js';
 import { PRESETS, applyPreset } from '../src/presets.js';
 import { buildCoverageReport } from '../src/coverage-report.js';
 import { buildReadinessSummary } from '../src/readiness.js';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
 import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from '../src/save-analysis.js';
+import { createQaArtifacts } from './export-qa-fixtures.mjs';
 import { createComprehensiveAndroidSave, createComprehensivePcSave } from './fixture-saves.mjs';
 import {
   buildChangeIndex,
@@ -216,6 +218,32 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
 
 const pcCoverageTotal = await assertComprehensiveCoverage(createComprehensivePcSave(), SaveType.PC);
 const androidCoverageTotal = await assertComprehensiveCoverage(createComprehensiveAndroidSave(), SaveType.Android);
+const qaArtifacts = await createQaArtifacts();
+assert.equal(qaArtifacts.files.length, 6);
+assert.deepEqual(
+  qaArtifacts.manifest.fixtures.map((fixture) => fixture.id),
+  ['pc-late-game', 'android-late-game']
+);
+assert.ok(qaArtifacts.manifest.fixtures.every((fixture) => fixture.expectedTotals.paths > 100));
+assert.ok(qaArtifacts.manifest.fixtures.every((fixture) => fixture.expectedSafety.error === 0));
+
+for (const file of qaArtifacts.files) {
+  const committedContent = await readFile(new URL(`../qa-fixtures/${file.path}`, import.meta.url), 'utf8');
+
+  if (file.path.endsWith('-save.txt')) {
+    const committedDecoded = await decodeSave(committedContent);
+    const generatedDecoded = await decodeSave(file.content);
+
+    assert.equal(committedDecoded.saveType, generatedDecoded.saveType);
+    assert.deepEqual(
+      committedDecoded.data,
+      generatedDecoded.data,
+      `qa-fixtures/${file.path} should decode to the generated fixture save`
+    );
+  } else {
+    assert.equal(committedContent, file.content, `qa-fixtures/${file.path} should match npm run qa:fixtures output`);
+  }
+}
 
 // Preset tests
 assert.ok(PRESETS.length >= 9, 'At least 9 presets defined');
