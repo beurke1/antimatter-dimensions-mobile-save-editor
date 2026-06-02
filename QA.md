@@ -35,7 +35,7 @@ Automated check:
 npm run verify:mobile
 ```
 
-This starts a temporary local server, launches headless Chrome, decodes synthetic PC and Android saves, exercises representative rendered navigation/filter/edit flows including a deep Celestials scoped edit, checks rendered iPhone-sized layouts, and writes screenshots plus `latest.json` to `artifacts/mobile-viewport/`.
+This starts a temporary local server, launches headless Chrome, decodes synthetic PC and Android saves, exercises rendered category/stage/search/type navigation, changed-only filtering, representative edit flows, and a deep Celestials scoped edit, checks rendered iPhone-sized layouts, and writes screenshots plus `latest.json` to `artifacts/mobile-viewport/`.
 
 Target iPhone Safari first. At minimum check 390x844 logical pixels and one narrower layout such as 375x667.
 

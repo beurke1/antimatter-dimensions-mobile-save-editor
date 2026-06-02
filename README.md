@@ -44,7 +44,7 @@ npm test
 npm run verify:mobile
 ```
 
-The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, reset behavior, safety analysis, progression-stage fixtures, and comprehensive category coverage across generated PC/Android late-game fixtures. The mobile verifier launches headless Chrome, decodes early and late PC/Android fixture saves, exercises representative rendered navigation/filter/edit flows including deep scoped browsing, checks iPhone-sized rendered layout overflow, and writes screenshots plus a JSON report to `artifacts/mobile-viewport/`.
+The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, reset behavior, safety analysis, progression-stage fixtures, and comprehensive category coverage across generated PC/Android late-game fixtures. The mobile verifier launches headless Chrome, decodes early and late PC/Android fixture saves, exercises rendered category/stage/search/type navigation, changed-only filtering, representative edit flows, and deep scoped browsing, checks iPhone-sized rendered layout overflow, and writes screenshots plus a JSON report to `artifacts/mobile-viewport/`.
 
 GitHub Actions runs the same smoke and mobile checks on pushes and pull requests. The Pages deployment also runs them before publishing the static app.
 
