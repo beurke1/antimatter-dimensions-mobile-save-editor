@@ -1,0 +1,745 @@
+import { decodeSave, encodeSaveData, SaveType, stringifySaveJson } from './save-codec.js';
+import {
+  buildPathIndex,
+  calculateCoverage,
+  getValueAtSegments,
+  getValueType,
+  setValueAtSegments,
+} from './path-index.js';
+import { CATEGORIES, getCategory } from './taxonomy.js';
+
+const appRoot = document.querySelector('#app');
+const searchableTypes = new Set(['string', 'number', 'boolean', 'null', 'big-number', 'array', 'object']);
+
+const state = {
+  rawInput: '',
+  data: null,
+  originalData: null,
+  saveType: SaveType.PC,
+  source: null,
+  nodes: [],
+  coverage: null,
+  activeCategoryId: 'all',
+  query: '',
+  typeFilter: 'all',
+  visibleLimit: 120,
+  dirty: false,
+  notice: null,
+  error: null,
+  encodedOutput: '',
+};
+
+const escapeHtml = (value) => {
+  return String(value ?? '')
+    .replace(/&/gu, '&amp;')
+    .replace(/</gu, '&lt;')
+    .replace(/>/gu, '&gt;')
+    .replace(/"/gu, '&quot;')
+    .replace(/'/gu, '&#039;');
+};
+
+const preserveFocus = (renderWork) => {
+  const activeElement = document.activeElement;
+  const activeId = activeElement?.id || activeElement?.dataset?.focusKey;
+  const selectionStart = activeElement && 'selectionStart' in activeElement ? activeElement.selectionStart : null;
+  const selectionEnd = activeElement && 'selectionEnd' in activeElement ? activeElement.selectionEnd : null;
+
+  renderWork();
+
+  if (!activeId) {
+    return;
+  }
+
+  const nextElement = document.getElementById(activeId) ?? appRoot.querySelector(`[data-focus-key="${CSS.escape(activeId)}"]`);
+  if (nextElement && typeof nextElement.focus === 'function') {
+    nextElement.focus({ preventScroll: true });
+
+    if (selectionStart !== null && 'setSelectionRange' in nextElement) {
+      nextElement.setSelectionRange(selectionStart, selectionEnd);
+    }
+  }
+};
+
+const setNotice = (message, tone = 'neutral') => {
+  state.notice = { message, tone };
+  state.error = null;
+};
+
+const setError = (message) => {
+  state.error = message;
+  state.notice = null;
+};
+
+const detectStage = (data) => {
+  if (!data) {
+    return 'No save';
+  }
+
+  if (data.reality || data.celestials || data.blackHole || data.realities || data.bigRealities) {
+    return 'Reality';
+  }
+
+  if (data.eternityPoints || data.eternities || data.bigEternities || data.dilation || data.timeShards) {
+    return 'Eternity';
+  }
+
+  if (data.infinityPoints || data.infinities || data.bigCrunches || data.replicanti || data.break || data.brake) {
+    return 'Infinity';
+  }
+
+  return 'Normal';
+};
+
+const rebuildIndex = () => {
+  state.nodes = state.data ? buildPathIndex(state.data, state.saveType) : [];
+  state.coverage = state.nodes.length ? calculateCoverage(state.nodes) : null;
+};
+
+const getNode = (path) => {
+  return state.nodes.find((node) => node.path === path);
+};
+
+const updateDataAtNode = (node, value, sourceLabel = 'field') => {
+  state.data = setValueAtSegments(state.data, node.segments, value);
+  state.dirty = true;
+  state.encodedOutput = '';
+  rebuildIndex();
+  setNotice(`${node.path} updated from ${sourceLabel}.`, 'success');
+  render();
+};
+
+const parseJsonValue = (text) => {
+  return JSON.parse(text);
+};
+
+const commitLeafInput = (input) => {
+  const card = input.closest('[data-node-path]');
+  const node = card ? getNode(card.dataset.nodePath) : null;
+
+  if (!node) {
+    return;
+  }
+
+  const type = input.dataset.editorType;
+  let nextValue;
+
+  if (type === 'number') {
+    nextValue = Number(input.value.trim());
+
+    if (!Number.isFinite(nextValue)) {
+      setError(`Invalid number for ${node.path}.`);
+      render();
+      return;
+    }
+  } else if (type === 'string') {
+    nextValue = input.value;
+  } else if (type === 'json') {
+    try {
+      nextValue = parseJsonValue(input.value);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : `Invalid JSON for ${node.path}.`);
+      render();
+      return;
+    }
+  } else {
+    return;
+  }
+
+  updateDataAtNode(node, nextValue, 'inline edit');
+};
+
+const filteredNodes = () => {
+  const normalizedQuery = state.query.trim().toLowerCase();
+
+  return state.nodes.filter((node) => {
+    if (state.activeCategoryId !== 'all' && node.categoryId !== state.activeCategoryId) {
+      return false;
+    }
+
+    if (state.typeFilter !== 'all' && node.type !== state.typeFilter) {
+      return false;
+    }
+
+    if (!normalizedQuery) {
+      return true;
+    }
+
+    const searchableText = [
+      node.path,
+      node.key,
+      node.type,
+      node.categoryTitle,
+      node.stage,
+      node.preview,
+    ].join(' ').toLowerCase();
+
+    return searchableText.includes(normalizedQuery);
+  });
+};
+
+const renderHeader = () => {
+  const status = state.data ? `${state.saveType.toUpperCase()} · ${detectStage(state.data)}` : 'No save loaded';
+  const dirty = state.dirty ? 'Changed' : 'Clean';
+
+  return `
+    <header class="topbar">
+      <div class="title-block">
+        <span class="eyebrow">Antimatter Dimensions</span>
+        <h1>Mobile Save Editor</h1>
+      </div>
+      <div class="status-stack" aria-label="Save status">
+        <span class="status-pill">${escapeHtml(status)}</span>
+        <span class="status-pill ${state.dirty ? 'dirty' : ''}">${dirty}</span>
+      </div>
+    </header>
+  `;
+};
+
+const renderImportPanel = () => {
+  return `
+    <section class="panel import-panel" aria-labelledby="import-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="import-title">Import</h2>
+          <p>Paste an encoded PC or Android save. Decoded JSON is accepted for inspection.</p>
+        </div>
+        <button class="icon-button" type="button" data-action="choose-file" aria-label="Open save file">↥</button>
+      </div>
+      <textarea
+        id="raw-save"
+        class="save-input"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="AntimatterDimensionsSavefileFormat..."
+      >${escapeHtml(state.rawInput)}</textarea>
+      <input id="file-input" class="file-input" type="file" accept=".txt,.json,text/plain,application/json" />
+      <div class="action-row">
+        <button type="button" class="secondary-button" data-action="paste">Paste</button>
+        <button type="button" class="primary-button" data-action="decode">Decode</button>
+      </div>
+    </section>
+  `;
+};
+
+const renderMessages = () => {
+  if (state.error) {
+    return `<div class="alert" role="alert">${escapeHtml(state.error)}</div>`;
+  }
+
+  if (state.notice) {
+    return `<div class="notice ${escapeHtml(state.notice.tone)}" role="status">${escapeHtml(state.notice.message)}</div>`;
+  }
+
+  return '';
+};
+
+const renderCoverage = () => {
+  if (!state.coverage) {
+    return '';
+  }
+
+  return `
+    <section class="coverage-grid" aria-label="Coverage summary">
+      <div>
+        <span>Total paths</span>
+        <strong>${state.coverage.total}</strong>
+      </div>
+      <div>
+        <span>Leaves</span>
+        <strong>${state.coverage.leafCount}</strong>
+      </div>
+      <div>
+        <span>Containers</span>
+        <strong>${state.coverage.containerCount}</strong>
+      </div>
+      <div>
+        <span>Fallback</span>
+        <strong>${state.coverage.uncategorizedCount}</strong>
+      </div>
+    </section>
+  `;
+};
+
+const renderCategoryTabs = () => {
+  if (!state.coverage) {
+    return '';
+  }
+
+  const allCount = state.coverage.total;
+  const categoryButtons = [
+    { id: 'all', title: 'All', count: allCount },
+    ...CATEGORIES.map((category) => ({
+      id: category.id,
+      title: category.title,
+      count: state.coverage.categoryCounts[category.id] ?? 0,
+    })).filter((category) => category.count > 0 || category.id === 'unknown'),
+  ];
+
+  return `
+    <nav class="category-tabs" aria-label="Save categories">
+      ${categoryButtons.map((category) => `
+        <button
+          type="button"
+          class="${category.id === state.activeCategoryId ? 'active' : ''}"
+          data-action="set-category"
+          data-category-id="${escapeHtml(category.id)}"
+        >
+          <span>${escapeHtml(category.title)}</span>
+          <strong>${category.count}</strong>
+        </button>
+      `).join('')}
+    </nav>
+  `;
+};
+
+const renderFilters = () => {
+  if (!state.data) {
+    return '';
+  }
+
+  const typeOptions = ['all', ...searchableTypes];
+
+  return `
+    <section class="filter-bar" aria-label="Search and filters">
+      <input
+        id="path-search"
+        type="search"
+        value="${escapeHtml(state.query)}"
+        placeholder="Search path, key, value, stage..."
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+      <select id="type-filter" aria-label="Type filter">
+        ${typeOptions.map((type) => `
+          <option value="${escapeHtml(type)}" ${state.typeFilter === type ? 'selected' : ''}>${escapeHtml(type === 'all' ? 'All types' : type)}</option>
+        `).join('')}
+      </select>
+    </section>
+  `;
+};
+
+const renderBooleanEditor = (node, value) => {
+  return `
+    <button
+      type="button"
+      role="switch"
+      aria-checked="${value ? 'true' : 'false'}"
+      class="switch ${value ? 'enabled' : ''}"
+      data-action="toggle-boolean"
+    >
+      ${value ? 'On' : 'Off'}
+    </button>
+  `;
+};
+
+const renderLeafEditor = (node) => {
+  const value = getValueAtSegments(state.data, node.segments);
+
+  if (node.type === 'boolean') {
+    return renderBooleanEditor(node, value);
+  }
+
+  if (node.type === 'number') {
+    return `
+      <input
+        class="field-input"
+        data-editor-type="number"
+        type="text"
+        inputmode="decimal"
+        value="${escapeHtml(value)}"
+        autocomplete="off"
+      />
+    `;
+  }
+
+  if (node.type === 'string') {
+    const inputTag = String(value).length > 80 ? 'textarea' : 'input';
+
+    if (inputTag === 'textarea') {
+      return `
+        <textarea
+          class="field-input field-textarea"
+          data-editor-type="string"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+        >${escapeHtml(value)}</textarea>
+      `;
+    }
+
+    return `
+      <input
+        class="field-input"
+        data-editor-type="string"
+        type="text"
+        value="${escapeHtml(value)}"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+    `;
+  }
+
+  return `
+    <textarea class="field-input field-textarea" data-editor-type="json">${escapeHtml(JSON.stringify(value))}</textarea>
+  `;
+};
+
+const renderContainerEditor = (node) => {
+  const value = getValueAtSegments(state.data, node.segments);
+  const json = stringifySaveJson(value);
+
+  return `
+    <details class="subtree-editor">
+      <summary>Edit subtree JSON</summary>
+      <textarea class="subtree-textarea" spellcheck="false" autocapitalize="off">${escapeHtml(json)}</textarea>
+      <button type="button" class="secondary-button full" data-action="apply-subtree-json">Apply subtree JSON</button>
+    </details>
+  `;
+};
+
+const renderNodeCard = (node) => {
+  const category = getCategory(node.categoryId);
+  const value = getValueAtSegments(state.data, node.segments);
+  const freshType = getValueType(value);
+  const isContainer = node.isContainer;
+
+  return `
+    <article class="path-card ${isContainer ? 'container' : 'leaf'}" data-node-path="${escapeHtml(node.path)}">
+      <div class="path-main">
+        <div class="path-copy">
+          <span class="node-key">${escapeHtml(node.key)}</span>
+          <code>${escapeHtml(node.path)}</code>
+        </div>
+        <div class="node-badges">
+          <span>${escapeHtml(freshType)}</span>
+          <span>${escapeHtml(category.stage)}</span>
+        </div>
+      </div>
+      <div class="value-preview">${escapeHtml(node.preview)}</div>
+      ${isContainer ? `
+        <div class="container-meta">${node.childCount} child ${node.childCount === 1 ? 'item' : 'items'} · ${escapeHtml(category.title)}</div>
+        ${renderContainerEditor(node)}
+      ` : `
+        <div class="leaf-editor">${renderLeafEditor(node)}</div>
+      `}
+    </article>
+  `;
+};
+
+const renderBrowser = () => {
+  if (!state.data) {
+    return `
+      <section class="empty-state">
+        <h2>Ready for a save</h2>
+        <p>After decoding, every object, array item, and primitive value appears in the categorized browser.</p>
+      </section>
+    `;
+  }
+
+  const category = state.activeCategoryId === 'all' ? null : getCategory(state.activeCategoryId);
+  const results = filteredNodes();
+  const visible = results.slice(0, state.visibleLimit);
+  const hiddenCount = Math.max(0, results.length - visible.length);
+
+  return `
+    <section class="panel browser-panel" aria-labelledby="browser-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="browser-title">${escapeHtml(category?.title ?? 'All Paths')}</h2>
+          <p>${results.length} matching path${results.length === 1 ? '' : 's'} · every match is editable inline or through subtree JSON.</p>
+        </div>
+      </div>
+      <div class="path-list">
+        ${visible.map(renderNodeCard).join('')}
+      </div>
+      ${hiddenCount ? `
+        <button type="button" class="secondary-button full" data-action="load-more">Show ${Math.min(120, hiddenCount)} more</button>
+      ` : ''}
+    </section>
+  `;
+};
+
+const renderOutput = () => {
+  if (!state.data) {
+    return '';
+  }
+
+  return `
+    <section class="panel output-panel" aria-labelledby="output-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="output-title">Output</h2>
+          <p>${state.encodedOutput ? 'Encoded save is ready.' : 'Encode after editing.'}</p>
+        </div>
+        <button type="button" class="icon-button" data-action="download" aria-label="Download encoded save" ${state.encodedOutput ? '' : 'disabled'}>↓</button>
+      </div>
+      <textarea id="encoded-output" class="output-textarea" readonly>${escapeHtml(state.encodedOutput)}</textarea>
+    </section>
+  `;
+};
+
+const renderExportBar = () => {
+  return `
+    <footer class="export-bar" aria-label="Export actions">
+      <button type="button" data-action="encode" ${state.data ? '' : 'disabled'}>Encode</button>
+      <button type="button" data-action="copy" ${state.encodedOutput ? '' : 'disabled'}>Copy</button>
+      <button type="button" data-action="share" ${state.encodedOutput ? '' : 'disabled'}>Share</button>
+    </footer>
+  `;
+};
+
+function render() {
+  preserveFocus(() => {
+    appRoot.innerHTML = `
+      ${renderHeader()}
+      <main class="app-shell">
+        ${renderImportPanel()}
+        ${renderMessages()}
+        ${renderCoverage()}
+        ${renderCategoryTabs()}
+        ${renderFilters()}
+        ${renderBrowser()}
+        ${renderOutput()}
+      </main>
+      ${renderExportBar()}
+    `;
+  });
+}
+
+const handleDecode = async () => {
+  state.rawInput = document.querySelector('#raw-save')?.value ?? state.rawInput;
+
+  try {
+    const decoded = await decodeSave(state.rawInput);
+    state.data = decoded.data;
+    state.originalData = structuredClone(decoded.data);
+    state.saveType = decoded.saveType;
+    state.source = decoded.source;
+    state.dirty = false;
+    state.encodedOutput = '';
+    state.activeCategoryId = 'all';
+    state.visibleLimit = 120;
+    rebuildIndex();
+    setNotice(`Decoded ${decoded.saveType.toUpperCase()} save with ${state.coverage.total} editable paths.`, 'success');
+  } catch (error) {
+    setError(error instanceof Error ? error.message : 'Could not decode save.');
+  }
+
+  render();
+};
+
+const handleEncode = async () => {
+  if (!state.data) {
+    return;
+  }
+
+  try {
+    state.encodedOutput = await encodeSaveData(state.data, state.saveType);
+    state.dirty = false;
+    setNotice('Encoded output generated.', 'success');
+  } catch (error) {
+    setError(error instanceof Error ? error.message : 'Could not encode save.');
+  }
+
+  render();
+};
+
+const copyOutput = async () => {
+  if (!state.encodedOutput) {
+    return false;
+  }
+
+  try {
+    await navigator.clipboard.writeText(state.encodedOutput);
+    return true;
+  } catch {
+    const output = document.querySelector('#encoded-output');
+    output?.focus();
+    output?.select();
+    return document.execCommand('copy');
+  }
+};
+
+document.addEventListener('click', async (event) => {
+  const target = event.target.closest('[data-action]');
+
+  if (!target) {
+    return;
+  }
+
+  const action = target.dataset.action;
+
+  if (action === 'choose-file') {
+    document.querySelector('#file-input')?.click();
+    return;
+  }
+
+  if (action === 'paste') {
+    try {
+      const text = await navigator.clipboard.readText();
+      state.rawInput = text;
+      setNotice('Clipboard pasted.', 'success');
+    } catch {
+      setError('Clipboard paste is unavailable in this browser.');
+    }
+    render();
+    return;
+  }
+
+  if (action === 'decode') {
+    await handleDecode();
+    return;
+  }
+
+  if (action === 'set-category') {
+    state.activeCategoryId = target.dataset.categoryId;
+    state.visibleLimit = 120;
+    render();
+    return;
+  }
+
+  if (action === 'load-more') {
+    state.visibleLimit += 120;
+    render();
+    return;
+  }
+
+  if (action === 'toggle-boolean') {
+    const card = target.closest('[data-node-path]');
+    const node = card ? getNode(card.dataset.nodePath) : null;
+
+    if (node) {
+      updateDataAtNode(node, !getValueAtSegments(state.data, node.segments), 'switch');
+    }
+    return;
+  }
+
+  if (action === 'apply-subtree-json') {
+    const card = target.closest('[data-node-path]');
+    const node = card ? getNode(card.dataset.nodePath) : null;
+    const textarea = card?.querySelector('.subtree-textarea');
+
+    if (!node || !textarea) {
+      return;
+    }
+
+    try {
+      const parsed = parseJsonValue(textarea.value);
+      if (node.path === 'root' && (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))) {
+        throw new Error('Root save JSON must be an object.');
+      }
+      updateDataAtNode(node, parsed, 'subtree JSON');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : `Invalid JSON for ${node.path}.`);
+      render();
+    }
+    return;
+  }
+
+  if (action === 'encode') {
+    await handleEncode();
+    return;
+  }
+
+  if (action === 'copy') {
+    const copied = await copyOutput();
+    copied ? setNotice('Output copied.', 'success') : setError('Could not copy output. Select it manually.');
+    render();
+    return;
+  }
+
+  if (action === 'share') {
+    if (navigator.share && state.encodedOutput) {
+      try {
+        await navigator.share({
+          title: 'Antimatter Dimensions save',
+          text: state.encodedOutput,
+        });
+        setNotice('Share sheet opened.', 'success');
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          setError('Share failed. Output was not changed.');
+        }
+      }
+    } else {
+      const copied = await copyOutput();
+      copied ? setNotice('Share unavailable; output copied instead.', 'success') : setError('Share and copy are unavailable.');
+    }
+    render();
+    return;
+  }
+
+  if (action === 'download') {
+    if (!state.encodedOutput) {
+      return;
+    }
+
+    const blob = new Blob([state.encodedOutput], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'antimatter-dimensions-save.txt';
+    link.click();
+    URL.revokeObjectURL(url);
+    setNotice('Download prepared.', 'success');
+    render();
+  }
+});
+
+document.addEventListener('input', (event) => {
+  const target = event.target;
+
+  if (target.id === 'raw-save') {
+    state.rawInput = target.value;
+    return;
+  }
+
+  if (target.id === 'path-search') {
+    state.query = target.value;
+    state.visibleLimit = 120;
+    render();
+  }
+});
+
+document.addEventListener('change', async (event) => {
+  const target = event.target;
+
+  if (target.id === 'file-input') {
+    const file = target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    state.rawInput = await file.text();
+    setNotice('File loaded.', 'success');
+    target.value = '';
+    render();
+    return;
+  }
+
+  if (target.id === 'type-filter') {
+    state.typeFilter = target.value;
+    state.visibleLimit = 120;
+    render();
+    return;
+  }
+
+  if (target.dataset.editorType) {
+    commitLeafInput(target);
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  const target = event.target;
+
+  if (target.dataset?.editorType && event.key === 'Enter' && target.tagName !== 'TEXTAREA') {
+    event.preventDefault();
+    commitLeafInput(target);
+  }
+});
+
+render();
+

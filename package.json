@@ -1,0 +1,11 @@
+{
+  "name": "antimatter-dimensions-mobile-save-editor",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 5174",
+    "start": "python3 -m http.server 5174",
+    "test": "node scripts/smoke-test.mjs"
+  }
+}

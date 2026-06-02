@@ -1,0 +1,85 @@
+import assert from 'node:assert/strict';
+import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
+import {
+  buildPathIndex,
+  calculateCoverage,
+  getValueAtSegments,
+  setValueAtSegments,
+} from '../src/path-index.js';
+
+const samplePcSave = {
+  antimatter: '10',
+  dimensions: {
+    antimatter: [
+      {
+        bought: 10,
+        amount: '25',
+      },
+    ],
+  },
+  challenge: {
+    normal: {
+      current: 0,
+    },
+  },
+  infinityPoints: '0',
+  replicanti: {
+    unl: false,
+    amount: '0',
+  },
+  version: 14,
+  lastUpdate: 1700000000000,
+  options: {
+    notation: 'Scientific',
+  },
+};
+
+const sampleAndroidSave = {
+  antimatter: {
+    mantissa: 1,
+    exponent: 10,
+  },
+  dimensions: {
+    antimatter: [
+      {
+        bought: 3,
+        amount: {
+          mantissa: 2,
+          exponent: 4,
+        },
+      },
+    ],
+  },
+  brake: false,
+  achievements: [1, 2, 3],
+  version: 30100100,
+  lastUpdate: 1700000000000,
+};
+
+const pcEncoded = await encodeSaveData(samplePcSave, SaveType.PC);
+assert.ok(pcEncoded.startsWith('AntimatterDimensionsSavefileFormatAAB'));
+
+const pcDecoded = await decodeSave(pcEncoded);
+assert.equal(pcDecoded.saveType, SaveType.PC);
+assert.deepEqual(pcDecoded.data, samplePcSave);
+
+const androidEncoded = await encodeSaveData(sampleAndroidSave, SaveType.Android);
+assert.ok(androidEncoded.startsWith('AntimatterDimensionsAndroidSaveFormatAAA'));
+
+const androidDecoded = await decodeSave(androidEncoded);
+assert.equal(androidDecoded.saveType, SaveType.Android);
+assert.deepEqual(androidDecoded.data, sampleAndroidSave);
+
+const nodes = buildPathIndex(samplePcSave, SaveType.PC);
+const coverage = calculateCoverage(nodes);
+assert.ok(nodes.some((node) => node.path === 'dimensions.antimatter[0].amount'));
+assert.ok(nodes.some((node) => node.path === 'challenge.normal.current'));
+assert.equal(coverage.total, nodes.length);
+assert.equal(coverage.editableCount, nodes.length);
+
+const updated = setValueAtSegments(samplePcSave, ['dimensions', 'antimatter', 0, 'amount'], '99');
+assert.equal(getValueAtSegments(updated, ['dimensions', 'antimatter', 0, 'amount']), '99');
+assert.equal(samplePcSave.dimensions.antimatter[0].amount, '25');
+
+console.log(`Smoke tests passed: ${coverage.total} indexed paths, PC and Android round trips verified.`);
+
