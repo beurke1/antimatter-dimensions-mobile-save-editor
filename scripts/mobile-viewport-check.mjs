@@ -1080,6 +1080,35 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         };
       }
 
+      if (${JSON.stringify(workflow)} === 'pc-decimal-string-export') {
+        await setSearch('antimatter');
+        await waitFor(() => card('antimatter'), 'PC decimal string path card');
+        const decimalEditor = card('antimatter')?.querySelector('.decimal-string-editor');
+        if (!decimalEditor) throw new Error('Missing PC decimal string editor');
+
+        setEditorValue('antimatter', '[data-editor-type="decimal-string-mantissa"]', '1.79');
+        await waitFor(() => card('antimatter')?.classList.contains('changed'), 'PC decimal mantissa edit');
+        setEditorValue('antimatter', '[data-editor-type="decimal-string-exponent"]', '308');
+        await waitFor(() => card('antimatter')?.querySelector('[data-editor-type="string"]')?.value === '1.79e308', 'PC decimal exponent edit');
+
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'PC decimal string encode');
+        const { decodeSave } = await import('./src/save-codec.js');
+        const decoded = await decodeSave(encoded);
+
+        return {
+          workflow: 'pc-decimal-string-export',
+          encodedPrefix: encoded.slice(0, 37),
+          decimalEditorRendered: Boolean(decimalEditor),
+          rawStringValue: card('antimatter')?.querySelector('[data-editor-type="string"]')?.value ?? '',
+          mantissaValue: card('antimatter')?.querySelector('[data-editor-type="decimal-string-mantissa"]')?.value ?? '',
+          exponentValue: card('antimatter')?.querySelector('[data-editor-type="decimal-string-exponent"]')?.value ?? '',
+          exactAntimatter: decoded.data.antimatter === '1.79e308',
+          exportedAsString: typeof decoded.data.antimatter === 'string',
+          changedRows: document.querySelectorAll('.path-card.changed').length,
+        };
+      }
+
       if (${JSON.stringify(workflow)} === 'deep-scope-edit') {
         await clickScope('celestials');
         await clickScope('celestials.ra');
@@ -1381,6 +1410,16 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('bitfield workflow did not produce an encoded PC save');
       }
     }
+    if (caseConfig.editorWorkflow === 'pc-decimal-string-export') {
+      if (!editorWorkflow?.decimalEditorRendered) failures.push('PC decimal string workflow did not render mantissa/exponent controls');
+      if (editorWorkflow?.rawStringValue !== '1.79e308' || editorWorkflow?.mantissaValue !== '1.79' || editorWorkflow?.exponentValue !== '308') {
+        failures.push('PC decimal string workflow did not synchronize raw, mantissa, and exponent fields');
+      }
+      if (!editorWorkflow?.exactAntimatter || !editorWorkflow?.exportedAsString) failures.push('PC decimal string workflow did not export the exact decimal string');
+      if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) {
+        failures.push('PC decimal string workflow did not produce an encoded PC save');
+      }
+    }
     if (caseConfig.editorWorkflow === 'deep-scope-edit') {
       if (!editorWorkflow?.levelChanged) failures.push('deep scoped browser workflow did not mark celestial pet level changed');
       if (!editorWorkflow?.activeBreadcrumb?.includes('teresa')) {
@@ -1477,6 +1516,12 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createNormalPcSave(),
       editorWorkflow: 'bitfield-toggle-export',
+    },
+    {
+      name: 'pc-decimal-string-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createNormalPcSave(),
+      editorWorkflow: 'pc-decimal-string-export',
     },
     {
       name: 'pc-preset-iphone-se',

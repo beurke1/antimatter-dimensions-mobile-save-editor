@@ -25,7 +25,7 @@ For each file in `qa-fixtures/*-save.txt`:
 5. Use every stage filter that has nonzero paths in the fixture.
 6. Drill into `dimensions` on every fixture, and into `celestials` plus `reality.glyphs` when those paths exist.
 7. If safety warnings are visible, use Show all and Open/Find on at least one warning row.
-8. Edit at least one primitive leaf, one boolean, one packed bitfield toggle, one Android big-number mantissa/exponent, one object key addition, one array append, one non-root removal, and one subtree JSON value.
+8. Edit at least one primitive leaf, one boolean, one packed bitfield toggle, one PC decimal-string mantissa/exponent value, one Android big-number mantissa/exponent, one object key addition, one array append, one non-root removal, and one subtree JSON value.
 9. Confirm Review edits shows before/after values and that Reset works.
 10. Tap Encode, then Copy, Share, and Download where the browser permits them.
 
@@ -37,7 +37,7 @@ Automated check:
 npm run verify:mobile
 ```
 
-This starts a temporary local server, launches headless Chrome, decodes synthetic PC and Android saves, exercises rendered file import, category/stage/search/type navigation, changed-only filtering after edits, review/reset flows, structural add/remove/export controls, bitfield toggle/export controls, stage-filtered quick edits with PC/Android numeric preservation, exact Eternities edit/export behavior, value-free QA/report copy/download, representative edit/export flows, and a deep Celestials scoped edit, checks rendered iPhone-sized layouts, and writes screenshots plus `latest.json` to `artifacts/mobile-viewport/`.
+This starts a temporary local server, launches headless Chrome, decodes synthetic PC and Android saves, exercises rendered file import, category/stage/search/type navigation, changed-only filtering after edits, review/reset flows, structural add/remove/export controls, bitfield toggle/export controls, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, exact Eternities edit/export behavior, value-free QA/report copy/download, representative edit/export flows, and a deep Celestials scoped edit, checks rendered iPhone-sized layouts, and writes screenshots plus `latest.json` to `artifacts/mobile-viewport/`.
 
 Target iPhone Safari first. At minimum check 390x844 logical pixels and one narrower layout such as 375x667.
 

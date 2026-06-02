@@ -145,6 +145,20 @@ const stageCssClass = (stage) => {
 
 const BITFIELD_PATH_PATTERN = /(?:achievementBits|secretAchievementBits|triggeredTabNotificationBits|hiddenTabBits|hiddenSubtabBits|completedBits|upgradeBits|upgReqs|unlockBits|quoteBits|progressBits|hintBits|requirementBits)/iu;
 const BITFIELD_BIT_COUNT = 32;
+const DECIMAL_STRING_PATTERN = /^([+-]?(?:(?:\d+(?:\.\d+)?)|(?:\.\d+)))(?:e([+-]?\d+))?$/iu;
+const DECIMAL_MANTISSA_PATTERN = /^[+-]?(?:(?:\d+(?:\.\d+)?)|(?:\.\d+))$/u;
+const DECIMAL_STRING_CATEGORIES = new Set([
+  'resources',
+  'dimensions',
+  'challenges',
+  'infinity',
+  'replicanti',
+  'eternity',
+  'reality',
+  'black-hole',
+  'celestials',
+  'records',
+]);
 
 const isBitfieldNode = (node, value) => {
   if (!node || node.type !== 'number' || !Number.isSafeInteger(value) || value < 0) {
@@ -160,6 +174,42 @@ const getBitfieldState = (value) => {
   return Array.from({ length: BITFIELD_BIT_COUNT }, (_, index) => {
     return ((bits >> BigInt(index)) & 1n) === 1n;
   });
+};
+
+const parseDecimalString = (value) => {
+  const match = String(value ?? '').trim().match(DECIMAL_STRING_PATTERN);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    mantissa: match[1],
+    exponent: match[2] ?? '0',
+  };
+};
+
+const isDecimalStringNode = (node, value) => {
+  return state.saveType === SaveType.PC &&
+    node?.type === 'string' &&
+    DECIMAL_STRING_CATEGORIES.has(node.categoryId) &&
+    Boolean(parseDecimalString(value));
+};
+
+const formatDecimalString = (mantissa, exponent) => {
+  const cleanMantissa = String(mantissa ?? '').trim();
+  const cleanExponent = String(exponent ?? '').trim();
+  const exponentNumber = Number(cleanExponent);
+
+  if (!DECIMAL_MANTISSA_PATTERN.test(cleanMantissa)) {
+    throw new Error('Mantissa must be a finite decimal number.');
+  }
+
+  if (!Number.isSafeInteger(exponentNumber)) {
+    throw new Error('Exponent must be a safe integer.');
+  }
+
+  return exponentNumber === 0 ? cleanMantissa : `${cleanMantissa}e${exponentNumber}`;
 };
 
 const refreshReadiness = () => {
@@ -405,6 +455,22 @@ const commitLeafInput = (input) => {
       ...currentValue,
       [type === 'big-mantissa' ? 'mantissa' : 'exponent']: parsedValue,
     };
+  } else if (type === 'decimal-string-mantissa' || type === 'decimal-string-exponent') {
+    const currentValue = getValueAtSegments(state.data, node.segments);
+
+    if (!isDecimalStringNode(node, currentValue)) {
+      return;
+    }
+
+    try {
+      const mantissaInput = card.querySelector('[data-editor-type="decimal-string-mantissa"]');
+      const exponentInput = card.querySelector('[data-editor-type="decimal-string-exponent"]');
+      nextValue = formatDecimalString(mantissaInput?.value, exponentInput?.value);
+    } catch (error) {
+      setError(error instanceof Error ? `${node.path}: ${error.message}` : `Invalid decimal string for ${node.path}.`);
+      render();
+      return;
+    }
   } else if (type === 'string') {
     nextValue = input.value;
   } else if (type === 'json') {
@@ -760,6 +826,41 @@ const renderBitfieldEditor = (node, value) => {
   `;
 };
 
+const renderDecimalStringEditor = (node, value) => {
+  const parsed = parseDecimalString(value);
+
+  if (!parsed) {
+    return '';
+  }
+
+  return `
+    <div class="decimal-string-editor" aria-label="${escapeHtml(node.path)} decimal string">
+      <label>
+        <span>Mantissa</span>
+        <input
+          class="field-input"
+          data-editor-type="decimal-string-mantissa"
+          type="text"
+          inputmode="decimal"
+          value="${escapeHtml(parsed.mantissa)}"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        <span>Exponent</span>
+        <input
+          class="field-input"
+          data-editor-type="decimal-string-exponent"
+          type="text"
+          inputmode="numeric"
+          value="${escapeHtml(parsed.exponent)}"
+          autocomplete="off"
+        />
+      </label>
+    </div>
+  `;
+};
+
 const renderLeafEditor = (node) => {
   const value = getValueAtSegments(state.data, node.segments);
 
@@ -785,6 +886,7 @@ const renderLeafEditor = (node) => {
 
   if (node.type === 'string') {
     const inputTag = String(value).length > 80 ? 'textarea' : 'input';
+    const decimalStringEditor = isDecimalStringNode(node, value) ? renderDecimalStringEditor(node, value) : '';
 
     if (inputTag === 'textarea') {
       return `
@@ -795,6 +897,7 @@ const renderLeafEditor = (node) => {
           autocapitalize="off"
           spellcheck="false"
         >${escapeHtml(value)}</textarea>
+        ${decimalStringEditor}
       `;
     }
 
@@ -808,6 +911,7 @@ const renderLeafEditor = (node) => {
         autocapitalize="off"
         spellcheck="false"
       />
+      ${decimalStringEditor}
     `;
   }
 

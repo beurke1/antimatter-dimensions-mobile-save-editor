@@ -878,16 +878,16 @@ button:disabled { cursor: default; opacity: 0.45; }
 
 .field-textarea { width: 100%; min-height: 88px; margin: 0; }
 
-.big-number-editor {
+.big-number-editor, .decimal-string-editor {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: 9px;
 }
 
-.big-number-editor label { min-width: 0; }
+.big-number-editor label, .decimal-string-editor label { min-width: 0; }
 
-.big-number-editor span {
+.big-number-editor span, .decimal-string-editor span {
   display: block;
   margin-bottom: 4px;
   color: var(--muted);
