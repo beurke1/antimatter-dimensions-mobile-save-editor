@@ -1277,11 +1277,13 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         setEditorValue('eternities', '[data-editor-type="string"]', '12345');
         await waitFor(() => card('eternities')?.classList.contains('changed'), 'Eternities edit');
 
+        const encodeClickedAt = Date.now();
         document.querySelector('[data-action="encode"]').click();
         const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'Eternities encode');
         const { decodeSave } = await import('./src/save-codec.js');
         const decoded = await decodeSave(encoded);
         const encodedLastUpdate = Number(decoded.data.lastUpdate ?? 0);
+        const outputStatus = document.querySelector('.output-panel .panel-heading p')?.textContent ?? '';
 
         return {
           workflow: 'pc-eternities-controlled-export',
@@ -1289,8 +1291,10 @@ const exerciseEditorWorkflow = async (client, workflow) => {
           exactEternities: decoded.data.eternities === '12345',
           encodedLastUpdate,
           originalLastUpdate,
-          timestampPreserved: encodedLastUpdate === originalLastUpdate,
+          timestampAdvanced: encodedLastUpdate >= encodeClickedAt && encodedLastUpdate > originalLastUpdate,
+          timestampRecent: Math.abs(Date.now() - encodedLastUpdate) < 30_000,
           lastUpdateChanged: card('lastUpdate')?.classList.contains('changed') ?? false,
+          outputMentionsTimestamp: outputStatus.includes('lastUpdate refreshed'),
         };
       }
 
@@ -1598,8 +1602,11 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     }
     if (caseConfig.editorWorkflow === 'pc-eternities-controlled-export') {
       if (!editorWorkflow?.exactEternities) failures.push('controlled Eternities edit was not preserved exactly in the encoded save');
-      if (!editorWorkflow?.timestampPreserved || editorWorkflow?.lastUpdateChanged) {
-        failures.push('controlled Eternities workflow changed lastUpdate unexpectedly');
+      if (!editorWorkflow?.timestampAdvanced || !editorWorkflow?.timestampRecent || !editorWorkflow?.lastUpdateChanged) {
+        failures.push('controlled Eternities workflow did not refresh lastUpdate for import safety');
+      }
+      if (!editorWorkflow?.outputMentionsTimestamp) {
+        failures.push('controlled Eternities workflow did not disclose lastUpdate refresh in the output panel');
       }
       if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) {
         failures.push('controlled Eternities workflow did not produce an encoded PC save');

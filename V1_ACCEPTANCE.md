@@ -43,7 +43,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Object containers can add new keys, arrays can append, insert, or replace items by index, and non-root paths can be removed from the mobile UI.
 - Arrays and objects remain editable through scoped JSON.
 - Quick-edit presets preserve PC decimal-string values and Android mantissa/exponent values.
-- Direct edits such as `eternities` encode back exactly without hidden timestamp mutation.
+- Direct edits such as `eternities` encode back exactly, and export refreshes `lastUpdate` visibly so imports do not gain unintended offline progress.
 - Changed-path review shows before/after previews and can expand beyond the initial rows.
 - Per-path reset and reset-all work.
 

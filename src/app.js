@@ -56,6 +56,8 @@ const state = {
   notice: null,
   error: null,
   encodedOutput: '',
+  exportTimestamp: null,
+  exportTimestampRefreshed: false,
   importCollapsed: false,
   showDetails: false,
   showPresets: false,
@@ -266,7 +268,28 @@ const markDataChanged = () => {
   rebuildIndex();
   state.dirty = state.changes.length > 0;
   state.encodedOutput = '';
+  state.exportTimestamp = null;
+  state.exportTimestampRefreshed = false;
   refreshReadiness();
+};
+
+const refreshLastUpdateForExport = () => {
+  if (!state.data || !Object.hasOwn(state.data, 'lastUpdate')) {
+    return { refreshed: false, timestamp: null };
+  }
+
+  const timestamp = Date.now();
+  const previousTimestamp = state.data.lastUpdate;
+  state.data = setValueAtSegments(state.data, ['lastUpdate'], timestamp);
+  rebuildIndex();
+  state.dirty = state.changes.length > 0;
+  state.encodedOutput = '';
+  refreshReadiness();
+
+  return {
+    refreshed: previousTimestamp !== timestamp,
+    timestamp,
+  };
 };
 
 const updateDataAtNode = (node, value, sourceLabel = 'field') => {
@@ -1381,12 +1404,18 @@ const renderOutput = () => {
     return '';
   }
 
+  const outputStatus = state.encodedOutput
+    ? state.exportTimestampRefreshed
+      ? `Ready to import. lastUpdate refreshed to ${state.exportTimestamp}.`
+      : 'Ready to import into the game.'
+    : 'Tap Encode in the bar below.';
+
   return `
     <section class="panel output-panel" aria-labelledby="output-title">
       <div class="panel-heading">
         <div>
           <h2 id="output-title">Encoded Output</h2>
-          <p>${state.encodedOutput ? 'Ready to import into the game.' : 'Tap Encode in the bar below.'}</p>
+          <p>${escapeHtml(outputStatus)}</p>
         </div>
         <button type="button" class="icon-button" data-action="download" aria-label="Download save" ${state.encodedOutput ? '' : 'disabled'}>↓</button>
       </div>
@@ -1446,6 +1475,8 @@ const handleDecode = async () => {
     state.source = decoded.source;
     state.dirty = false;
     state.encodedOutput = '';
+    state.exportTimestamp = null;
+    state.exportTimestampRefreshed = false;
     state.activeCategoryId = 'all';
     state.activeStageId = 'all';
     state.scopePath = 'root';
@@ -1469,6 +1500,8 @@ const handleEncode = async () => {
     return;
   }
 
+  const exportTimestamp = refreshLastUpdateForExport();
+
   if (state.analysisSummary.errors > 0) {
     setError(`Fix ${state.analysisSummary.errors} safety error${state.analysisSummary.errors === 1 ? '' : 's'} before encoding. See Safety check panel.`);
     render();
@@ -1477,9 +1510,16 @@ const handleEncode = async () => {
 
   try {
     state.encodedOutput = await encodeSaveData(state.data, state.saveType);
+    state.exportTimestamp = exportTimestamp.timestamp;
+    state.exportTimestampRefreshed = exportTimestamp.refreshed;
     state.dirty = false;
     refreshReadiness();
-    setNotice('Encoded. Copy or share the output below.', 'success');
+    setNotice(
+      exportTimestamp.refreshed
+        ? 'Encoded with current lastUpdate. Edited values will not gain offline progress on import.'
+        : 'Encoded. Copy or share the output below.',
+      'success'
+    );
   } catch (error) {
     setError(error instanceof Error ? error.message : 'Could not encode save.');
   }
