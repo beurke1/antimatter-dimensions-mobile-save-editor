@@ -437,6 +437,79 @@ const expandSafetyPanel = async (client, minimumRows) => {
   `);
 };
 
+const exerciseEditorWorkflow = async (client, workflow) => {
+  return evaluate(client, `
+    (async () => {
+      const waitFor = async (predicate, label) => {
+        const deadline = Date.now() + 8000;
+        while (Date.now() < deadline) {
+          const value = predicate();
+          if (value) return value;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        throw new Error(label + ' timed out');
+      };
+      const card = (path) => document.querySelector(\`[data-node-path="\${CSS.escape(path)}"]\`);
+      const setEditorValue = (path, selector, value) => {
+        const input = card(path)?.querySelector(selector);
+        if (!input) throw new Error(\`Missing editor for \${path}\`);
+        input.value = value;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+
+      if (${JSON.stringify(workflow)} === 'pc-basic') {
+        setEditorValue('options.notation', '[data-editor-type="string"]', 'Engineering');
+        await waitFor(() => card('options.notation')?.classList.contains('changed'), 'PC string edit');
+
+        card('buyUntil10')?.querySelector('[data-action="toggle-boolean"]')?.click();
+        await waitFor(() => card('buyUntil10')?.classList.contains('changed'), 'PC boolean edit');
+
+        const optionsCard = card('options');
+        if (!optionsCard) throw new Error('Missing options card');
+        optionsCard.querySelector('.subtree-editor').open = true;
+        const subtree = optionsCard.querySelector('.subtree-textarea');
+        const optionsJson = JSON.parse(subtree.value);
+        optionsJson.confirmations.bigCrunch = false;
+        subtree.value = JSON.stringify(optionsJson, null, 2);
+        optionsCard.querySelector('[data-action="apply-subtree-json"]').click();
+        await waitFor(() => card('options.confirmations.bigCrunch')?.classList.contains('changed'), 'PC subtree JSON edit');
+
+        card('buyUntil10')?.querySelector('[data-action="reset-node"]')?.click();
+        await waitFor(() => !card('buyUntil10')?.classList.contains('changed'), 'PC reset');
+
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'PC encode');
+        return {
+          workflow: 'pc-basic',
+          encodedPrefix: encoded.slice(0, 37),
+          changedRows: document.querySelectorAll('.path-card.changed').length,
+          notationChanged: card('options.notation')?.classList.contains('changed') ?? false,
+          subtreeChanged: card('options.confirmations.bigCrunch')?.classList.contains('changed') ?? false,
+          booleanReset: !(card('buyUntil10')?.classList.contains('changed') ?? true),
+        };
+      }
+
+      if (${JSON.stringify(workflow)} === 'android-big-number') {
+        setEditorValue('antimatter', '[data-editor-type="big-mantissa"]', '2');
+        await waitFor(() => card('antimatter')?.classList.contains('changed'), 'Android mantissa edit');
+        setEditorValue('antimatter', '[data-editor-type="big-exponent"]', '12');
+        await waitFor(() => card('antimatter')?.textContent.includes('2e12') || card('antimatter')?.classList.contains('changed'), 'Android exponent edit');
+
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'Android encode');
+        return {
+          workflow: 'android-big-number',
+          encodedPrefix: encoded.slice(0, 39),
+          antimatterChanged: card('antimatter')?.classList.contains('changed') ?? false,
+          changedRows: document.querySelectorAll('.path-card.changed').length,
+        };
+      }
+
+      return null;
+    })()
+  `);
+};
+
 const metrics = async (client) => {
   return evaluate(client, `
     (() => {
@@ -541,6 +614,9 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     const safetyPanel = caseConfig.minimumSafetyRows
       ? await expandSafetyPanel(client, caseConfig.minimumSafetyRows)
       : null;
+    const editorWorkflow = caseConfig.editorWorkflow
+      ? await exerciseEditorWorkflow(client, caseConfig.editorWorkflow)
+      : null;
     const caseMetrics = await metrics(client);
     const screenshotPath = path.join(artifactDir, `${caseConfig.name}.png`);
     await screenshot(client, screenshotPath);
@@ -577,12 +653,27 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
     if (caseConfig.minimumSafetyRows && !safetyPanel?.openedSearch) {
       failures.push('safety path open/find action did not focus browser search on the issue path');
     }
+    if (caseConfig.editorWorkflow === 'pc-basic') {
+      if (!editorWorkflow?.notationChanged) failures.push('PC string editor did not mark notation changed');
+      if (!editorWorkflow?.subtreeChanged) failures.push('PC subtree JSON editor did not mark nested option changed');
+      if (!editorWorkflow?.booleanReset) failures.push('PC reset action did not clear boolean change');
+      if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) {
+        failures.push('PC editor workflow did not produce an encoded PC save');
+      }
+    }
+    if (caseConfig.editorWorkflow === 'android-big-number') {
+      if (!editorWorkflow?.antimatterChanged) failures.push('Android big-number editor did not mark antimatter changed');
+      if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsAndroidSaveFormat')) {
+        failures.push('Android editor workflow did not produce an encoded Android save');
+      }
+    }
 
     return {
       name: caseConfig.name,
       viewport: caseConfig.viewport.name,
       decoded,
       safetyPanel,
+      editorWorkflow,
       metrics: caseMetrics,
       failures,
       screenshot: path.relative(root, screenshotPath),
@@ -609,6 +700,7 @@ try {
       name: 'pc-normal-iphone-se',
       viewport: viewports.iphoneSe,
       saveData: createNormalPcSave(),
+      editorWorkflow: 'pc-basic',
     },
     {
       name: 'pc-fixture-iphone-15',
@@ -619,6 +711,7 @@ try {
       name: 'android-normal-iphone-15',
       viewport: viewports.iphone15,
       saveData: createNormalAndroidSave(),
+      editorWorkflow: 'android-big-number',
     },
     {
       name: 'warnings-iphone-se',

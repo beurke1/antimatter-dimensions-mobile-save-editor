@@ -183,7 +183,8 @@ Thirteenth follow-up implementation added:
 - `lastTenRuns`, `lastTenEternities`, and `lastTenRealities` now classify as Records instead of Core.
 - Safety rows now include an Open/Find action that jumps directly to the affected path in the browser.
 - Safety panels with more than six issues can be expanded and collapsed instead of hiding the rest behind a static count.
-- Rendered mobile verification now includes a warning-heavy save case to check expanded warning-list layout.
+- Rendered mobile verification now includes a warning-heavy save case to check expanded warning-list layout and warning path jumps.
+- Rendered mobile verification now exercises PC string edits, boolean toggles, scoped JSON edits, reset, Android big-number edits, and encode output.
 
 Open engineering tasks:
 
