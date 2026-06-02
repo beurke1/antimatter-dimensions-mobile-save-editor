@@ -16,17 +16,18 @@ import { analyzeEditRisks, analyzeSaveData, summarizeAnalysis } from './save-ana
 import { buildCoverageReport } from './coverage-report.js';
 import { buildReadinessSummary } from './readiness.js';
 import { CATEGORIES, getCategory } from './taxonomy.js';
+import { PRESETS, applyPreset } from './presets.js';
 
 const appRoot = document.querySelector('#app');
 const searchableTypes = new Set(['string', 'number', 'boolean', 'null', 'big-number', 'array', 'object']);
 const stageFilters = [
-  { id: 'all', label: 'All stages' },
-  { id: 'normal', label: 'Normal' },
-  { id: 'infinity', label: 'Infinity' },
-  { id: 'eternity', label: 'Eternity' },
-  { id: 'reality', label: 'Reality' },
-  { id: 'meta', label: 'Meta' },
-  { id: 'fallback', label: 'Fallback' },
+  { id: 'all', label: 'All', stage: '' },
+  { id: 'normal', label: 'Normal', stage: '' },
+  { id: 'infinity', label: 'Infinity', stage: 'infinity' },
+  { id: 'eternity', label: 'Eternity', stage: 'eternity' },
+  { id: 'reality', label: 'Reality', stage: 'reality' },
+  { id: 'meta', label: 'Meta', stage: '' },
+  { id: 'fallback', label: 'Fallback', stage: '' },
 ];
 
 const state = {
@@ -53,6 +54,9 @@ const state = {
   notice: null,
   error: null,
   encodedOutput: '',
+  importCollapsed: false,
+  showDetails: false,
+  showPresets: false,
 };
 
 const escapeHtml = (value) => {
@@ -101,7 +105,7 @@ const detectStage = (data) => {
     return 'No save';
   }
 
-  if (data.reality || data.celestials || data.blackHole || data.realities || data.bigRealities) {
+  if (data.celestials || data.reality?.glyphs || data.blackHole) {
     return 'Reality';
   }
 
@@ -136,6 +140,23 @@ const stageMatchesFilter = (stage, filterId) => {
   }
 
   return normalizedStage.includes(filterId);
+};
+
+const stageCssClass = (stage) => {
+  const s = String(stage ?? '').toLowerCase();
+  if (s.includes('infinity')) {
+    return 'stage-infinity';
+  }
+
+  if (s.includes('eternity')) {
+    return 'stage-eternity';
+  }
+
+  if (s.includes('reality')) {
+    return 'stage-reality';
+  }
+
+  return '';
 };
 
 const refreshReadiness = () => {
@@ -194,7 +215,7 @@ const markDataChanged = () => {
 const updateDataAtNode = (node, value, sourceLabel = 'field') => {
   state.data = setValueAtSegments(state.data, node.segments, value);
   markDataChanged();
-  setNotice(`${node.path} updated from ${sourceLabel}.`, 'success');
+  setNotice(`${node.path} updated.`, 'success');
   render();
 };
 
@@ -323,31 +344,52 @@ const filteredNodes = () => {
   });
 };
 
+/* ── RENDER HELPERS ── */
+
 const renderHeader = () => {
-  const status = state.data ? `${state.saveType.toUpperCase()} · ${detectStage(state.data)}` : 'No save loaded';
-  const editState = state.dirty ? 'Needs encode' : state.changes.length ? 'Encoded edits' : 'Clean';
+  const gameStage = state.data ? detectStage(state.data) : null;
+  const status = state.data
+    ? `${state.saveType.toUpperCase()} · ${gameStage}`
+    : 'No save loaded';
+  const editState = state.dirty ? 'Needs encode' : state.changes.length ? 'Encoded' : 'Clean';
 
   return `
     <header class="topbar">
       <div class="title-block">
         <span class="eyebrow">Antimatter Dimensions</span>
-        <h1>Mobile Save Editor</h1>
+        <h1>Save Editor</h1>
       </div>
       <div class="status-stack" aria-label="Save status">
         <span class="status-pill">${escapeHtml(status)}</span>
-        <span class="status-pill ${state.dirty || state.changes.length ? 'dirty' : ''}">${editState}</span>
+        ${state.data ? `<span class="status-pill ${state.dirty || state.changes.length ? 'dirty' : ''}">${escapeHtml(editState)}</span>` : ''}
       </div>
     </header>
   `;
 };
 
 const renderImportPanel = () => {
+  if (state.importCollapsed) {
+    const pathCount = state.coverage?.total ?? 0;
+    const stage = state.data ? detectStage(state.data) : '';
+    return `
+      <section class="panel import-panel" aria-label="Import">
+        <div class="import-compact">
+          <div class="import-compact-info">
+            <strong>${escapeHtml(state.saveType.toUpperCase())} save · ${escapeHtml(stage)}</strong>
+            <span>${pathCount} paths indexed</span>
+          </div>
+          <button type="button" class="secondary-button compact" data-action="toggle-import">Re-import</button>
+        </div>
+      </section>
+    `;
+  }
+
   return `
     <section class="panel import-panel" aria-labelledby="import-title">
       <div class="panel-heading">
         <div>
-          <h2 id="import-title">Import</h2>
-          <p>Paste an encoded PC or Android save. Decoded JSON is accepted for inspection.</p>
+          <h2 id="import-title">Import Save</h2>
+          <p>Paste a PC or Android save string, or a decoded JSON object.</p>
         </div>
         <button class="icon-button" type="button" data-action="choose-file" aria-label="Open save file">↥</button>
       </div>
@@ -380,72 +422,32 @@ const renderMessages = () => {
   return '';
 };
 
-const renderCoverage = () => {
+const renderStatStrip = () => {
   if (!state.coverage) {
     return '';
   }
 
-  return `
-    <section class="panel coverage-panel" aria-label="Coverage summary">
-      <div class="coverage-grid">
-        <div>
-          <span>Total paths</span>
-          <strong>${state.coverage.total}</strong>
-        </div>
-        <div>
-          <span>Leaves</span>
-          <strong>${state.coverage.leafCount}</strong>
-        </div>
-        <div>
-          <span>Containers</span>
-          <strong>${state.coverage.containerCount}</strong>
-        </div>
-        <div>
-          <span>Fallback</span>
-          <strong>${state.coverage.uncategorizedCount}</strong>
-        </div>
-        <div>
-          <span>Changed</span>
-          <strong>${state.changes.length}</strong>
-        </div>
-        <div>
-          <span>Warnings</span>
-          <strong>${state.analysisSummary.errors + state.analysisSummary.warnings}</strong>
-        </div>
-      </div>
-      <div class="coverage-actions">
-        <button type="button" class="secondary-button compact" data-action="copy-report">Copy report</button>
-        <button type="button" class="secondary-button compact" data-action="download-report">Download JSON</button>
-      </div>
-    </section>
-  `;
-};
-
-const renderReadinessPanel = () => {
-  if (!state.data) {
-    return '';
-  }
+  const issueTotal = state.analysisSummary.errors + state.analysisSummary.warnings;
 
   return `
-    <section class="panel readiness-panel ${escapeHtml(state.readiness.status)}" aria-labelledby="readiness-title">
-      <div class="panel-heading">
-        <div>
-          <h2 id="readiness-title">Readiness</h2>
-          <p>${escapeHtml(state.readiness.label)}</p>
-        </div>
+    <div class="stat-strip" aria-label="Save statistics">
+      <div class="stat-cell">
+        <span>Paths</span>
+        <strong>${state.coverage.total}</strong>
       </div>
-      <div class="readiness-list">
-        ${state.readiness.items.map((item) => `
-          <article class="readiness-row ${escapeHtml(item.state)}">
-            <span>${escapeHtml(item.state)}</span>
-            <div>
-              <strong>${escapeHtml(item.label)}</strong>
-              <p>${escapeHtml(item.detail)}</p>
-            </div>
-          </article>
-        `).join('')}
+      <div class="stat-cell ${state.changes.length ? 'has-changes' : ''}">
+        <span>Changed</span>
+        <strong>${state.changes.length}</strong>
       </div>
-    </section>
+      <div class="stat-cell ${state.analysisSummary.errors ? 'has-errors' : state.analysisSummary.warnings ? 'has-warnings' : ''}">
+        <span>Issues</span>
+        <strong>${issueTotal}</strong>
+      </div>
+      <div class="stat-cell">
+        <span>Fallback</span>
+        <strong>${state.coverage.uncategorizedCount}</strong>
+      </div>
+    </div>
   `;
 };
 
@@ -456,11 +458,12 @@ const renderCategoryTabs = () => {
 
   const allCount = state.coverage.total;
   const categoryButtons = [
-    { id: 'all', title: 'All', count: allCount },
+    { id: 'all', title: 'All', count: allCount, accentStage: '' },
     ...CATEGORIES.map((category) => ({
       id: category.id,
       title: category.title,
       count: state.coverage.categoryCounts[category.id] ?? 0,
+      accentStage: category.accentStage ?? '',
     })).filter((category) => category.count > 0 || category.id === 'unknown'),
   ];
 
@@ -472,6 +475,7 @@ const renderCategoryTabs = () => {
           class="${category.id === state.activeCategoryId ? 'active' : ''}"
           data-action="set-category"
           data-category-id="${escapeHtml(category.id)}"
+          data-accent="${escapeHtml(category.accentStage)}"
         >
           <span>${escapeHtml(category.title)}</span>
           <strong>${category.count}</strong>
@@ -494,6 +498,7 @@ const renderStageTabs = () => {
           class="${stage.id === state.activeStageId ? 'active' : ''}"
           data-action="set-stage"
           data-stage-id="${escapeHtml(stage.id)}"
+          data-stage="${escapeHtml(stage.stage)}"
         >
           ${escapeHtml(stage.label)}
         </button>
@@ -515,7 +520,7 @@ const renderFilters = () => {
         id="path-search"
         type="search"
         value="${escapeHtml(state.query)}"
-        placeholder="Search path, key, value, stage..."
+        placeholder="Search path, key, value..."
         autocomplete="off"
         autocapitalize="off"
         spellcheck="false"
@@ -531,75 +536,8 @@ const renderFilters = () => {
         data-action="toggle-changed-filter"
         aria-pressed="${state.showChangedOnly ? 'true' : 'false'}"
       >
-        Changed ${state.changes.length}
+        ${state.changes.length ? `Changed (${state.changes.length})` : 'No changes yet'}
       </button>
-    </section>
-  `;
-};
-
-const renderChangeReview = () => {
-  if (!state.data || state.changes.length === 0) {
-    return '';
-  }
-
-  const previewChanges = state.changes.slice(0, 8);
-  const remainingCount = Math.max(0, state.changes.length - previewChanges.length);
-
-  return `
-    <section class="panel change-review" aria-labelledby="changes-title">
-      <div class="panel-heading">
-        <div>
-          <h2 id="changes-title">Review edits</h2>
-          <p>${state.changes.length} changed path${state.changes.length === 1 ? '' : 's'} compared with the imported save.</p>
-        </div>
-        <button type="button" class="secondary-button compact" data-action="reset-all">Reset all</button>
-      </div>
-      <div class="change-list">
-        ${previewChanges.map((change) => `
-          <article class="change-row" data-change-path="${escapeHtml(change.path)}">
-            <div>
-              <span class="change-type">${escapeHtml(change.changeType)}</span>
-              <code>${escapeHtml(change.path)}</code>
-              <p>${escapeHtml(change.beforePreview)} → ${escapeHtml(change.afterPreview)}</p>
-            </div>
-            <button type="button" class="tiny-button" data-action="reset-change">Reset</button>
-          </article>
-        `).join('')}
-      </div>
-      ${remainingCount ? `<p class="change-more">${remainingCount} more shown by the Changed filter.</p>` : ''}
-    </section>
-  `;
-};
-
-const renderSafetyPanel = () => {
-  if (!state.data || state.analysisIssues.length === 0) {
-    return '';
-  }
-
-  const visibleIssues = state.analysisIssues.slice(0, 8);
-  const remainingCount = Math.max(0, state.analysisIssues.length - visibleIssues.length);
-
-  return `
-    <section class="panel safety-panel" aria-labelledby="safety-title">
-      <div class="panel-heading">
-        <div>
-          <h2 id="safety-title">Safety check</h2>
-          <p>${state.analysisSummary.errors} errors · ${state.analysisSummary.warnings} warnings · ${state.analysisSummary.info} notes</p>
-        </div>
-      </div>
-      <div class="safety-list">
-        ${visibleIssues.map((issue) => `
-          <article class="safety-row ${escapeHtml(issue.severity)}">
-            <div>
-              <span>${escapeHtml(issue.severity)}</span>
-              <strong>${escapeHtml(issue.title)}</strong>
-              <code>${escapeHtml(issue.path)}</code>
-              <p>${escapeHtml(issue.message)}</p>
-            </div>
-          </article>
-        `).join('')}
-      </div>
-      ${remainingCount ? `<p class="safety-more">${remainingCount} more issue${remainingCount === 1 ? '' : 's'} in this save.</p>` : ''}
     </section>
   `;
 };
@@ -619,7 +557,7 @@ const renderScopeNavigator = () => {
     <section class="panel scope-panel" aria-labelledby="scope-title">
       <div class="panel-heading">
         <div>
-          <h2 id="scope-title">Browse scope</h2>
+          <h2 id="scope-title">Browse</h2>
           <p>${escapeHtml(scopeNode.path)} · ${scopeNode.childCount} direct child${scopeNode.childCount === 1 ? '' : 'ren'}</p>
         </div>
         ${scopeNode.path !== 'root' ? '<button type="button" class="secondary-button compact" data-action="set-scope" data-scope-path="root">Root</button>' : ''}
@@ -649,13 +587,13 @@ const renderScopeNavigator = () => {
                 ${child.isContainer ? '' : 'disabled'}
               >
                 <span>${escapeHtml(child.key)}</span>
-                <small>${escapeHtml(child.type)}${child.isContainer ? ` · ${child.childCount}` : ''}${childChange ? ' · changed' : ''}</small>
+                <small>${escapeHtml(child.type)}${child.isContainer ? ` · ${child.childCount}` : ''}${childChange ? ' · edited' : ''}</small>
               </button>
             `;
           }).join('')}
         </div>
       ` : ''}
-      ${hiddenChildren ? `<p class="scope-more">${hiddenChildren} more direct children. Use search in this scope to narrow them.</p>` : ''}
+      ${hiddenChildren ? `<p class="scope-more">${hiddenChildren} more children. Use search to narrow.</p>` : ''}
     </section>
   `;
 };
@@ -729,7 +667,7 @@ const renderLeafEditor = (node) => {
 
 const renderBigNumberEditor = (node, value) => {
   return `
-    <div class="big-number-editor" aria-label="${escapeHtml(node.path)} big number editor">
+    <div class="big-number-editor" aria-label="${escapeHtml(node.path)} big number">
       <label>
         <span>Mantissa</span>
         <input
@@ -762,9 +700,9 @@ const renderContainerEditor = (node) => {
 
   return `
     <details class="subtree-editor">
-      <summary>Edit subtree JSON</summary>
+      <summary></summary>
       <textarea class="subtree-textarea" spellcheck="false" autocapitalize="off">${escapeHtml(json)}</textarea>
-      <button type="button" class="secondary-button full" data-action="apply-subtree-json">Apply subtree JSON</button>
+      <button type="button" class="secondary-button full" data-action="apply-subtree-json">Apply JSON</button>
     </details>
   `;
 };
@@ -775,6 +713,7 @@ const renderNodeCard = (node) => {
   const freshType = getValueType(value);
   const isContainer = node.isContainer;
   const change = getChange(node.path);
+  const stageClass = stageCssClass(category.stage);
 
   return `
     <article class="path-card ${isContainer ? 'container' : 'leaf'} ${change ? 'changed' : ''}" data-node-path="${escapeHtml(node.path)}">
@@ -784,9 +723,9 @@ const renderNodeCard = (node) => {
           <code>${escapeHtml(node.path)}</code>
         </div>
         <div class="node-badges">
-          ${change ? `<span class="changed-badge">${escapeHtml(change.changeType)}</span>` : ''}
-          <span>${escapeHtml(freshType)}</span>
-          <span>${escapeHtml(category.stage)}</span>
+          ${change ? `<span class="badge changed-badge">${escapeHtml(change.changeType)}</span>` : ''}
+          <span class="badge">${escapeHtml(freshType)}</span>
+          ${stageClass ? `<span class="badge ${escapeHtml(stageClass)}">${escapeHtml(category.stage)}</span>` : ''}
         </div>
       </div>
       <div class="value-preview">${escapeHtml(node.preview)}</div>
@@ -799,8 +738,8 @@ const renderNodeCard = (node) => {
       ${node.type === 'big-number' ? renderBigNumberEditor(node, value) : ''}
       ${isContainer ? `
         <div class="container-meta">
-          <span>${node.childCount} child ${node.childCount === 1 ? 'item' : 'items'} · ${escapeHtml(category.title)}</span>
-          <button type="button" class="tiny-button" data-action="set-scope" data-scope-path="${escapeHtml(node.path)}">Open</button>
+          <span>${node.childCount} children · ${escapeHtml(category.title)}</span>
+          <button type="button" class="tiny-button" data-action="set-scope" data-scope-path="${escapeHtml(node.path)}">Browse</button>
         </div>
         ${renderContainerEditor(node)}
       ` : `
@@ -814,8 +753,8 @@ const renderBrowser = () => {
   if (!state.data) {
     return `
       <section class="empty-state">
-        <h2>Ready for a save</h2>
-        <p>After decoding, every object, array item, and primitive value appears in the categorized browser.</p>
+        <h2>Load a save above</h2>
+        <p>Paste a PC or Android save string and tap Decode. Every path in the save becomes editable — organized by game stage, searchable, with before/after change tracking.</p>
       </section>
     `;
   }
@@ -830,7 +769,7 @@ const renderBrowser = () => {
       <div class="panel-heading">
         <div>
           <h2 id="browser-title">${escapeHtml(category?.title ?? 'All Paths')}</h2>
-          <p>${results.length} matching path${results.length === 1 ? '' : 's'} · every match is editable inline or through subtree JSON.</p>
+          <p>${results.length} path${results.length === 1 ? '' : 's'} · all editable inline or via subtree JSON</p>
         </div>
       </div>
       <div class="path-list">
@@ -843,6 +782,191 @@ const renderBrowser = () => {
   `;
 };
 
+const renderChangeReview = () => {
+  if (!state.data || state.changes.length === 0) {
+    return '';
+  }
+
+  const previewChanges = state.changes.slice(0, 8);
+  const remainingCount = Math.max(0, state.changes.length - previewChanges.length);
+
+  return `
+    <section class="panel change-review" aria-labelledby="changes-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="changes-title">Review edits</h2>
+          <p>${state.changes.length} changed path${state.changes.length === 1 ? '' : 's'}</p>
+        </div>
+        <button type="button" class="secondary-button compact" data-action="reset-all">Reset all</button>
+      </div>
+      <div class="change-list">
+        ${previewChanges.map((change) => `
+          <article class="change-row" data-change-path="${escapeHtml(change.path)}">
+            <div>
+              <span class="change-type">${escapeHtml(change.changeType)}</span>
+              <code>${escapeHtml(change.path)}</code>
+              <p>${escapeHtml(change.beforePreview)} → ${escapeHtml(change.afterPreview)}</p>
+            </div>
+            <button type="button" class="tiny-button" data-action="reset-change">Reset</button>
+          </article>
+        `).join('')}
+      </div>
+      ${remainingCount ? `<p class="change-more">${remainingCount} more via Changed filter above.</p>` : ''}
+    </section>
+  `;
+};
+
+const renderSafetyPanel = () => {
+  if (!state.data || state.analysisIssues.length === 0) {
+    return '';
+  }
+
+  const visibleIssues = state.analysisIssues.slice(0, 6);
+  const remainingCount = Math.max(0, state.analysisIssues.length - visibleIssues.length);
+
+  return `
+    <section class="panel safety-panel" aria-labelledby="safety-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="safety-title">Safety check</h2>
+          <p>${state.analysisSummary.errors} error${state.analysisSummary.errors === 1 ? '' : 's'} · ${state.analysisSummary.warnings} warning${state.analysisSummary.warnings === 1 ? '' : 's'} · ${state.analysisSummary.info} note${state.analysisSummary.info === 1 ? '' : 's'}</p>
+        </div>
+      </div>
+      <div class="safety-list">
+        ${visibleIssues.map((issue) => `
+          <article class="safety-row ${escapeHtml(issue.severity)}">
+            <div>
+              <span class="safety-badge">${escapeHtml(issue.severity)}</span>
+              <strong>${escapeHtml(issue.title)}</strong>
+              <code>${escapeHtml(issue.path)}</code>
+              <p>${escapeHtml(issue.message)}</p>
+            </div>
+          </article>
+        `).join('')}
+      </div>
+      ${remainingCount ? `<p class="safety-more">${remainingCount} more issue${remainingCount === 1 ? '' : 's'}.</p>` : ''}
+    </section>
+  `;
+};
+
+const renderPresetsPanel = () => {
+  if (!state.data) {
+    return '';
+  }
+
+  const gameStage = detectStage(state.data);
+  const relevantPresets = PRESETS.filter((preset) => {
+    // Always show Normal presets; show later presets only for appropriate saves
+    if (preset.stage === 'Normal') {
+      return true;
+    }
+
+    if (preset.stage === 'Infinity' && ['Infinity', 'Eternity', 'Reality'].includes(gameStage)) {
+      return true;
+    }
+
+    if (preset.stage === 'Eternity' && ['Eternity', 'Reality'].includes(gameStage)) {
+      return true;
+    }
+
+    if (preset.stage === 'Reality' && gameStage === 'Reality') {
+      return true;
+    }
+
+    return false;
+  });
+
+  return `
+    <section class="panel presets-panel" aria-labelledby="presets-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="presets-title">Quick Edits</h2>
+          <p>One-tap edits for common game states. Review changes before encoding.</p>
+        </div>
+      </div>
+      <div class="presets-grid">
+        ${relevantPresets.map((preset) => `
+          <button
+            type="button"
+            class="preset-button"
+            data-action="apply-preset"
+            data-preset-id="${escapeHtml(preset.id)}"
+            data-accent="${escapeHtml(preset.accentStage)}"
+          >
+            <strong>${escapeHtml(preset.label)}</strong>
+            <small>${escapeHtml(preset.description)}</small>
+          </button>
+        `).join('')}
+      </div>
+    </section>
+  `;
+};
+
+const renderDetailsSection = () => {
+  if (!state.data) {
+    return '';
+  }
+
+  const toggle = `
+    <button
+      type="button"
+      class="secondary-button full"
+      data-action="toggle-details"
+      style="margin-top:0;margin-bottom:8px;"
+    >
+      ${state.showDetails ? 'Hide details' : 'Show coverage & readiness'}
+    </button>
+  `;
+
+  if (!state.showDetails) {
+    return toggle;
+  }
+
+  const coverageSection = state.coverage ? `
+    <section class="panel coverage-panel" aria-label="Coverage">
+      <div class="panel-heading">
+        <div>
+          <h2>Coverage</h2>
+          <p>${state.coverage.total} paths · ${state.coverage.leafCount} leaves · ${state.coverage.containerCount} containers</p>
+        </div>
+      </div>
+      <div class="coverage-grid">
+        <div><span>Total</span><strong>${state.coverage.total}</strong></div>
+        <div><span>Leaves</span><strong>${state.coverage.leafCount}</strong></div>
+        <div><span>Fallback</span><strong>${state.coverage.uncategorizedCount}</strong></div>
+      </div>
+      <div class="coverage-actions">
+        <button type="button" class="secondary-button compact" data-action="copy-report">Copy report</button>
+        <button type="button" class="secondary-button compact" data-action="download-report">Download JSON</button>
+      </div>
+    </section>
+  ` : '';
+
+  const readinessSection = `
+    <section class="panel readiness-panel ${escapeHtml(state.readiness.status)}" aria-labelledby="readiness-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="readiness-title">Readiness</h2>
+          <p>${escapeHtml(state.readiness.label)}</p>
+        </div>
+      </div>
+      <div class="readiness-list">
+        ${state.readiness.items.map((item) => `
+          <article class="readiness-row ${escapeHtml(item.state)}">
+            <span>${escapeHtml(item.state)}</span>
+            <div>
+              <strong>${escapeHtml(item.label)}</strong>
+              <p>${escapeHtml(item.detail)}</p>
+            </div>
+          </article>
+        `).join('')}
+      </div>
+    </section>
+  `;
+
+  return toggle + coverageSection + readinessSection;
+};
+
 const renderOutput = () => {
   if (!state.data) {
     return '';
@@ -852,10 +976,10 @@ const renderOutput = () => {
     <section class="panel output-panel" aria-labelledby="output-title">
       <div class="panel-heading">
         <div>
-          <h2 id="output-title">Output</h2>
-          <p>${state.encodedOutput ? 'Encoded save is ready.' : 'Encode after editing.'}</p>
+          <h2 id="output-title">Encoded Output</h2>
+          <p>${state.encodedOutput ? 'Ready to import into the game.' : 'Tap Encode in the bar below.'}</p>
         </div>
-        <button type="button" class="icon-button" data-action="download" aria-label="Download encoded save" ${state.encodedOutput ? '' : 'disabled'}>↓</button>
+        <button type="button" class="icon-button" data-action="download" aria-label="Download save" ${state.encodedOutput ? '' : 'disabled'}>↓</button>
       </div>
       <textarea id="encoded-output" class="output-textarea" readonly>${escapeHtml(state.encodedOutput)}</textarea>
     </section>
@@ -879,21 +1003,28 @@ function render() {
       <main class="app-shell">
         ${renderImportPanel()}
         ${renderMessages()}
-        ${renderCoverage()}
-        ${renderReadinessPanel()}
-        ${renderCategoryTabs()}
-        ${renderStageTabs()}
-        ${renderFilters()}
-        ${renderScopeNavigator()}
-        ${renderSafetyPanel()}
-        ${renderChangeReview()}
-        ${renderBrowser()}
-        ${renderOutput()}
+        ${state.data ? `
+          ${renderStatStrip()}
+          ${renderCategoryTabs()}
+          ${renderStageTabs()}
+          ${renderFilters()}
+          ${renderScopeNavigator()}
+          ${renderBrowser()}
+          ${renderPresetsPanel()}
+          ${renderChangeReview()}
+          ${renderSafetyPanel()}
+          ${renderDetailsSection()}
+          ${renderOutput()}
+        ` : `
+          ${renderBrowser()}
+        `}
       </main>
       ${renderExportBar()}
     `;
   });
 }
+
+/* ── ACTIONS ── */
 
 const handleDecode = async () => {
   state.rawInput = document.querySelector('#raw-save')?.value ?? state.rawInput;
@@ -911,8 +1042,10 @@ const handleDecode = async () => {
     state.scopePath = 'root';
     state.showChangedOnly = false;
     state.visibleLimit = 120;
+    state.importCollapsed = true;
+    state.showDetails = false;
     rebuildIndex();
-    setNotice(`Decoded ${decoded.saveType.toUpperCase()} save with ${state.coverage.total} editable paths.`, 'success');
+    setNotice(`Decoded ${decoded.saveType.toUpperCase()} save — ${state.coverage.total} paths ready to edit.`, 'success');
   } catch (error) {
     setError(error instanceof Error ? error.message : 'Could not decode save.');
   }
@@ -926,7 +1059,7 @@ const handleEncode = async () => {
   }
 
   if (state.analysisSummary.errors > 0) {
-    setError(`Fix ${state.analysisSummary.errors} safety error${state.analysisSummary.errors === 1 ? '' : 's'} before encoding.`);
+    setError(`Fix ${state.analysisSummary.errors} safety error${state.analysisSummary.errors === 1 ? '' : 's'} before encoding. See Safety check panel.`);
     render();
     return;
   }
@@ -935,16 +1068,12 @@ const handleEncode = async () => {
     state.encodedOutput = await encodeSaveData(state.data, state.saveType);
     state.dirty = false;
     refreshReadiness();
-    setNotice('Encoded output generated.', 'success');
+    setNotice('Encoded. Copy or share the output below.', 'success');
   } catch (error) {
     setError(error instanceof Error ? error.message : 'Could not encode save.');
   }
 
   render();
-};
-
-const copyOutput = async () => {
-  return copyText(state.encodedOutput, document.querySelector('#encoded-output'));
 };
 
 const copyText = async (value, fallbackElement = null) => {
@@ -961,6 +1090,10 @@ const copyText = async (value, fallbackElement = null) => {
     output?.select();
     return document.execCommand('copy');
   }
+};
+
+const copyOutput = async () => {
+  return copyText(state.encodedOutput, document.querySelector('#encoded-output'));
 };
 
 const downloadText = (value, filename, type = 'text/plain;charset=utf-8') => {
@@ -981,6 +1114,8 @@ const getCoverageReportText = () => {
   return state.coverageReport ? JSON.stringify(state.coverageReport, null, 2) : '';
 };
 
+/* ── EVENT DELEGATION ── */
+
 document.addEventListener('click', async (event) => {
   const target = event.target.closest('[data-action]');
 
@@ -995,13 +1130,25 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (action === 'toggle-import') {
+    state.importCollapsed = !state.importCollapsed;
+    render();
+    return;
+  }
+
+  if (action === 'toggle-details') {
+    state.showDetails = !state.showDetails;
+    render();
+    return;
+  }
+
   if (action === 'paste') {
     try {
       const text = await navigator.clipboard.readText();
       state.rawInput = text;
-      setNotice('Clipboard pasted.', 'success');
+      setNotice('Pasted from clipboard.', 'success');
     } catch {
-      setError('Clipboard paste is unavailable in this browser.');
+      setError('Clipboard paste unavailable. Paste manually into the text area.');
     }
     render();
     return;
@@ -1099,6 +1246,24 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (action === 'apply-preset') {
+    const presetId = target.dataset.presetId;
+    if (!presetId || !state.data) {
+      return;
+    }
+
+    try {
+      state.data = applyPreset(state.data, presetId);
+      markDataChanged();
+      const preset = PRESETS.find((p) => p.id === presetId);
+      setNotice(`Applied: ${preset?.label ?? presetId}. Review changes before encoding.`, 'success');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Could not apply preset.');
+    }
+    render();
+    return;
+  }
+
   if (action === 'encode') {
     await handleEncode();
     return;
@@ -1106,7 +1271,7 @@ document.addEventListener('click', async (event) => {
 
   if (action === 'copy') {
     const copied = await copyOutput();
-    copied ? setNotice('Output copied.', 'success') : setError('Could not copy output. Select it manually.');
+    copied ? setNotice('Output copied.', 'success') : setError('Copy failed. Select the output text manually.');
     render();
     return;
   }
@@ -1139,7 +1304,7 @@ document.addEventListener('click', async (event) => {
         setNotice('Share sheet opened.', 'success');
       } catch (error) {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
-          setError('Share failed. Output was not changed.');
+          setError('Share failed.');
         }
       }
     } else {
@@ -1186,7 +1351,8 @@ document.addEventListener('change', async (event) => {
     }
 
     state.rawInput = await file.text();
-    setNotice('File loaded.', 'success');
+    setNotice('File loaded. Tap Decode.', 'success');
+    state.importCollapsed = false;
     target.value = '';
     render();
     return;

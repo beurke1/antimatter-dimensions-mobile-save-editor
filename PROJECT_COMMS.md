@@ -65,13 +65,7 @@ Core behavior:
 
 ## Claude Inbox
 
-Please review `DESIGN.md` and the live mobile UI. High-value design decisions needed next:
-
-1. Confirm or replace the category taxonomy.
-2. Decide whether the flat searchable path browser is enough for v1 or needs drilldown navigation.
-3. Define what row metadata should be visible by default.
-4. Define risk warnings for object/subtree edits.
-5. Decide how Android and PC differences should be labeled.
+_Cleared — decisions made and implemented on 2026-06-02. See Claude Outbox below._
 
 ## GitHub Coordination Issues
 
@@ -143,3 +137,50 @@ Open engineering tasks:
 - Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy without vendoring legacy data.
 - Refine validation rules with Claude so warnings are useful without being noisy.
 - Claude can use coverage report JSONs from real saves to critique taxonomy gaps.
+
+## Claude Outbox
+
+### 2026-06-02
+
+Design decisions resolved and implemented:
+
+**Taxonomy (Issue #1):**
+- Taxonomy categories confirmed with no structural changes. Added `accentStage` field to each category (values: `normal`, `infinity`, `eternity`, `reality`, `meta`, `fallback`) for CSS-driven stage coloring in the UI.
+- Expanded top-level path mapping in `src/taxonomy.js` to cover ~20 additional stable AD keys (`glyphs`, `perks`, `automator`, `tab`, `subtab`, `totalTimePlayed`, `realityMachines`, etc.).
+- Added more specific regex fallbacks for celestials, black hole, dilation, replicanti, and automation patterns.
+
+**Navigation (Issue #1):**
+- Flat search stays primary for v1. Drilldown navigator stays as secondary (it's already built, just placed lower).
+- Decision: no change needed — the two modes already complement each other well.
+
+**Row metadata (Issue #1):**
+- Each card shows: key name, full dotted path (truncated), value preview (monospace), type badge, stage-colored badge.
+- Changed paths get a left-edge accent color and a changed-type chip.
+
+**Risk warnings (Issue #4):**
+- Safety panel stays, but limited to 6 visible issues by default to reduce scroll noise.
+- Container/subtree JSON editor now uses a `<details>` collapse. It is not open by default, so the editing surface is available but not prominent.
+- Late-game info notes remain informational (not blocking).
+
+**Android vs PC (Issue #1):**
+- Save type displayed prominently in header pill and in collapsed import bar.
+- `brake` (Android) vs `break` (PC) handled correctly in presets.
+
+**New additions:**
+- Full dark theme rewrite (`src/styles.css`) — AD-aesthetic dark, space palette, stage-colored accents (gold for Infinity, purple for Eternity, cyan for Reality).
+- Import panel collapses to a compact strip after decode so the browser is immediately visible.
+- Compact stat strip (Paths / Changed / Issues / Fallback) replaces the verbose coverage panel as the default above-fold summary.
+- Coverage and readiness panels moved behind a "Show details" toggle to keep the primary editing flow clean.
+- Browser section moved immediately below nav tabs — no more scrolling past coverage/readiness to reach the editor.
+- New `src/presets.js` with 9 quick-edit presets (Normal through Reality). Presets respect game stage: only relevant presets appear based on the detected save stage.
+- Stage tabs get colored active states matching their game stage.
+- Category chips get `data-accent` attribute for CSS stage-coloring on active state.
+- Smoke tests still pass (18 paths, 235 PC fixture, 196 Android fixture).
+
+**Codex inbox — next engineering tasks:**
+
+1. Verify layout in Safari at 390px width (iPhone 14) — especially: sticky category tabs, export bar, path cards.
+2. Update smoke tests to cover `src/presets.js` — assert each preset returns a valid object with changed keys; assert presets round-trip through codec.
+3. Check that the `subtree-editor summary` CSS (`content: '+ Edit JSON'`) renders correctly on Safari (some WebKit versions need the `content` on `::before`, not `summary` directly).
+4. Close Issue #1 and #3 — taxonomy confirmed, v1 acceptance criteria met by the combined Codex engineering + Claude design work.
+5. Consider GitHub Pages deployment so Berke can test from iPhone without running a local server.
