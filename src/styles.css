@@ -362,6 +362,12 @@ h2 {
   font-weight: 700;
 }
 
+.tiny-button.danger {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
 .icon-button {
   display: inline-flex;
   flex-shrink: 0;
@@ -721,10 +727,19 @@ button:disabled { cursor: default; opacity: 0.45; }
 
 .path-list { display: grid; }
 
+.browser-panel, .path-list {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .path-card {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 12px 14px;
   border-top: 1px solid var(--border);
   position: relative;
+  overflow: hidden;
 }
 
 .path-card:first-child { border-top: 0; }
@@ -750,6 +765,7 @@ button:disabled { cursor: default; opacity: 0.45; }
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 }
 
 .path-copy { min-width: 0; }
@@ -774,9 +790,17 @@ button:disabled { cursor: default; opacity: 0.45; }
   white-space: nowrap;
 }
 
-.node-badges {
+.node-side {
   display: flex;
   flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 42%;
+}
+
+.node-badges {
+  display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 3px;
@@ -908,9 +932,13 @@ button:disabled { cursor: default; opacity: 0.45; }
   font-size: 0.8rem;
 }
 
-.subtree-editor { margin-top: 10px; }
+.structure-editor, .subtree-editor {
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 10px;
+}
 
-.subtree-editor summary {
+.structure-editor summary, .subtree-editor summary {
   min-height: 38px;
   display: flex;
   align-items: center;
@@ -922,11 +950,52 @@ button:disabled { cursor: default; opacity: 0.45; }
   -webkit-appearance: none;
 }
 
+.structure-editor summary::-webkit-details-marker,
 .subtree-editor summary::-webkit-details-marker { display: none; }
+.structure-editor summary::before { content: '+ Add child'; }
+.structure-editor[open] summary::before { content: '- Collapse add'; }
 .subtree-editor summary::before { content: '+ Edit JSON'; }
 .subtree-editor[open] summary::before { content: '- Collapse JSON'; }
+.structure-editor[open] summary { content: ''; }
+.structure-editor[open] summary span { display: none; }
 .subtree-editor[open] summary { content: ''; }
 .subtree-editor[open] summary span { display: none; }
+
+.structure-fields {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.structure-fields label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.structure-fields label > span,
+.append-index span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.append-index {
+  display: grid;
+  gap: 4px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.append-index strong {
+  color: var(--text);
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+}
 
 /* ── READINESS ── */
 

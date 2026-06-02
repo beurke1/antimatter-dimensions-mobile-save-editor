@@ -4,6 +4,7 @@ import {
   buildPathIndex,
   calculateCoverage,
   deleteValueAtSegments,
+  formatPath,
   getAncestorNodes,
   getDirectChildNodes,
   getNodeByPath,
@@ -229,6 +230,82 @@ const resetAllChanges = () => {
   markDataChanged();
   state.dirty = false;
   setNotice('All edits reset.', 'success');
+  render();
+};
+
+const removeNodeAtPath = (path) => {
+  const node = getNode(path);
+
+  if (!node || node.path === 'root') {
+    return;
+  }
+
+  state.data = deleteValueAtSegments(state.data, node.segments);
+
+  if (state.scopePath === node.path || state.scopePath.startsWith(`${node.path}.`) || state.scopePath.startsWith(`${node.path}[`)) {
+    state.scopePath = node.parentPath ?? 'root';
+  }
+
+  markDataChanged();
+  setNotice(`${node.path} removed. Review before encoding.`, 'success');
+  render();
+};
+
+const addChildToContainer = (card) => {
+  const node = card ? getNode(card.dataset.nodePath) : null;
+  const value = node ? getValueAtSegments(state.data, node.segments) : null;
+  const valueType = getValueType(value);
+
+  if (!node || (valueType !== 'object' && valueType !== 'array')) {
+    return;
+  }
+
+  const jsonInput = card.querySelector('[data-add-child-json]');
+  const rawJson = jsonInput?.value.trim() ?? '';
+
+  if (!rawJson) {
+    setError(`Missing JSON value for ${node.path}.`);
+    render();
+    return;
+  }
+
+  let childValue;
+  try {
+    childValue = parseJsonValue(rawJson);
+  } catch (error) {
+    setError(error instanceof Error ? error.message : `Invalid child JSON for ${node.path}.`);
+    render();
+    return;
+  }
+
+  let childSegments;
+
+  if (Array.isArray(value)) {
+    childSegments = [...node.segments, value.length];
+  } else {
+    const keyInput = card.querySelector('[data-add-child-key]');
+    const key = keyInput?.value.trim() ?? '';
+
+    if (!key) {
+      setError(`Missing key for ${node.path}.`);
+      render();
+      return;
+    }
+
+    if (Object.hasOwn(value, key)) {
+      setError(`${formatPath([...node.segments, key])} already exists.`);
+      render();
+      return;
+    }
+
+    childSegments = [...node.segments, key];
+  }
+
+  state.data = setValueAtSegments(state.data, childSegments, childValue);
+  state.scopePath = node.path;
+  state.query = '';
+  markDataChanged();
+  setNotice(`${formatPath(childSegments)} added. Review before encoding.`, 'success');
   render();
 };
 
@@ -703,9 +780,44 @@ const renderBigNumberEditor = (node, value) => {
 
 const renderContainerEditor = (node) => {
   const value = getValueAtSegments(state.data, node.segments);
+  const valueType = getValueType(value);
   const json = stringifySaveJson(value);
+  const canAddChild = valueType === 'object' || valueType === 'array';
+  const appendIndex = Array.isArray(value) ? value.length : 0;
 
   return `
+    ${canAddChild ? `
+      <details class="structure-editor">
+        <summary></summary>
+        <div class="structure-fields">
+          ${Array.isArray(value) ? `
+            <div class="append-index" aria-label="${escapeHtml(node.path)} append index">
+              <span>Index</span>
+              <strong>${appendIndex}</strong>
+            </div>
+          ` : `
+            <label>
+              <span>Key</span>
+              <input
+                class="field-input"
+                data-add-child-key
+                type="text"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+              />
+            </label>
+          `}
+          <label>
+            <span>JSON</span>
+            <textarea class="field-input field-textarea" data-add-child-json spellcheck="false" autocapitalize="off">null</textarea>
+          </label>
+        </div>
+        <button type="button" class="secondary-button full" data-action="add-child">
+          ${Array.isArray(value) ? 'Append item' : 'Add key'}
+        </button>
+      </details>
+    ` : ''}
     <details class="subtree-editor">
       <summary></summary>
       <textarea class="subtree-textarea" spellcheck="false" autocapitalize="off">${escapeHtml(json)}</textarea>
@@ -729,10 +841,13 @@ const renderNodeCard = (node) => {
           <span class="node-key">${escapeHtml(node.key)}</span>
           <code>${escapeHtml(node.path)}</code>
         </div>
-        <div class="node-badges">
-          ${change ? `<span class="badge changed-badge">${escapeHtml(change.changeType)}</span>` : ''}
-          <span class="badge">${escapeHtml(freshType)}</span>
-          ${stageClass ? `<span class="badge ${escapeHtml(stageClass)}">${escapeHtml(category.stage)}</span>` : ''}
+        <div class="node-side">
+          <div class="node-badges">
+            ${change ? `<span class="badge changed-badge">${escapeHtml(change.changeType)}</span>` : ''}
+            <span class="badge">${escapeHtml(freshType)}</span>
+            ${stageClass ? `<span class="badge ${escapeHtml(stageClass)}">${escapeHtml(category.stage)}</span>` : ''}
+          </div>
+          ${node.path !== 'root' ? '<button type="button" class="tiny-button danger" data-action="remove-node">Remove</button>' : ''}
         </div>
       </div>
       <div class="value-preview">${escapeHtml(node.preview)}</div>
@@ -1255,6 +1370,14 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (action === 'remove-node') {
+    const card = target.closest('[data-node-path]');
+    if (card) {
+      removeNodeAtPath(card.dataset.nodePath);
+    }
+    return;
+  }
+
   if (action === 'toggle-boolean') {
     const card = target.closest('[data-node-path]');
     const node = card ? getNode(card.dataset.nodePath) : null;
@@ -1262,6 +1385,11 @@ document.addEventListener('click', async (event) => {
     if (node) {
       updateDataAtNode(node, !getValueAtSegments(state.data, node.segments), 'switch');
     }
+    return;
+  }
+
+  if (action === 'add-child') {
+    addChildToContainer(target.closest('[data-node-path]'));
     return;
   }
 

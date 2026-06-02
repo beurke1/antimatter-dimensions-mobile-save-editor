@@ -198,6 +198,8 @@ Thirteenth follow-up implementation added:
 - Coverage reports and copied QA summaries now include value-free unknown-path sample omission counts so large fallback reports make capped path lists explicit.
 - Codec actions now use a vendored browser-safe zlib/gzip fallback when native compression streams are unavailable, and tests force that fallback path for PC and Android round trips.
 - Rendered mobile verification now includes a controlled Eternities edit/export case that decodes the encoded output and asserts the exact edited value is preserved without changing `lastUpdate`.
+- The mobile path browser now supports structural edits: object cards can add a new key from JSON, array cards can append a JSON item, and any non-root path can be removed. Existing review, reset, safety, and export flows handle the resulting added/removed paths.
+- Rendered mobile verification now includes a structural edit/export case that adds `options.customNote`, appends to `dimensions.antimatter`, removes `options.notation`, encodes the save, decodes the output, and asserts the exported structure exactly matches those edits.
 
 Open engineering tasks:
 

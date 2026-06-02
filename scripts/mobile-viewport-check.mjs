@@ -897,6 +897,34 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         input.value = value;
         input.dispatchEvent(new Event('change', { bubbles: true }));
       };
+      const setSearch = async (value) => {
+        const input = document.querySelector('#path-search');
+        if (!input) throw new Error('Missing path search');
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      };
+      const setRootScope = async () => {
+        const button = document.querySelector('[data-action="set-scope"][data-scope-path="root"]');
+        if (button) {
+          button.click();
+          await new Promise((resolve) => setTimeout(resolve, 80));
+        }
+      };
+      const addChild = async (path, key, jsonText) => {
+        const containerCard = card(path);
+        if (!containerCard) throw new Error(\`Missing container card for \${path}\`);
+        const details = containerCard.querySelector('.structure-editor');
+        if (!details) throw new Error(\`Missing add child editor for \${path}\`);
+        details.open = true;
+        const keyInput = containerCard.querySelector('[data-add-child-key]');
+        if (keyInput) keyInput.value = key;
+        const jsonInput = containerCard.querySelector('[data-add-child-json]');
+        if (!jsonInput) throw new Error(\`Missing child JSON input for \${path}\`);
+        jsonInput.value = jsonText;
+        containerCard.querySelector('[data-action="add-child"]').click();
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      };
 
       if (${JSON.stringify(workflow)} === 'pc-basic') {
         setEditorValue('options.notation', '[data-editor-type="string"]', 'Engineering');
@@ -975,6 +1003,46 @@ const exerciseEditorWorkflow = async (client, workflow) => {
           resetAllCleared: !document.querySelector('.change-review') && document.querySelectorAll('.path-card.changed').length === 0,
           changedToggleCleared: changedToggleText === 'No changes yet',
           visibleCardsAfterReset: document.querySelectorAll('.path-card').length,
+        };
+      }
+
+      if (${JSON.stringify(workflow)} === 'structural-add-remove') {
+        await setSearch('options');
+        await waitFor(() => card('options'), 'options card for add child');
+        await addChild('options', 'customNote', '{"enabled":true,"label":"mobile"}');
+        await waitFor(() => card('options.customNote')?.classList.contains('changed'), 'added object child');
+        const addedObjectVisible = Boolean(card('options.customNote.enabled'));
+
+        await setRootScope();
+        await setSearch('dimensions.antimatter');
+        await waitFor(() => card('dimensions.antimatter'), 'antimatter dimensions array card');
+        const arrayBefore = JSON.parse(card('dimensions.antimatter').querySelector('.subtree-textarea').value).length;
+        await addChild('dimensions.antimatter', '', '{"bought":1,"amount":"2"}');
+        const appendedPath = \`dimensions.antimatter[\${arrayBefore}]\`;
+        await waitFor(() => card(appendedPath)?.classList.contains('changed'), 'appended array item');
+
+        await setRootScope();
+        await setSearch('options.notation');
+        await waitFor(() => card('options.notation'), 'options notation card for remove');
+        card('options.notation')?.querySelector('[data-action="remove-node"]')?.click();
+        await waitFor(() => !card('options.notation'), 'removed options notation card');
+
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'structural encode');
+        const { decodeSave } = await import('./src/save-codec.js');
+        const decoded = await decodeSave(encoded);
+        const appended = decoded.data.dimensions?.antimatter?.[arrayBefore];
+
+        return {
+          workflow: 'structural-add-remove',
+          encodedPrefix: encoded.slice(0, 37),
+          addedObjectVisible,
+          objectAdded: decoded.data.options?.customNote?.enabled === true &&
+            decoded.data.options?.customNote?.label === 'mobile',
+          arrayBefore,
+          arrayAppended: appended?.bought === 1 && appended?.amount === '2',
+          removedPathAbsent: !Object.hasOwn(decoded.data.options ?? {}, 'notation'),
+          changedRows: document.querySelectorAll('.path-card.changed').length,
         };
       }
 
@@ -1261,6 +1329,14 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('reset all did not return the rendered editor to a clean state');
       }
     }
+    if (caseConfig.editorWorkflow === 'structural-add-remove') {
+      if (!editorWorkflow?.addedObjectVisible || !editorWorkflow?.objectAdded) failures.push('structural editor did not add and export an object child');
+      if (!editorWorkflow?.arrayAppended) failures.push('structural editor did not append and export an array item');
+      if (!editorWorkflow?.removedPathAbsent) failures.push('structural editor did not remove the selected leaf from encoded output');
+      if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) {
+        failures.push('structural editor workflow did not produce an encoded PC save');
+      }
+    }
     if (caseConfig.editorWorkflow === 'deep-scope-edit') {
       if (!editorWorkflow?.levelChanged) failures.push('deep scoped browser workflow did not mark celestial pet level changed');
       if (!editorWorkflow?.activeBreadcrumb?.includes('teresa')) {
@@ -1345,6 +1421,12 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createNormalPcSave(),
       editorWorkflow: 'review-reset-all',
+    },
+    {
+      name: 'pc-structural-edit-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createNormalPcSave(),
+      editorWorkflow: 'structural-add-remove',
     },
     {
       name: 'pc-preset-iphone-se',
