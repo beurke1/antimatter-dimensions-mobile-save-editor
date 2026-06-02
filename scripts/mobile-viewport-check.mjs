@@ -169,7 +169,7 @@ const startChrome = async () => {
       return response.ok;
     },
     'Chrome DevTools startup',
-    10_000,
+    25_000,
     () => stderr.trim() ? `Chrome stderr:\n${stderr.trim().slice(-2000)}` : ''
   );
 
