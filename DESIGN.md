@@ -76,5 +76,5 @@ Claude should refine labels, ordering, grouping, and mobile navigation. Codex sh
 - The UI must never hide an unmapped imported path.
 - Smoke tests must verify PC round trip, Android round trip, path indexing, scoped navigation helpers, coverage report generation, readiness calculation, immutable path edits, change tracking, added-key reset, safety analysis, progression-stage fixture coverage, and all non-fallback category coverage in generated late-game PC/Android fixtures.
 - Smoke tests must verify that synthetic QA fixture artifacts can be generated.
-- Mobile verification must check rendered iPhone-sized layouts for horizontal overflow, clipped controls, undersized controls, fixed export-bar overlap, file import, category/stage/search/type navigation, changed-only filtering, value-free QA/report copy, representative edits, deep scoped browsing, reset, encode, copy, share, and download.
+- Mobile verification must check rendered iPhone-sized layouts for horizontal overflow, clipped controls, undersized controls, fixed export-bar overlap, file import, category/stage/search/type navigation, changed-only filtering, value-free QA/report copy/download, representative edits, deep scoped browsing, reset, encode, copy, share, and download.
 - GitHub Pages deployment must publish only after smoke tests pass.

@@ -585,6 +585,10 @@ const exerciseQaWorkflow = async (client, workflow) => {
       };
 
       const writes = [];
+      const downloads = [];
+      const originalCreateObjectUrl = URL.createObjectURL;
+      const originalRevokeObjectUrl = URL.revokeObjectURL;
+      const originalAnchorClick = HTMLAnchorElement.prototype.click;
       const clipboard = {
         writeText: async (value) => {
           writes.push(String(value));
@@ -597,39 +601,74 @@ const exerciseQaWorkflow = async (client, workflow) => {
         value: clipboard,
       });
       window.__adSaveEditorClipboardWrites = writes;
-
-      await clickAction('[data-action="toggle-details"]', 'coverage details toggle');
-      await waitFor(() => document.querySelector('.coverage-panel'), 'coverage panel');
-
-      await clickAction('[data-action="copy-qa-summary"]', 'Copy QA summary');
-      await waitFor(() => window.__adSaveEditorClipboardWrites?.length >= 1, 'QA summary copy');
-      const qaSummary = window.__adSaveEditorClipboardWrites.at(-1) ?? '';
-
-      await clickAction('[data-action="copy-report"]', 'Copy report');
-      await waitFor(() => window.__adSaveEditorClipboardWrites?.length >= 2, 'coverage report copy');
-      const reportText = window.__adSaveEditorClipboardWrites.at(-1) ?? '';
-      let report = null;
-      try {
-        report = JSON.parse(reportText);
-      } catch {
-        report = null;
-      }
-
-      const leakedFixtures = ['AntimatterDimensionsSavefileFormat', 'AntimatterDimensionsAndroidSaveFormat', 'Mixed scientific', '1700000000000'];
-      const summaryValueFree = leakedFixtures.every((fixtureValue) => !qaSummary.includes(fixtureValue));
-      const reportValueFree = leakedFixtures.every((fixtureValue) => !reportText.includes(fixtureValue));
-
-      return {
-        workflow: 'value-free-copy',
-        clipboardWrites: window.__adSaveEditorClipboardWrites.length,
-        qaSummaryCopied: qaSummary.includes('Antimatter Dimensions Real-Save QA Summary'),
-        qaSummaryHasCounts: qaSummary.includes('- Paths:') && qaSummary.includes('## Safety'),
-        summaryValueFree,
-        reportCopied: Boolean(report),
-        reportHasTotals: Number(report?.totals?.paths ?? 0) > 20,
-        reportHasSafety: typeof report?.safety?.error === 'number',
-        reportValueFree,
+      URL.createObjectURL = (blob) => {
+        const href = 'blob:ad-save-editor-report-test-' + downloads.length;
+        downloads.push({ href, blob, download: '' });
+        window.__adSaveEditorReportDownloads = downloads;
+        return href;
       };
+      URL.revokeObjectURL = () => {};
+      HTMLAnchorElement.prototype.click = function click() {
+        const latest = downloads.at(-1);
+        if (latest) latest.download = this.download;
+      };
+
+      try {
+        await clickAction('[data-action="toggle-details"]', 'coverage details toggle');
+        await waitFor(() => document.querySelector('.coverage-panel'), 'coverage panel');
+
+        await clickAction('[data-action="copy-qa-summary"]', 'Copy QA summary');
+        await waitFor(() => window.__adSaveEditorClipboardWrites?.length >= 1, 'QA summary copy');
+        const qaSummary = window.__adSaveEditorClipboardWrites.at(-1) ?? '';
+
+        await clickAction('[data-action="copy-report"]', 'Copy report');
+        await waitFor(() => window.__adSaveEditorClipboardWrites?.length >= 2, 'coverage report copy');
+        const reportText = window.__adSaveEditorClipboardWrites.at(-1) ?? '';
+
+        await clickAction('[data-action="download-report"]', 'Download coverage report');
+        await waitFor(() => downloads.length >= 1 && downloads.at(-1).download, 'coverage report download');
+        const downloadedReportText = await downloads.at(-1).blob.text();
+
+        let report = null;
+        let downloadedReport = null;
+        try {
+          report = JSON.parse(reportText);
+        } catch {
+          report = null;
+        }
+        try {
+          downloadedReport = JSON.parse(downloadedReportText);
+        } catch {
+          downloadedReport = null;
+        }
+
+        const leakedFixtures = ['AntimatterDimensionsSavefileFormat', 'AntimatterDimensionsAndroidSaveFormat', 'Mixed scientific', '1700000000000'];
+        const summaryValueFree = leakedFixtures.every((fixtureValue) => !qaSummary.includes(fixtureValue));
+        const reportValueFree = leakedFixtures.every((fixtureValue) => !reportText.includes(fixtureValue));
+        const downloadedReportValueFree = leakedFixtures.every((fixtureValue) => !downloadedReportText.includes(fixtureValue));
+
+        return {
+          workflow: 'value-free-copy',
+          clipboardWrites: window.__adSaveEditorClipboardWrites.length,
+          qaSummaryCopied: qaSummary.includes('Antimatter Dimensions Real-Save QA Summary'),
+          qaSummaryHasCounts: qaSummary.includes('- Paths:') && qaSummary.includes('## Safety'),
+          summaryValueFree,
+          reportCopied: Boolean(report),
+          reportHasTotals: Number(report?.totals?.paths ?? 0) > 20,
+          reportHasSafety: typeof report?.safety?.error === 'number',
+          reportValueFree,
+          reportDownloaded: Boolean(downloadedReport),
+          reportDownloadFilename: downloads.at(-1).download,
+          reportDownloadMatchesCopy: downloadedReportText === reportText,
+          downloadedReportHasTotals: Number(downloadedReport?.totals?.paths ?? 0) > 20,
+          downloadedReportHasSafety: typeof downloadedReport?.safety?.error === 'number',
+          downloadedReportValueFree,
+        };
+      } finally {
+        URL.createObjectURL = originalCreateObjectUrl;
+        URL.revokeObjectURL = originalRevokeObjectUrl;
+        HTMLAnchorElement.prototype.click = originalAnchorClick;
+      }
     })()
   `);
 };
@@ -1003,6 +1042,11 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
       if (!qaWorkflow?.summaryValueFree) failures.push('rendered QA summary copy leaked fixture values or encoded save text');
       if (!qaWorkflow?.reportCopied || !qaWorkflow?.reportHasTotals || !qaWorkflow?.reportHasSafety) failures.push('rendered coverage report copy did not produce the expected JSON report');
       if (!qaWorkflow?.reportValueFree) failures.push('rendered coverage report copy leaked fixture values or encoded save text');
+      if (!qaWorkflow?.reportDownloaded || !qaWorkflow?.downloadedReportHasTotals || !qaWorkflow?.downloadedReportHasSafety) failures.push('rendered coverage report download did not produce the expected JSON report');
+      if (qaWorkflow?.reportDownloadFilename !== 'antimatter-dimensions-coverage-report.json' || !qaWorkflow?.reportDownloadMatchesCopy) {
+        failures.push('rendered coverage report download did not match the copied JSON report');
+      }
+      if (!qaWorkflow?.downloadedReportValueFree) failures.push('rendered coverage report download leaked fixture values or encoded save text');
     }
     if (caseConfig.editorWorkflow === 'pc-basic') {
       if (!editorWorkflow?.notationChanged) failures.push('PC string editor did not mark notation changed');
