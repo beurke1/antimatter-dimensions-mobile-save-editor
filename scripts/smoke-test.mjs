@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { decodeSave, encodeSaveData, SaveType } from '../src/save-codec.js';
 import {
+  buildChangeIndex,
   buildPathIndex,
   calculateCoverage,
+  deleteValueAtSegments,
   getValueAtSegments,
   setValueAtSegments,
 } from '../src/path-index.js';
@@ -81,5 +83,16 @@ const updated = setValueAtSegments(samplePcSave, ['dimensions', 'antimatter', 0,
 assert.equal(getValueAtSegments(updated, ['dimensions', 'antimatter', 0, 'amount']), '99');
 assert.equal(samplePcSave.dimensions.antimatter[0].amount, '25');
 
-console.log(`Smoke tests passed: ${coverage.total} indexed paths, PC and Android round trips verified.`);
+const changedSave = setValueAtSegments(samplePcSave, ['options', 'notation'], 'Engineering');
+const changes = buildChangeIndex(samplePcSave, changedSave, SaveType.PC);
+assert.ok(changes.some((change) => change.path === 'options.notation' && change.changeType === 'changed'));
+assert.ok(changes.some((change) => change.path === 'root'));
 
+const addedSave = setValueAtSegments(samplePcSave, ['options', 'customFlag'], true);
+const addedChanges = buildChangeIndex(samplePcSave, addedSave, SaveType.PC);
+assert.ok(addedChanges.some((change) => change.path === 'options.customFlag' && change.changeType === 'added'));
+
+const removedAddedSave = deleteValueAtSegments(addedSave, ['options', 'customFlag']);
+assert.deepEqual(removedAddedSave, samplePcSave);
+
+console.log(`Smoke tests passed: ${coverage.total} indexed paths, round trips and change tracking verified.`);

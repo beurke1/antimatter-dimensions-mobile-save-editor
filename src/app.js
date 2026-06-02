@@ -1,7 +1,9 @@
 import { decodeSave, encodeSaveData, SaveType, stringifySaveJson } from './save-codec.js';
 import {
+  buildChangeIndex,
   buildPathIndex,
   calculateCoverage,
+  deleteValueAtSegments,
   getValueAtSegments,
   getValueType,
   setValueAtSegments,
@@ -10,6 +12,15 @@ import { CATEGORIES, getCategory } from './taxonomy.js';
 
 const appRoot = document.querySelector('#app');
 const searchableTypes = new Set(['string', 'number', 'boolean', 'null', 'big-number', 'array', 'object']);
+const stageFilters = [
+  { id: 'all', label: 'All stages' },
+  { id: 'normal', label: 'Normal' },
+  { id: 'infinity', label: 'Infinity' },
+  { id: 'eternity', label: 'Eternity' },
+  { id: 'reality', label: 'Reality' },
+  { id: 'meta', label: 'Meta' },
+  { id: 'fallback', label: 'Fallback' },
+];
 
 const state = {
   rawInput: '',
@@ -18,10 +29,13 @@ const state = {
   saveType: SaveType.PC,
   source: null,
   nodes: [],
+  changes: [],
   coverage: null,
   activeCategoryId: 'all',
+  activeStageId: 'all',
   query: '',
   typeFilter: 'all',
+  showChangedOnly: false,
   visibleLimit: 120,
   dirty: false,
   notice: null,
@@ -90,8 +104,33 @@ const detectStage = (data) => {
   return 'Normal';
 };
 
+const stageMatchesFilter = (stage, filterId) => {
+  if (filterId === 'all') {
+    return true;
+  }
+
+  const normalizedStage = String(stage ?? '').toLowerCase();
+
+  if (normalizedStage === 'all game') {
+    return filterId !== 'fallback';
+  }
+
+  if (filterId === 'meta') {
+    return normalizedStage.includes('meta');
+  }
+
+  if (filterId === 'fallback') {
+    return normalizedStage.includes('fallback');
+  }
+
+  return normalizedStage.includes(filterId);
+};
+
 const rebuildIndex = () => {
   state.nodes = state.data ? buildPathIndex(state.data, state.saveType) : [];
+  state.changes = state.data && state.originalData
+    ? buildChangeIndex(state.originalData, state.data, state.saveType)
+    : [];
   state.coverage = state.nodes.length ? calculateCoverage(state.nodes) : null;
 };
 
@@ -99,12 +138,48 @@ const getNode = (path) => {
   return state.nodes.find((node) => node.path === path);
 };
 
+const getChange = (path) => {
+  return state.changes.find((change) => change.path === path);
+};
+
+const markDataChanged = () => {
+  rebuildIndex();
+  state.dirty = state.changes.length > 0;
+  state.encodedOutput = '';
+};
+
 const updateDataAtNode = (node, value, sourceLabel = 'field') => {
   state.data = setValueAtSegments(state.data, node.segments, value);
-  state.dirty = true;
-  state.encodedOutput = '';
-  rebuildIndex();
+  markDataChanged();
   setNotice(`${node.path} updated from ${sourceLabel}.`, 'success');
+  render();
+};
+
+const resetChangeAtPath = (path) => {
+  const change = getChange(path);
+
+  if (!change || !state.originalData) {
+    return;
+  }
+
+  const originalValue = getValueAtSegments(state.originalData, change.segments);
+  state.data = originalValue === undefined
+    ? deleteValueAtSegments(state.data, change.segments)
+    : setValueAtSegments(state.data, change.segments, structuredClone(originalValue));
+  markDataChanged();
+  setNotice(`${path} reset.`, 'success');
+  render();
+};
+
+const resetAllChanges = () => {
+  if (!state.originalData) {
+    return;
+  }
+
+  state.data = structuredClone(state.originalData);
+  markDataChanged();
+  state.dirty = false;
+  setNotice('All edits reset.', 'success');
   render();
 };
 
@@ -150,13 +225,22 @@ const commitLeafInput = (input) => {
 
 const filteredNodes = () => {
   const normalizedQuery = state.query.trim().toLowerCase();
+  const changedPathSet = new Set(state.changes.map((change) => change.path));
 
   return state.nodes.filter((node) => {
     if (state.activeCategoryId !== 'all' && node.categoryId !== state.activeCategoryId) {
       return false;
     }
 
+    if (!stageMatchesFilter(node.stage, state.activeStageId)) {
+      return false;
+    }
+
     if (state.typeFilter !== 'all' && node.type !== state.typeFilter) {
+      return false;
+    }
+
+    if (state.showChangedOnly && !changedPathSet.has(node.path)) {
       return false;
     }
 
@@ -179,7 +263,7 @@ const filteredNodes = () => {
 
 const renderHeader = () => {
   const status = state.data ? `${state.saveType.toUpperCase()} · ${detectStage(state.data)}` : 'No save loaded';
-  const dirty = state.dirty ? 'Changed' : 'Clean';
+  const editState = state.dirty ? 'Needs encode' : state.changes.length ? 'Encoded edits' : 'Clean';
 
   return `
     <header class="topbar">
@@ -189,7 +273,7 @@ const renderHeader = () => {
       </div>
       <div class="status-stack" aria-label="Save status">
         <span class="status-pill">${escapeHtml(status)}</span>
-        <span class="status-pill ${state.dirty ? 'dirty' : ''}">${dirty}</span>
+        <span class="status-pill ${state.dirty || state.changes.length ? 'dirty' : ''}">${editState}</span>
       </div>
     </header>
   `;
@@ -257,6 +341,10 @@ const renderCoverage = () => {
         <span>Fallback</span>
         <strong>${state.coverage.uncategorizedCount}</strong>
       </div>
+      <div>
+        <span>Changed</span>
+        <strong>${state.changes.length}</strong>
+      </div>
     </section>
   `;
 };
@@ -293,6 +381,27 @@ const renderCategoryTabs = () => {
   `;
 };
 
+const renderStageTabs = () => {
+  if (!state.coverage) {
+    return '';
+  }
+
+  return `
+    <nav class="stage-tabs" aria-label="Game stage filters">
+      ${stageFilters.map((stage) => `
+        <button
+          type="button"
+          class="${stage.id === state.activeStageId ? 'active' : ''}"
+          data-action="set-stage"
+          data-stage-id="${escapeHtml(stage.id)}"
+        >
+          ${escapeHtml(stage.label)}
+        </button>
+      `).join('')}
+    </nav>
+  `;
+};
+
 const renderFilters = () => {
   if (!state.data) {
     return '';
@@ -316,6 +425,48 @@ const renderFilters = () => {
           <option value="${escapeHtml(type)}" ${state.typeFilter === type ? 'selected' : ''}>${escapeHtml(type === 'all' ? 'All types' : type)}</option>
         `).join('')}
       </select>
+      <button
+        type="button"
+        class="changed-toggle ${state.showChangedOnly ? 'active' : ''}"
+        data-action="toggle-changed-filter"
+        aria-pressed="${state.showChangedOnly ? 'true' : 'false'}"
+      >
+        Changed ${state.changes.length}
+      </button>
+    </section>
+  `;
+};
+
+const renderChangeReview = () => {
+  if (!state.data || state.changes.length === 0) {
+    return '';
+  }
+
+  const previewChanges = state.changes.slice(0, 8);
+  const remainingCount = Math.max(0, state.changes.length - previewChanges.length);
+
+  return `
+    <section class="panel change-review" aria-labelledby="changes-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="changes-title">Review edits</h2>
+          <p>${state.changes.length} changed path${state.changes.length === 1 ? '' : 's'} compared with the imported save.</p>
+        </div>
+        <button type="button" class="secondary-button compact" data-action="reset-all">Reset all</button>
+      </div>
+      <div class="change-list">
+        ${previewChanges.map((change) => `
+          <article class="change-row" data-change-path="${escapeHtml(change.path)}">
+            <div>
+              <span class="change-type">${escapeHtml(change.changeType)}</span>
+              <code>${escapeHtml(change.path)}</code>
+              <p>${escapeHtml(change.beforePreview)} → ${escapeHtml(change.afterPreview)}</p>
+            </div>
+            <button type="button" class="tiny-button" data-action="reset-change">Reset</button>
+          </article>
+        `).join('')}
+      </div>
+      ${remainingCount ? `<p class="change-more">${remainingCount} more shown by the Changed filter.</p>` : ''}
     </section>
   `;
 };
@@ -405,20 +556,28 @@ const renderNodeCard = (node) => {
   const value = getValueAtSegments(state.data, node.segments);
   const freshType = getValueType(value);
   const isContainer = node.isContainer;
+  const change = getChange(node.path);
 
   return `
-    <article class="path-card ${isContainer ? 'container' : 'leaf'}" data-node-path="${escapeHtml(node.path)}">
+    <article class="path-card ${isContainer ? 'container' : 'leaf'} ${change ? 'changed' : ''}" data-node-path="${escapeHtml(node.path)}">
       <div class="path-main">
         <div class="path-copy">
           <span class="node-key">${escapeHtml(node.key)}</span>
           <code>${escapeHtml(node.path)}</code>
         </div>
         <div class="node-badges">
+          ${change ? `<span class="changed-badge">${escapeHtml(change.changeType)}</span>` : ''}
           <span>${escapeHtml(freshType)}</span>
           <span>${escapeHtml(category.stage)}</span>
         </div>
       </div>
       <div class="value-preview">${escapeHtml(node.preview)}</div>
+      ${change ? `
+        <div class="change-inline">
+          <span>${escapeHtml(change.beforePreview)} → ${escapeHtml(change.afterPreview)}</span>
+          <button type="button" class="tiny-button" data-action="reset-node">Reset</button>
+        </div>
+      ` : ''}
       ${isContainer ? `
         <div class="container-meta">${node.childCount} child ${node.childCount === 1 ? 'item' : 'items'} · ${escapeHtml(category.title)}</div>
         ${renderContainerEditor(node)}
@@ -500,7 +659,9 @@ function render() {
         ${renderMessages()}
         ${renderCoverage()}
         ${renderCategoryTabs()}
+        ${renderStageTabs()}
         ${renderFilters()}
+        ${renderChangeReview()}
         ${renderBrowser()}
         ${renderOutput()}
       </main>
@@ -521,6 +682,8 @@ const handleDecode = async () => {
     state.dirty = false;
     state.encodedOutput = '';
     state.activeCategoryId = 'all';
+    state.activeStageId = 'all';
+    state.showChangedOnly = false;
     state.visibleLimit = 120;
     rebuildIndex();
     setNotice(`Decoded ${decoded.saveType.toUpperCase()} save with ${state.coverage.total} editable paths.`, 'success');
@@ -601,9 +764,44 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (action === 'set-stage') {
+    state.activeStageId = target.dataset.stageId;
+    state.visibleLimit = 120;
+    render();
+    return;
+  }
+
+  if (action === 'toggle-changed-filter') {
+    state.showChangedOnly = !state.showChangedOnly;
+    state.visibleLimit = 120;
+    render();
+    return;
+  }
+
   if (action === 'load-more') {
     state.visibleLimit += 120;
     render();
+    return;
+  }
+
+  if (action === 'reset-all') {
+    resetAllChanges();
+    return;
+  }
+
+  if (action === 'reset-change') {
+    const row = target.closest('[data-change-path]');
+    if (row) {
+      resetChangeAtPath(row.dataset.changePath);
+    }
+    return;
+  }
+
+  if (action === 'reset-node') {
+    const card = target.closest('[data-node-path]');
+    if (card) {
+      resetChangeAtPath(card.dataset.nodePath);
+    }
     return;
   }
 
@@ -742,4 +940,3 @@ document.addEventListener('keydown', (event) => {
 });
 
 render();
-

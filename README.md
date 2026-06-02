@@ -8,9 +8,11 @@ Clean-slate mobile save editor for Antimatter Dimensions.
 - Decoded JSON import.
 - Runtime indexing of every path in the imported save.
 - Category browsing with an Uncategorized fallback.
+- Stage filtering for the major game phases.
 - Search by path, key, type, category, stage, and value preview.
 - Inline primitive edits.
 - Scoped JSON edits for objects and arrays.
+- Changed-path review with reset controls.
 - Encode, copy, share, and download.
 
 ## Run Locally
@@ -27,7 +29,7 @@ Open `http://localhost:5174`.
 npm test
 ```
 
-The smoke test verifies PC and Android round trips, path indexing, coverage counting, and immutable path edits.
+The smoke test verifies PC and Android round trips, path indexing, coverage counting, immutable path edits, change tracking, and reset behavior.
 
 ## Collaboration
 

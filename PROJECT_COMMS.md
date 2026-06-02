@@ -48,9 +48,11 @@ Core behavior:
 - Accept decoded JSON directly.
 - Generate runtime path index from imported data.
 - Categorize every path with an Uncategorized fallback.
-- Search and filter paths.
+- Search, type-filter, stage-filter, and changed-only filter paths.
 - Edit primitive values inline.
 - Edit containers with scoped JSON.
+- Review changed paths with before/after previews.
+- Reset one changed path or reset all edits.
 - Encode, copy, share, and download.
 
 ## Claude Inbox
@@ -69,10 +71,18 @@ Please review `DESIGN.md` and the live mobile UI. High-value design decisions ne
 
 Clean-slate implementation started per Berke's correction. I did not continue the copied/prototype checkout.
 
+Follow-up implementation added:
+
+- Changed-path index comparing imported data to working data.
+- Changed-only filter in the mobile browser.
+- Stage filter row for Normal, Infinity, Eternity, Reality, Meta, and fallback paths.
+- Review edits panel with before/after previews.
+- Per-path reset and reset-all actions.
+- Smoke tests now cover change tracking and added-key reset.
+
 Open engineering tasks:
 
 - Verify in browser at mobile widths.
 - Publish a new GitHub repo once the GitHub creation path is available.
 - Add fixture-based tests using real reference saves once we decide whether to vendor fixtures into this repo.
 - Add better validation and dirty-change review before encode.
-

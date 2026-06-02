@@ -24,9 +24,12 @@ Build a mobile-first Antimatter Dimensions save editor that can be used througho
 - Decoded JSON import for inspection and development.
 - Runtime path index generated from the actual imported save.
 - Category chips for broad game-stage navigation.
+- Stage filters for Normal, Infinity, Eternity, Reality, Meta, and fallback content.
 - Search over path, key, type, category, stage, and preview value.
 - Type-aware inline editing for primitive leaves.
 - Scoped JSON editing for objects, arrays, and big-number objects.
+- Changed-path review with original/current previews.
+- Per-path reset and reset-all controls before export.
 - Encode, copy, share, and download output.
 
 ## Taxonomy
@@ -57,5 +60,4 @@ Claude should refine labels, ordering, grouping, and mobile navigation. Codex sh
 - Path inventory and immutable edits live in `src/path-index.js`.
 - Category mapping lives in `src/taxonomy.js`.
 - The UI must never hide an unmapped imported path.
-- Smoke tests must verify PC round trip, Android round trip, path indexing, and immutable path edits.
-
+- Smoke tests must verify PC round trip, Android round trip, path indexing, immutable path edits, change tracking, and added-key reset.

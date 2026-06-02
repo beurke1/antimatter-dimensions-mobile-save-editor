@@ -55,6 +55,36 @@ export const setValueAtSegments = (source, segments, value) => {
   return update(source, 0);
 };
 
+export const deleteValueAtSegments = (source, segments) => {
+  if (segments.length === 0) {
+    return {};
+  }
+
+  const update = (current, depth) => {
+    if (current === null || current === undefined) {
+      return current;
+    }
+
+    const segment = segments[depth];
+    const container = Array.isArray(current) ? [...current] : { ...current };
+
+    if (depth === segments.length - 1) {
+      if (Array.isArray(container) && typeof segment === 'number') {
+        container.splice(segment, 1);
+      } else {
+        delete container[segment];
+      }
+
+      return container;
+    }
+
+    container[segment] = update(current[segment], depth + 1);
+    return container;
+  };
+
+  return update(source, 0);
+};
+
 export const getValueType = (value) => {
   if (value === null) {
     return 'null';
@@ -181,3 +211,86 @@ export const calculateCoverage = (nodes) => {
   };
 };
 
+export const valuesAreEqual = (left, right) => {
+  return JSON.stringify(left) === JSON.stringify(right);
+};
+
+export const buildChangeIndex = (originalData, currentData, saveType = 'pc') => {
+  if (!originalData || !currentData) {
+    return [];
+  }
+
+  const originalNodes = buildPathIndex(originalData, saveType);
+  const currentNodes = buildPathIndex(currentData, saveType);
+  const nodeByPath = new Map();
+
+  for (const node of originalNodes) {
+    nodeByPath.set(node.path, {
+      originalNode: node,
+      currentNode: null,
+    });
+  }
+
+  for (const node of currentNodes) {
+    const existing = nodeByPath.get(node.path);
+
+    if (existing) {
+      existing.currentNode = node;
+    } else {
+      nodeByPath.set(node.path, {
+        originalNode: null,
+        currentNode: node,
+      });
+    }
+  }
+
+  return [...nodeByPath.values()]
+    .map(({ originalNode, currentNode }) => {
+      const node = currentNode ?? originalNode;
+      const beforeValue = originalNode ? getValueAtSegments(originalData, originalNode.segments) : undefined;
+      const afterValue = currentNode ? getValueAtSegments(currentData, currentNode.segments) : undefined;
+
+      if (valuesAreEqual(beforeValue, afterValue)) {
+        return null;
+      }
+
+      let changeType = 'changed';
+      if (!originalNode) {
+        changeType = 'added';
+      } else if (!currentNode) {
+        changeType = 'removed';
+      }
+
+      return {
+        id: node.path,
+        path: node.path,
+        key: node.key,
+        segments: node.segments,
+        depth: node.depth,
+        categoryId: node.categoryId,
+        categoryTitle: node.categoryTitle,
+        stage: node.stage,
+        type: currentNode?.type ?? originalNode?.type ?? 'unknown',
+        beforeType: originalNode?.type ?? 'missing',
+        afterType: currentNode?.type ?? 'missing',
+        beforePreview: originalNode ? formatPreview(beforeValue) : 'Missing',
+        afterPreview: currentNode ? formatPreview(afterValue) : 'Missing',
+        childCount: currentNode?.childCount ?? originalNode?.childCount ?? 0,
+        isContainer: Boolean(currentNode?.isContainer ?? originalNode?.isContainer),
+        changeType,
+        saveType,
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => {
+      if (left.isContainer !== right.isContainer) {
+        return left.isContainer ? 1 : -1;
+      }
+
+      if (left.depth !== right.depth) {
+        return left.depth - right.depth;
+      }
+
+      return left.path.localeCompare(right.path);
+    });
+};
