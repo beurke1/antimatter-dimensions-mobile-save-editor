@@ -259,7 +259,7 @@ for (const preset of PRESETS) {
 
 // PC presets produce valid data that round-trips
 const basePC = createComprehensivePcSave();
-for (const preset of PRESETS.filter((p) => p.id !== 'reality-machines-1000')) {
+for (const preset of PRESETS) {
   const applied = applyPreset(basePC, preset.id);
   assert.ok(applied && typeof applied === 'object' && !Array.isArray(applied), `Preset ${preset.id} returns a plain object`);
   const encoded = await encodeSaveData(applied, SaveType.PC);
@@ -267,9 +267,30 @@ for (const preset of PRESETS.filter((p) => p.id !== 'reality-machines-1000')) {
   assert.ok(reDecoded.data, `Preset ${preset.id} round-trips through PC codec`);
 }
 
-// Android-specific preset: break uses 'brake' key
-const baseMobilePC = { ...sampleAndroidSave };
-const brakeApplied = applyPreset(baseMobilePC, 'break-infinity');
+const assertAndroidBigNumber = (value, mantissa, exponent, label) => {
+  assert.deepEqual(value, { mantissa, exponent }, label);
+};
+
+// Presets preserve PC decimal-string fields instead of writing Android objects
+assert.equal(applyPreset(basePC, 'antimatter-e308').antimatter, '1.79e308');
+assert.equal(applyPreset(basePC, 'infinity-points-e100').infinityPoints, '1e100');
+assert.equal(applyPreset(basePC, 'eternity-points-e100').eternityPoints, '1e100');
+assert.equal(applyPreset(basePC, 'time-shards-e6').timeShards, '1e6');
+assert.equal(applyPreset(basePC, 'reality-machines-1000').reality.realityMachines, '1000');
+assert.equal(applyPreset(basePC, 'replicanti-unlock').replicanti.amount, '1');
+
+// Presets preserve Android mantissa/exponent fields and Android break naming
+const baseAndroid = createComprehensiveAndroidSave();
+assertAndroidBigNumber(applyPreset(baseAndroid, 'antimatter-e308').antimatter, 1.79, 308, 'Android antimatter stays big-number object');
+assertAndroidBigNumber(applyPreset(baseAndroid, 'infinity-points-e100').infinityPoints, 1, 100, 'Android IP stays big-number object');
+assertAndroidBigNumber(applyPreset(baseAndroid, 'eternity-points-e100').eternityPoints, 1, 100, 'Android EP stays big-number object');
+assertAndroidBigNumber(applyPreset(baseAndroid, 'time-shards-e6').timeShards, 1, 6, 'Android time shards stay big-number object');
+assertAndroidBigNumber(applyPreset(baseAndroid, 'reality-machines-1000').reality.realityMachines, 1000, 0, 'Android RM stays big-number object');
+const androidReplicantiPreset = applyPreset(baseAndroid, 'replicanti-unlock');
+assertAndroidBigNumber(androidReplicantiPreset.replicanti.amount, 1, 0, 'Android replicanti amount stays big-number object');
+assert.equal('chance' in androidReplicantiPreset.replicanti, false, 'Android replicanti preset should not add PC chance field');
+assert.equal('interval' in androidReplicantiPreset.replicanti, false, 'Android replicanti preset should not add PC interval field');
+const brakeApplied = applyPreset(baseAndroid, 'break-infinity');
 assert.equal(brakeApplied.brake, true, 'break-infinity preset sets brake on Android-style saves');
 
 // Unknown preset throws
