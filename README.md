@@ -2,6 +2,11 @@
 
 Clean-slate mobile save editor for Antimatter Dimensions.
 
+GitHub repo: https://github.com/beurke1/antimatter-dimensions-mobile-save-editor
+
+Expected public test URL after the first Pages deployment:
+https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
+
 ## What Works
 
 - PC and Android save decode/encode.
@@ -35,6 +40,12 @@ npm test
 ```
 
 The smoke test verifies PC and Android round trips, path indexing, scoped navigation helpers, coverage report generation, immutable path edits, change tracking, reset behavior, safety analysis, and comprehensive category coverage across generated PC/Android late-game fixtures.
+
+GitHub Actions runs the same smoke test on pushes and pull requests. The Pages deployment also runs the smoke test before publishing the static app.
+
+## Public Mobile Testing
+
+After the Pages workflow completes on `main`, use the public test URL above for iPhone Safari checks.
 
 ## Collaboration
 

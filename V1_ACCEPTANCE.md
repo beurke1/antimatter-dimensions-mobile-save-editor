@@ -50,9 +50,14 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Share uses native share where available and copy fallback otherwise.
 - Download creates a text file for the encoded save.
 
+## Hosting And CI
+
+- GitHub Actions smoke tests pass on `main`.
+- GitHub Pages publishes the static app for iPhone Safari testing.
+- The public Pages URL loads without local tooling.
+
 ## Coordination
 
 - Claude reviews taxonomy, navigation, row anatomy, and warning presentation.
 - Codex owns implementation, tests, and real-save/mobile verification.
 - Open GitHub issues in `PROJECT_COMMS.md` track remaining v1 decisions.
-

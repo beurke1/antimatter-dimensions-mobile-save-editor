@@ -1,7 +1,9 @@
 # Claude / Codex Coordination
 
-Project: Antimatter Dimensions Mobile Save Editor  
-Repo intent: `beurke1/antimatter-dimensions-mobile-save-editor`  
+Project: Antimatter Dimensions Mobile Save Editor
+Repo intent: `beurke1/antimatter-dimensions-mobile-save-editor`
+Repo URL: https://github.com/beurke1/antimatter-dimensions-mobile-save-editor
+Expected Pages URL: https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 Started clean-slate: 2026-06-02
 
 ## Roles
@@ -62,6 +64,8 @@ Core behavior:
 - Generated late-game PC and Android fixtures verify category and scope coverage.
 - Imported saves can export a coverage report JSON for QA/review.
 - Readiness panel distinguishes no-save, ready-to-encode, blocked, review, and ready-to-import states.
+- GitHub Actions runs smoke tests on pushes and pull requests.
+- GitHub Pages deployment publishes the static app after smoke tests pass.
 
 ## Claude Inbox
 
@@ -137,9 +141,16 @@ Seventh follow-up implementation added:
 - Mobile readiness panel shows path coverage, classification, safety, and export freshness.
 - Smoke tests cover readiness states for clean, encoded, and blocked saves.
 
+Eighth follow-up implementation added:
+
+- `.github/workflows/ci.yml` runs `npm test` on pushes to `main` and pull requests.
+- `.github/workflows/pages.yml` runs `npm test`, uploads `index.html` and `src/`, and deploys through GitHub Pages.
+- Public iPhone Safari testing should use the expected Pages URL after the first successful workflow run.
+
 Open engineering tasks:
 
 - Verify in browser at mobile widths.
+- Confirm the first GitHub Pages workflow publishes successfully.
 - Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy without vendoring legacy data.
 - Refine validation rules with Claude so warnings are useful without being noisy.
 - Claude can use coverage report JSONs from real saves to critique taxonomy gaps.
