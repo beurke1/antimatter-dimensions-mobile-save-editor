@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createComprehensiveAndroidSave, createComprehensivePcSave } from './fixture-saves.mjs';
@@ -107,7 +108,7 @@ const startStaticServer = async () => {
   };
 };
 
-const waitFor = async (work, label, timeoutMs = 10_000) => {
+const waitFor = async (work, label, timeoutMs = 10_000, getDiagnostic = () => '') => {
   const start = Date.now();
   let lastError;
 
@@ -123,13 +124,15 @@ const waitFor = async (work, label, timeoutMs = 10_000) => {
     await sleep(80);
   }
 
-  throw new Error(`${label} timed out${lastError ? `: ${lastError.message}` : ''}`);
+  const diagnostic = getDiagnostic();
+  throw new Error(`${label} timed out${lastError ? `: ${lastError.message}` : ''}${diagnostic ? `\n${diagnostic}` : ''}`);
 };
 
 const startChrome = async () => {
   const executable = chromePath();
   const debuggingPort = await freePort();
-  const profileDir = path.join('/private/tmp', `ad-save-editor-chrome-${process.pid}-${Date.now()}`);
+  const temporaryRoot = existsSync('/private/tmp') ? '/private/tmp' : tmpdir();
+  const profileDir = path.join(temporaryRoot, `ad-save-editor-chrome-${process.pid}-${Date.now()}`);
   const chromeProcess = spawn(executable, [
     '--headless=new',
     '--disable-gpu',
@@ -137,6 +140,8 @@ const startChrome = async () => {
     '--no-first-run',
     '--no-default-browser-check',
     '--no-sandbox',
+    '--password-store=basic',
+    '--use-mock-keychain',
     `--remote-debugging-port=${debuggingPort}`,
     `--user-data-dir=${profileDir}`,
     'about:blank',
@@ -153,10 +158,15 @@ const startChrome = async () => {
     chromeProcess.once('exit', (code, signal) => resolve({ code, signal }));
   });
 
-  await waitFor(async () => {
-    const response = await fetch(`http://127.0.0.1:${debuggingPort}/json/version`);
-    return response.ok;
-  }, 'Chrome DevTools startup');
+  await waitFor(
+    async () => {
+      const response = await fetch(`http://127.0.0.1:${debuggingPort}/json/version`);
+      return response.ok;
+    },
+    'Chrome DevTools startup',
+    10_000,
+    () => stderr.trim() ? `Chrome stderr:\n${stderr.trim().slice(-2000)}` : ''
+  );
 
   return {
     executable,
