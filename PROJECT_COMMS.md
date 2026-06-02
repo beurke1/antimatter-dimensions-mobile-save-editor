@@ -67,6 +67,7 @@ Core behavior:
 - GitHub Actions runs smoke tests on pushes and pull requests.
 - GitHub Pages deployment publishes the static app after smoke tests pass.
 - Synthetic QA fixture saves and expected coverage reports can be generated for public mobile testing.
+- Static mobile viewport checks run in CI for responsive layout invariants.
 
 ## Claude Inbox
 
@@ -156,9 +157,14 @@ Ninth follow-up implementation added:
 - `QA.md` defines the synthetic fixture, mobile viewport, and real-save verification protocol.
 - Smoke tests verify QA fixture artifact generation.
 
+Tenth follow-up implementation added:
+
+- `scripts/mobile-viewport-check.mjs` verifies viewport meta, responsive CSS invariants, and documented iPhone viewport QA targets.
+- CI and Pages workflows run `npm run verify:mobile` after smoke tests.
+
 Open engineering tasks:
 
-- Verify in browser at mobile widths.
+- Perform an actual rendered browser/iPhone viewport pass at mobile widths.
 - Decide whether to add optional real-save fixtures later; generated fixtures now cover the major taxonomy without vendoring legacy data.
 - Refine validation rules with Claude so warnings are useful without being noisy.
 - Claude can use coverage report JSONs from real saves to critique taxonomy gaps.

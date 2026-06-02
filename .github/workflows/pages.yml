@@ -31,6 +31,9 @@ jobs:
       - name: Run smoke tests
         run: npm test
 
+      - name: Run mobile viewport verification
+        run: npm run verify:mobile
+
   deploy:
     name: Deploy static app
     needs: test
