@@ -911,7 +911,7 @@ const exerciseEditorWorkflow = async (client, workflow) => {
           await new Promise((resolve) => setTimeout(resolve, 80));
         }
       };
-      const addChild = async (path, key, jsonText) => {
+      const addChild = async (path, key, jsonText, options = {}) => {
         const containerCard = card(path);
         if (!containerCard) throw new Error(\`Missing container card for \${path}\`);
         const details = containerCard.querySelector('.structure-editor');
@@ -919,6 +919,10 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         details.open = true;
         const keyInput = containerCard.querySelector('[data-add-child-key]');
         if (keyInput) keyInput.value = key;
+        const modeInput = containerCard.querySelector('[data-array-child-mode]');
+        if (modeInput && options.mode) modeInput.value = options.mode;
+        const indexInput = containerCard.querySelector('[data-array-child-index]');
+        if (indexInput && options.index !== undefined) indexInput.value = String(options.index);
         const jsonInput = containerCard.querySelector('[data-add-child-json]');
         if (!jsonInput) throw new Error(\`Missing child JSON input for \${path}\`);
         jsonInput.value = jsonText;
@@ -1042,6 +1046,42 @@ const exerciseEditorWorkflow = async (client, workflow) => {
           arrayBefore,
           arrayAppended: appended?.bought === 1 && appended?.amount === '2',
           removedPathAbsent: !Object.hasOwn(decoded.data.options ?? {}, 'notation'),
+          changedRows: document.querySelectorAll('.path-card.changed').length,
+        };
+      }
+
+      if (${JSON.stringify(workflow)} === 'array-index-edit-export') {
+        await setSearch('dimensions.antimatter');
+        await waitFor(() => card('dimensions.antimatter'), 'antimatter dimensions array card');
+        const arrayCard = card('dimensions.antimatter');
+        const modeInput = arrayCard?.querySelector('[data-array-child-mode]');
+        const indexInput = arrayCard?.querySelector('[data-array-child-index]');
+        if (!modeInput || !indexInput) throw new Error('Missing array index controls');
+
+        const originalArray = JSON.parse(arrayCard.querySelector('.subtree-textarea').value);
+        const originalSecond = originalArray[1];
+
+        await addChild('dimensions.antimatter', '', '{"bought":7,"amount":"9"}', { mode: 'insert', index: 0 });
+        await waitFor(() => card('dimensions.antimatter[0].bought')?.classList.contains('changed'), 'inserted array item');
+
+        await addChild('dimensions.antimatter', '', '{"bought":8,"amount":"10"}', { mode: 'replace', index: 1 });
+        await waitFor(() => card('dimensions.antimatter[1].bought')?.classList.contains('changed'), 'replaced array item');
+
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'array index encode');
+        const { decodeSave } = await import('./src/save-codec.js');
+        const decoded = await decodeSave(encoded);
+        const editedArray = decoded.data.dimensions?.antimatter ?? [];
+
+        return {
+          workflow: 'array-index-edit-export',
+          encodedPrefix: encoded.slice(0, 37),
+          arrayIndexControlsRendered: Boolean(modeInput && indexInput),
+          originalLength: originalArray.length,
+          exportedLength: editedArray.length,
+          insertedExact: editedArray[0]?.bought === 7 && editedArray[0]?.amount === '9',
+          replacedExact: editedArray[1]?.bought === 8 && editedArray[1]?.amount === '10',
+          shiftedItemPreserved: JSON.stringify(editedArray[2]) === JSON.stringify(originalSecond),
           changedRows: document.querySelectorAll('.path-card.changed').length,
         };
       }
@@ -1434,6 +1474,16 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('structural editor workflow did not produce an encoded PC save');
       }
     }
+    if (caseConfig.editorWorkflow === 'array-index-edit-export') {
+      if (!editorWorkflow?.arrayIndexControlsRendered) failures.push('array index workflow did not render insert/replace controls');
+      if (editorWorkflow?.exportedLength !== editorWorkflow?.originalLength + 1) failures.push('array index workflow did not preserve expected array length after insert plus replace');
+      if (!editorWorkflow?.insertedExact) failures.push('array index workflow did not export the exact inserted array item');
+      if (!editorWorkflow?.replacedExact) failures.push('array index workflow did not export the exact replaced array item');
+      if (!editorWorkflow?.shiftedItemPreserved) failures.push('array index workflow did not preserve shifted array items after insertion');
+      if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) {
+        failures.push('array index workflow did not produce an encoded PC save');
+      }
+    }
     if (caseConfig.editorWorkflow === 'bitfield-toggle-export') {
       if (!editorWorkflow?.bitfieldRendered) failures.push('bitfield workflow did not render bit toggle controls');
       if (editorWorkflow?.beforeValue !== 0 || editorWorkflow?.afterInputValue !== 4 || !editorWorkflow?.bit2Active) {
@@ -1552,6 +1602,12 @@ try {
       viewport: viewports.iphoneSe,
       saveData: createNormalPcSave(),
       editorWorkflow: 'structural-add-remove',
+    },
+    {
+      name: 'pc-array-index-edit-iphone-se',
+      viewport: viewports.iphoneSe,
+      saveData: createNormalPcSave(),
+      editorWorkflow: 'array-index-edit-export',
     },
     {
       name: 'pc-bitfield-iphone-se',

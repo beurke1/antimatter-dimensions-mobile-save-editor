@@ -349,9 +349,56 @@ const addChildToContainer = (card) => {
   }
 
   let childSegments;
+  let childAction = 'added';
 
   if (Array.isArray(value)) {
-    childSegments = [...node.segments, value.length];
+    const mode = card.querySelector('[data-array-child-mode]')?.value ?? 'append';
+    const indexInput = card.querySelector('[data-array-child-index]');
+    const requestedIndex = Number(indexInput?.value.trim() ?? value.length);
+
+    if (!Number.isInteger(requestedIndex)) {
+      setError(`Invalid array index for ${node.path}.`);
+      render();
+      return;
+    }
+
+    if (mode === 'append') {
+      childSegments = [...node.segments, value.length];
+      childAction = 'appended';
+      state.data = setValueAtSegments(state.data, childSegments, childValue);
+    } else if (mode === 'insert') {
+      if (requestedIndex < 0 || requestedIndex > value.length) {
+        setError(`Insert index for ${node.path} must be from 0 to ${value.length}.`);
+        render();
+        return;
+      }
+
+      const nextArray = [...value];
+      nextArray.splice(requestedIndex, 0, childValue);
+      childSegments = [...node.segments, requestedIndex];
+      childAction = 'inserted';
+      state.data = setValueAtSegments(state.data, node.segments, nextArray);
+    } else if (mode === 'replace') {
+      if (value.length === 0) {
+        setError(`${node.path} has no array items to replace.`);
+        render();
+        return;
+      }
+
+      if (requestedIndex < 0 || requestedIndex >= value.length) {
+        setError(`Replace index for ${node.path} must be from 0 to ${value.length - 1}.`);
+        render();
+        return;
+      }
+
+      childSegments = [...node.segments, requestedIndex];
+      childAction = 'replaced';
+      state.data = setValueAtSegments(state.data, childSegments, childValue);
+    } else {
+      setError(`Invalid array edit mode for ${node.path}.`);
+      render();
+      return;
+    }
   } else {
     const keyInput = card.querySelector('[data-add-child-key]');
     const key = keyInput?.value.trim() ?? '';
@@ -369,13 +416,13 @@ const addChildToContainer = (card) => {
     }
 
     childSegments = [...node.segments, key];
+    state.data = setValueAtSegments(state.data, childSegments, childValue);
   }
 
-  state.data = setValueAtSegments(state.data, childSegments, childValue);
   state.scopePath = node.path;
   state.query = '';
   markDataChanged();
-  setNotice(`${formatPath(childSegments)} added. Review before encoding.`, 'success');
+  setNotice(`${formatPath(childSegments)} ${childAction}. Review before encoding.`, 'success');
   render();
 };
 
@@ -982,8 +1029,28 @@ const renderContainerEditor = (node) => {
         <summary></summary>
         <div class="structure-fields">
           ${Array.isArray(value) ? `
-            <div class="append-index" aria-label="${escapeHtml(node.path)} append index">
+            <label>
+              <span>Mode</span>
+              <select class="field-input" data-array-child-mode>
+                <option value="append">Append</option>
+                <option value="insert">Insert</option>
+                <option value="replace">Replace</option>
+              </select>
+            </label>
+            <label>
               <span>Index</span>
+              <input
+                class="field-input"
+                data-array-child-index
+                type="number"
+                inputmode="numeric"
+                min="0"
+                value="${appendIndex}"
+                autocomplete="off"
+              />
+            </label>
+            <div class="append-index" aria-label="${escapeHtml(node.path)} next append index">
+              <span>Next</span>
               <strong>${appendIndex}</strong>
             </div>
           ` : `
@@ -1005,7 +1072,7 @@ const renderContainerEditor = (node) => {
           </label>
         </div>
         <button type="button" class="secondary-button full" data-action="add-child">
-          ${Array.isArray(value) ? 'Append item' : 'Add key'}
+          ${Array.isArray(value) ? 'Apply item' : 'Add key'}
         </button>
       </details>
     ` : ''}

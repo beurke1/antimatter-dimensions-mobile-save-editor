@@ -39,7 +39,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 - Packed integer bitfields expose tap-friendly bit toggles while preserving raw integer editing.
 - PC Decimal strings expose mantissa/exponent controls while preserving exact string export.
 - Android-style `{ mantissa, exponent }` big numbers use direct mantissa/exponent controls.
-- Object containers can add new keys, arrays can append items, and non-root paths can be removed from the mobile UI.
+- Object containers can add new keys, arrays can append, insert, or replace items by index, and non-root paths can be removed from the mobile UI.
 - Arrays and objects remain editable through scoped JSON.
 - Quick-edit presets preserve PC decimal-string values and Android mantissa/exponent values.
 - Direct edits such as `eternities` encode back exactly without hidden timestamp mutation.
@@ -64,7 +64,7 @@ This checklist defines the minimum bar before Berke tests the editor on iPhone S
 ## Hosting And CI
 
 - GitHub Actions smoke tests pass on `main`.
-- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, review/reset flows, structural add/remove/export controls, bitfield toggle/export controls, primitive leaf JSON type changes, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, value-free QA/report copy/download, and encoded output copy/share/download.
+- GitHub Actions rendered mobile viewport verification passes on `main`, including file import, review/reset flows, structural add/remove/export controls, indexed array insert/replace/export controls, bitfield toggle/export controls, primitive leaf JSON type changes, PC decimal-string mantissa/exponent editing, stage-filtered quick edits with PC/Android numeric preservation, value-free QA/report copy/download, and encoded output copy/share/download.
 - GitHub Pages publishes the static app for iPhone Safari testing.
 - The public Pages URL loads without local tooling.
 - `npm run qa:fixtures` generates the committed fixture saves and expected reports.

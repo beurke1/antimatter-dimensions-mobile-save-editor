@@ -204,6 +204,7 @@ Thirteenth follow-up implementation added:
 - Packed integer bitfields now expose mobile bit toggles for paths such as challenge completions, achievement bit arrays, upgrade bits, unlock bits, quote/progress/hint bits, and tab notification bits, while preserving raw integer edits. Rendered mobile verification toggles `challenge.normal.completedBits` bit 2 and decodes the encoded save to assert the exact packed value `4`.
 - PC Decimal string quantities now expose mantissa/exponent controls while preserving raw string editing and exact string export. Rendered mobile verification edits `antimatter` to mantissa `1.79`, exponent `308`, encodes, decodes, and asserts the exported value remains the string `1.79e308`.
 - Primitive leaf cards now include a collapsed raw JSON editor so a leaf can become any valid JSON type without editing its parent object. Rendered mobile verification changes `options.notation` from a string into an object, encodes, decodes, and asserts the exported object is exact.
+- Array container cards now support append, indexed insert, and indexed replace from JSON. Rendered mobile verification inserts and replaces items in `dimensions.antimatter`, encodes, decodes, and asserts exact item positions plus shifted-item preservation.
 
 Open engineering tasks:
 
