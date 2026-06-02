@@ -304,7 +304,11 @@ assert.equal(isPositiveQuantity(0), false);
 assert.equal(isPositiveQuantity(5), true);
 assert.equal(isPositiveQuantity('0'), false);
 assert.equal(isPositiveQuantity('1e250'), true);
-assert.equal(isPositiveQuantity('1e1000'), true, 'overflowing decimal strings count as positive');
+assert.equal(isPositiveQuantity('1e1000'), true, 'positive overflow decimal strings count as positive');
+assert.equal(isPositiveQuantity('-1e1000'), false, 'negative overflow decimal strings are not positive');
+assert.equal(isPositiveQuantity('-5'), false);
+assert.equal(isPositiveQuantity('not-a-number'), false);
+assert.equal(isPositiveQuantity({ mantissa: -1, exponent: 5 }), false);
 assert.equal(isPositiveQuantity({ mantissa: 0, exponent: 0 }), false);
 assert.equal(isPositiveQuantity({ mantissa: 1, exponent: 1000 }), true);
 assert.equal(isPositiveQuantity(null), false);
@@ -317,6 +321,11 @@ assert.equal(detectStage({ ...samplePcSave, infinityPoints: '1e10' }), STAGES.IN
 assert.equal(detectStage({ ...samplePcSave, brake: true }), STAGES.INFINITY);
 assert.equal(detectStage({ ...samplePcSave, eternityPoints: '1e5' }), STAGES.ETERNITY);
 assert.equal(detectStage({ ...samplePcSave, realities: '3' }), STAGES.REALITY);
+assert.equal(
+  detectStage({ ...samplePcSave, infinityPoints: '-1e1000' }),
+  STAGES.NORMAL,
+  'negative overflow infinityPoints must not promote the stage',
+);
 assert.equal(detectStage(createComprehensivePcSave()), STAGES.REALITY, 'late-game PC fixture is Reality');
 assert.equal(detectStage(createComprehensiveAndroidSave()), STAGES.REALITY, 'late-game Android fixture is Reality');
 

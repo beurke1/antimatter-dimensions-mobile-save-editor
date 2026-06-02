@@ -35,16 +35,16 @@ export const isPositiveQuantity = (value) => {
   }
 
   if (typeof value === 'string') {
-    const trimmed = value.trim();
-    const numeric = Number(trimmed);
+    const numeric = Number(value.trim());
 
     if (Number.isFinite(numeric)) {
       return numeric > 0;
     }
 
-    // Non-finite parse (overflow or non-numeric): any non-empty, non-zero
-    // string is treated as a positive big number.
-    return trimmed !== '' && trimmed !== '0';
+    // Non-finite parse: only a positive overflow (e.g. "1e1000" -> +Infinity)
+    // counts as positive. Negative overflow ("-1e1000" -> -Infinity) and
+    // non-numeric strings (NaN) must not be treated as a reached stage.
+    return numeric === Number.POSITIVE_INFINITY;
   }
 
   if (typeof value === 'object' && typeof value.mantissa === 'number') {
