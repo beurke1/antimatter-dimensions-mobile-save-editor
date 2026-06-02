@@ -4,8 +4,54 @@ export const createBigNumber = (mantissa, exponent) => ({
 });
 
 const FIXTURE_LAST_UPDATE = 1700000000000;
+const DECIMAL_STRING_PATTERN = /^[+-]?(?:(?:\d+(?:\.\d+)?)|(?:\.\d+))(?:e[+-]?\d+)?$/iu;
 
 const range = (count, mapper) => Array.from({ length: count }, (_, index) => mapper(index));
+
+const decimalStringToBigNumber = (value) => {
+  const normalized = value.trim().toLowerCase();
+  const [coefficientText, exponentText = '0'] = normalized.split('e');
+  let exponent = Number(exponentText);
+
+  if (!Number.isInteger(exponent)) {
+    return value;
+  }
+
+  const sign = coefficientText.startsWith('-') ? -1 : 1;
+  const unsignedCoefficient = coefficientText.replace(/^[+-]/u, '');
+  const [integerPart = '', fractionalPart = ''] = unsignedCoefficient.split('.');
+  const decimalIndex = integerPart.length;
+  const digitsText = `${integerPart}${fractionalPart}`;
+  const firstSignificantIndex = digitsText.search(/[1-9]/u);
+
+  if (firstSignificantIndex === -1) {
+    return createBigNumber(0, 0);
+  }
+
+  const significantDigits = digitsText.slice(firstSignificantIndex);
+  exponent += decimalIndex - firstSignificantIndex - 1;
+  const mantissa = sign * Number(significantDigits.length === 1
+    ? significantDigits
+    : `${significantDigits[0]}.${significantDigits.slice(1)}`);
+
+  return createBigNumber(mantissa, exponent);
+};
+
+const androidizeDecimalStrings = (value) => {
+  if (typeof value === 'string') {
+    return DECIMAL_STRING_PATTERN.test(value.trim()) ? decimalStringToBigNumber(value) : value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(androidizeDecimalStrings);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, childValue]) => [key, androidizeDecimalStrings(childValue)]));
+  }
+
+  return value;
+};
 
 const createPcAutobuyerState = () => ({
   autobuyersOn: true,
@@ -887,18 +933,22 @@ export const createComprehensivePcSave = () => ({
 
 export const createComprehensiveAndroidSave = () => ({
   IAP: { enabled: false },
+  achievementBits: [1, 2, 3],
+  achievementChecks: {
+    noSacrifices: true,
+    onlyEighthDimensions: false,
+    noEighthDimensions: false,
+  },
   achievements: [1, 2, 3],
   antimatter: createBigNumber(1, 1000),
-  auto: {
-    dimensions: [{ isActive: true, bulk: 10 }],
-    bigCrunch: { isActive: true, amount: createBigNumber(1, 200) },
-  },
+  auto: androidizeDecimalStrings(createPcAutobuyerState()),
   bankedInfinities: createBigNumber(5, 1),
   bigCrunches: createBigNumber(1, 3),
   bigEternities: createBigNumber(2, 2),
   bigRealities: createBigNumber(3, 1),
   blackHole: [
-    { unlocked: true, active: true, intervalUpgrades: 2, powerUpgrades: 3 },
+    { unlocked: true, active: true, intervalUpgrades: 2, powerUpgrades: 3, durationUpgrades: 4 },
+    { unlocked: true, active: false, intervalUpgrades: 1, powerUpgrades: 2, durationUpgrades: 3 },
   ],
   blackHoleAutoPauseMode: 0,
   blackHoleNegative: 0,
@@ -908,59 +958,81 @@ export const createComprehensiveAndroidSave = () => ({
   breakInfinityRebuyables: [10, 5],
   breakInfinityUpgradeBits: 12,
   buyUntil10: true,
-  celestials: {
-    teresa: { pouredAmount: createBigNumber(1, 8) },
-    ra: { pets: { teresa: { level: 10 } } },
-  },
+  celestials: androidizeDecimalStrings(createPcCelestialsState()),
   challenge: {
-    normal: { current: 0, completedBits: 255 },
-    infinity: { current: 0, completedBits: 127 },
+    normal: { current: 0, bestTimes: range(11, (index) => 1000 + index), completedBits: 255 },
+    infinity: { current: 0, bestTimes: range(8, (index) => 2000 + index), completedBits: 127 },
+    eternity: { current: 0, unlocked: 12, requirementBits: 7 },
   },
   dilation: {
     active: false,
     tachyonParticles: createBigNumber(1, 30),
     dilatedTime: createBigNumber(1, 35),
+    nextThreshold: createBigNumber(1, 40),
+    baseTachyonGalaxies: 4,
+    totalTachyonGalaxies: 8,
+    upgrades: [4, 5],
+    rebuyables: { 1: 5, 2: 4, 3: 3, 11: 2, 12: 1, 13: 1 },
+    lastEP: createBigNumber(1, 60),
   },
   dimensionBoosts: 12,
   dimensions: {
-    antimatter: [
-      { amount: createBigNumber(1, 100), bought: 10 },
-      { amount: createBigNumber(1, 80), bought: 8 },
-    ],
-    infinity: [{ amount: createBigNumber(1, 50), bought: 5 }],
-    time: [{ amount: createBigNumber(1, 25), bought: 3 }],
+    antimatter: range(8, (tier) => ({
+      amount: createBigNumber(1, 100 - (tier * 5)),
+      bought: 10 - tier,
+      costBumps: Math.max(0, 2 - tier),
+    })),
+    infinity: range(8, (tier) => ({
+      isUnlocked: true,
+      bought: 5 + tier,
+      amount: createBigNumber(1, 50 + tier),
+      cost: createBigNumber(1, 80 + tier),
+      baseAmount: tier,
+    })),
+    time: range(8, (tier) => ({
+      cost: createBigNumber(1, 10 + tier),
+      amount: createBigNumber(1, 25 + tier),
+      bought: 3 + tier,
+    })),
   },
+  epmultUpgrades: 9,
   epMultUpgrades: 9,
+  eterc8ids: 2,
+  eterc8repl: 1,
+  eternityChalls: { current: 0, completions: { 1: 5, 2: 3 } },
   eternities: createBigNumber(2, 2),
   eternityPoints: createBigNumber(1, 60),
   eternityUpgradeBits: 7,
+  eternityUpgrades: [1, 2, 3],
   galaxies: 8,
   highestTierBoughtThisDimboost: 7,
   infinities: createBigNumber(1, 3),
+  infinitiesBanked: createBigNumber(5, 1),
   infinityPoints: createBigNumber(1, 250),
   infinityPower: createBigNumber(1, 90),
+  infinityRebuyables: [10, 5],
   infinityUpgradeBits: 15,
+  infinityUpgrades: ['timeMult', 'dimMult'],
   ipMultUpgrades: 12,
   isGameEnd: false,
   lastUpdate: 1700000000000,
+  lastTenEternities: range(10, (index) => [5000 + index, 4500 + index, createBigNumber(1, 60), createBigNumber(1, 55), `E${index}`, createBigNumber(2, 2)]),
+  lastTenRealities: range(10, (index) => [20000 + index, 18000 + index, createBigNumber(1, 12), 500 + index, `R${index}`, 50, 20]),
+  lastTenRuns: range(10, (index) => [1000 + index, 900 + index, createBigNumber(1, 100), createBigNumber(1, 90), `I${index}`]),
   matter: createBigNumber(1, 20),
-  news: { seen: ['a1'] },
-  options: { notation: 'Scientific', theme: 'Normal' },
+  news: {
+    seen: ['a1', 'lategame'],
+    specialTickerData: { uselessNewsClicks: 2, paperclips: 100, newsQueuePosition: 10, eiffelTowerChapter: 1 },
+    totalSeen: 2,
+  },
+  options: createPcOptionsState(),
   partInfinitied: 0.25,
   partInfinityPoint: 0.5,
+  partSimulatedReality: 0.75,
+  previousInfinities: [{ time: 1000, amount: createBigNumber(1, 100) }],
   realities: createBigNumber(2.5, 1),
-  reality: {
-    realityMachines: createBigNumber(1, 12),
-    imaginaryMachines: 1200,
-    glyphs: {
-      active: [{ id: 1, type: 'power', level: 500, strength: 2.1 }],
-    },
-    perks: [1, 2, 3],
-  },
-  records: {
-    totalAntimatter: createBigNumber(1, 1200),
-    bestInfinity: { time: 1000 },
-  },
+  reality: androidizeDecimalStrings(createPcRealityState()),
+  records: androidizeDecimalStrings(createPcRecords()),
   replicanti: {
     unl: true,
     amount: createBigNumber(1, 900),
@@ -968,17 +1040,57 @@ export const createComprehensiveAndroidSave = () => ({
     intervalUpgrades: 10,
     galaxies: 20,
   },
-  requirementChecks: { reality: { noEternities: false } },
+  requirementChecks: {
+    infinity: { maxAll: false, noSacrifice: false, noAD8: true },
+    eternity: { onlyAD1: true, onlyAD8: true, noAD1: false, noRG: true },
+    reality: {
+      noAM: false,
+      noTriads: true,
+      noPurchasedTT: false,
+      noInfinities: false,
+      noEternities: false,
+      noContinuum: true,
+      maxID1: createBigNumber(1, 50),
+      maxStudies: 120,
+      maxGlyphs: 4,
+      slowestBH: 1,
+    },
+    permanent: { emojiGalaxies: 1, singleTickspeed: 0, perkTreeDragging: 1 },
+  },
   respec: false,
   sacrificed: createBigNumber(1, 500),
+  secretAchievementBits: [1],
   secretAchievements: [1],
   secretUnlocks: { themes: ['S1'] },
-  shownRuns: { reality: true },
-  speedrun: { isActive: false },
+  shownRuns: { Reality: true, Eternity: true, Infinity: true, reality: true },
+  speedrun: {
+    isUnlocked: true,
+    isActive: false,
+    isSegmented: false,
+    usedSTD: false,
+    hasStarted: true,
+    hideInfo: false,
+    displayAllMilestones: true,
+    startDate: 1600000000000,
+    name: 'android-fixture',
+    offlineTimeUsed: 0,
+    records: range(26, (index) => index),
+    achievementTimes: { r11: 1000 },
+    seedSelection: 0,
+    initialSeed: 12345,
+    previousRuns: { fixture: { time: 123456 } },
+  },
   timeShards: createBigNumber(1, 75),
   timestudy: {
     studies: [11, 21, 31],
     theorem: 120,
+    maxTheorem: 150,
+    amBought: 10,
+    ipBought: 20,
+    epBought: 30,
+    shopMinimized: false,
+    preferredPaths: [[11, 21, 31], 0],
+    presets: [{ name: 'Push', studies: '11,21,31' }],
   },
   totalTickBought: 150,
   totalTickGained: 200,

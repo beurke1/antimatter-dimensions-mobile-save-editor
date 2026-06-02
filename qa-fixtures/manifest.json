@@ -398,10 +398,10 @@
         "reality.imaginaryMachines"
       ],
       "expectedTotals": {
-        "paths": 196,
-        "editablePaths": 196,
-        "leaves": 124,
-        "containers": 72,
+        "paths": 2256,
+        "editablePaths": 2256,
+        "leaves": 1670,
+        "containers": 586,
         "changedPaths": 0,
         "unknownPaths": 0
       },
@@ -412,30 +412,30 @@
       },
       "missingCategories": [],
       "categoryCounts": {
-        "dimensions": 33,
-        "eternity": 23,
-        "resources": 23,
-        "reality": 19,
-        "infinity": 16,
-        "records": 13,
-        "core": 11,
-        "automation": 10,
-        "black-hole": 10,
-        "achievements": 9,
-        "celestials": 9,
+        "records": 868,
+        "celestials": 327,
+        "automation": 284,
+        "dimensions": 205,
+        "reality": 202,
+        "options": 159,
+        "eternity": 61,
+        "challenges": 39,
+        "infinity": 25,
+        "resources": 24,
+        "achievements": 19,
+        "core": 18,
+        "black-hole": 17,
         "replicanti": 8,
-        "challenges": 7,
-        "options": 5,
         "unknown": 0
       },
       "stageCounts": {
-        "All game": 55,
-        "Normal": 44,
-        "Reality": 38,
-        "Infinity": 24,
-        "Eternity": 23,
-        "Normal to Eternity": 7,
-        "Meta": 5
+        "All game": 1195,
+        "Reality": 546,
+        "Normal": 223,
+        "Meta": 159,
+        "Eternity": 61,
+        "Normal to Eternity": 39,
+        "Infinity": 33
       }
     }
   ]

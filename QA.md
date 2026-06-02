@@ -14,7 +14,7 @@ Then open the public app:
 
 https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 
-The `pc-late-game-save.txt` fixture is the broadest synthetic pass. It should currently decode to 1,576 paths and includes source-shaped automation, records, speedrun, Reality, Celestials, Pelle, and options branches.
+The broadest synthetic passes are `pc-late-game-save.txt` and `android-late-game-save.txt`. They should currently decode to 1,576 PC paths and 2,256 Android-format paths, with source-shaped automation, records, speedrun, Reality, Celestials, Pelle, and options branches.
 
 For each file in `qa-fixtures/*-save.txt`:
 

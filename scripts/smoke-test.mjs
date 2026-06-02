@@ -371,6 +371,28 @@ const requiredComprehensivePcLandmarks = [
   'options.automatorEvents.maxEntries',
 ];
 
+const requiredComprehensiveAndroidLandmarks = [
+  'auto.reality.rm.mantissa',
+  'auto.antimatterDims.all[7].bulk',
+  'dimensions.antimatter[7].amount.exponent',
+  'dimensions.infinity[7].cost.mantissa',
+  'challenge.eternity.requirementBits',
+  'records.recentRealities[0][2].exponent',
+  'records.bestReality.RM.mantissa',
+  'lastTenRuns[9][2].exponent',
+  'speedrun.previousRuns.fixture.time',
+  'replicanti.amount.exponent',
+  'replicanti.intervalUpgrades',
+  'dilation.nextThreshold.mantissa',
+  'reality.glyphs.filter.types.power.effectScores[0]',
+  'reality.automator.constants.targetRM.exponent',
+  'celestials.ra.alchemy[20].reaction',
+  'celestials.laitela.dimensions[3].amount.exponent',
+  'celestials.pelle.rifts.vacuum.fill.mantissa',
+  'options.confirmations.armageddon',
+  'options.awayProgress.realityShards',
+];
+
 assert.ok(KNOWN_TOP_LEVEL_CATEGORIES.length >= 100, 'Known top-level taxonomy guard should cover the broad AD player shape');
 assert.equal(
   new Set(KNOWN_TOP_LEVEL_CATEGORIES.map(([path]) => path)).size,
@@ -507,6 +529,15 @@ const assertComprehensiveCoverage = async (saveData, saveType) => {
 
     for (const path of requiredComprehensivePcLandmarks) {
       assert.ok(fixtureNodeByPath.has(path), `PC late-game fixture should include source landmark ${path}`);
+    }
+  } else {
+    assert.ok(
+      fixtureCoverage.total >= 1000,
+      `Android late-game fixture should stress a broad Android-format save, got ${fixtureCoverage.total} paths`
+    );
+
+    for (const path of requiredComprehensiveAndroidLandmarks) {
+      assert.ok(fixtureNodeByPath.has(path), `Android late-game fixture should include source landmark ${path}`);
     }
   }
 

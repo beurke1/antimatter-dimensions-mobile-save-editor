@@ -31,7 +31,7 @@ https://beurke1.github.io/antimatter-dimensions-mobile-save-editor/
 - Stage-aware quick-edit presets with PC/Android numeric format preservation.
 - Copy value-free QA summaries with detected game stage and stage signal paths, coverage counts, unknown top-level counts, unknown-path sample omission counts, safety issue counts, and warning samples, plus copy/download coverage reports for imported saves.
 - Encode, copy, share, and download.
-- Generated progression-stage PC and Android fixture coverage tests, including a source-shaped PC late-game fixture with 1,500+ editable paths.
+- Generated progression-stage PC and Android fixture coverage tests, including source-shaped late-game fixtures with 1,500+ PC paths and 2,200+ Android-format paths.
 - Synthetic Normal, Infinity, Eternity, and late-game QA fixture exports for public mobile testing.
 
 ## Run Locally
@@ -59,7 +59,7 @@ GitHub Actions runs the same smoke and mobile checks on pushes and pull requests
 npm run qa:fixtures
 ```
 
-This writes synthetic PC and Android Normal, Infinity, Eternity, and late-game saves plus expected coverage reports to `qa-fixtures/`. The PC late-game fixture covers 1,500+ source-shaped paths across automation, records, speedrun, Reality, Celestials, Pelle, and options. Use `QA.md` for the mobile and real-save verification protocol.
+This writes synthetic PC and Android Normal, Infinity, Eternity, and late-game saves plus expected coverage reports to `qa-fixtures/`. The PC late-game fixture covers 1,500+ source-shaped paths, and the Android late-game fixture covers 2,200+ Android-format paths across automation, records, speedrun, Reality, Celestials, Pelle, and options. Use `QA.md` for the mobile and real-save verification protocol.
 
 ## Public Mobile Testing
 
