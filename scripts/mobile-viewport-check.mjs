@@ -450,6 +450,12 @@ const exerciseEditorWorkflow = async (client, workflow) => {
         throw new Error(label + ' timed out');
       };
       const card = (path) => document.querySelector(\`[data-node-path="\${CSS.escape(path)}"]\`);
+      const clickScope = async (path) => {
+        const button = document.querySelector(\`[data-action="set-scope"][data-scope-path="\${CSS.escape(path)}"]\`);
+        if (!button) throw new Error(\`Missing scope button for \${path}\`);
+        button.click();
+        await waitFor(() => card(path), \`scope \${path}\`);
+      };
       const setEditorValue = (path, selector, value) => {
         const input = card(path)?.querySelector(selector);
         if (!input) throw new Error(\`Missing editor for \${path}\`);
@@ -486,6 +492,29 @@ const exerciseEditorWorkflow = async (client, workflow) => {
           notationChanged: card('options.notation')?.classList.contains('changed') ?? false,
           subtreeChanged: card('options.confirmations.bigCrunch')?.classList.contains('changed') ?? false,
           booleanReset: !(card('buyUntil10')?.classList.contains('changed') ?? true),
+        };
+      }
+
+      if (${JSON.stringify(workflow)} === 'deep-scope-edit') {
+        await clickScope('celestials');
+        await clickScope('celestials.ra');
+        await clickScope('celestials.ra.pets');
+        await clickScope('celestials.ra.pets.teresa');
+
+        setEditorValue('celestials.ra.pets.teresa.level', '[data-editor-type="number"]', '11');
+        await waitFor(() => card('celestials.ra.pets.teresa.level')?.classList.contains('changed'), 'deep celestial edit');
+
+        document.querySelector('[data-action="encode"]').click();
+        const encoded = await waitFor(() => document.querySelector('#encoded-output')?.value, 'deep PC encode');
+        const activeBreadcrumb = Array.from(document.querySelectorAll('.breadcrumbs button.active'))
+          .map((button) => button.textContent.trim())
+          .join(' ');
+        return {
+          workflow: 'deep-scope-edit',
+          encodedPrefix: encoded.slice(0, 37),
+          activeBreadcrumb,
+          levelChanged: card('celestials.ra.pets.teresa.level')?.classList.contains('changed') ?? false,
+          changedRows: document.querySelectorAll('.path-card.changed').length,
         };
       }
 
@@ -661,6 +690,15 @@ const runCase = async ({ chrome, appUrl, caseConfig }) => {
         failures.push('PC editor workflow did not produce an encoded PC save');
       }
     }
+    if (caseConfig.editorWorkflow === 'deep-scope-edit') {
+      if (!editorWorkflow?.levelChanged) failures.push('deep scoped browser workflow did not mark celestial pet level changed');
+      if (!editorWorkflow?.activeBreadcrumb?.includes('teresa')) {
+        failures.push('deep scoped browser workflow did not end at the expected breadcrumb');
+      }
+      if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsSavefileFormat')) {
+        failures.push('deep scoped browser workflow did not produce an encoded PC save');
+      }
+    }
     if (caseConfig.editorWorkflow === 'android-big-number') {
       if (!editorWorkflow?.antimatterChanged) failures.push('Android big-number editor did not mark antimatter changed');
       if (!editorWorkflow?.encodedPrefix?.startsWith('AntimatterDimensionsAndroidSaveFormat')) {
@@ -706,6 +744,7 @@ try {
       name: 'pc-fixture-iphone-15',
       viewport: viewports.iphone15,
       saveData: createComprehensivePcSave(),
+      editorWorkflow: 'deep-scope-edit',
     },
     {
       name: 'android-normal-iphone-15',
